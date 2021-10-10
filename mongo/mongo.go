@@ -36,6 +36,15 @@ func Setup(opt SetupOptions) {
 
 	Database = client.Database(opt.DB)
 
+	for _, ind := range opt.Indexes {
+		col := ind.Collection
+		if name, err := Database.Collection(string(col)).Indexes().CreateOne(ctx, ind.Index); err != nil {
+			panic(err)
+		} else {
+			log.WithField("collection", col).Infof("Collection index created: %s", name)
+		}
+	}
+
 	log.Info("mongo, ok")
 }
 
@@ -46,20 +55,20 @@ func Collection(name CollectionName) *mongo.Collection {
 type CollectionName string
 
 var (
-	CollectionNameEmotes            CollectionName = "emotes"
-	CollectionNameUsers             CollectionName = "users"
-	CollectionNameBans              CollectionName = "bans"
-	CollectionNameReports           CollectionName = "reports"
-	CollectionNameBadges            CollectionName = "badges"
-	CollectionNameRoles             CollectionName = "roles"
-	CollectionNameAudit             CollectionName = "audit"
-	CollectionNameEntitlements      CollectionName = "entitlements"
-	CollectionNameNotifications     CollectionName = "notifications"
-	CollectionNameNotificationsRead CollectionName = "notifications_read"
+	CollectionNameEmotes CollectionName = "emotes"
+	CollectionNameUsers  CollectionName = "users_v3"
 )
 
 type SetupOptions struct {
-	URI    string
-	DB     string
-	Direct bool
+	URI     string
+	DB      string
+	Direct  bool
+	Indexes []IndexRef
 }
+
+type IndexRef struct {
+	Collection CollectionName
+	Index      mongo.IndexModel
+}
+
+type IndexModel = mongo.IndexModel
