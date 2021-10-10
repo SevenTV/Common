@@ -31,9 +31,17 @@ func (b EmoteBuilder) FetchByID(ctx context.Context, id primitive.ObjectID) (*Em
 }
 
 type Emote struct {
-	ID   primitive.ObjectID `json:"id" bson:"_id"`
-	Name string             `json:"name" bson:"name"`
-	URLs [][]string         `json:"urls" bson:"-"`
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	Name       string             `json:"name" bson:"name"`
+	Visibility int32              `json:"visibility" bson:"visibility"`
+
+	// Meta
+	Width    []int32 `json:"width" bson:"width"`
+	Height   []int32 `json:"height" bson:"height"`
+	Animated bool    `json:"animated" bson:"animated"`
+
+	// Non-structural
+	URLs [][]string `json:"urls" bson:"-"`
 }
 
 const (
