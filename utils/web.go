@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"github.com/SevenTV/GQL/src/configure"
+	"github.com/SevenTV/Common/configure"
 )
 
 func GetCdnURL(emoteID string, size int8) string {
