@@ -34,6 +34,8 @@ type Emote struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id"`
 	Name       string             `json:"name" bson:"name"`
 	Visibility int32              `json:"visibility" bson:"visibility"`
+	Status     int32              `json:"status" bson:"status"`
+	Tags       []string           `json:"tags" bson:"tags"`
 
 	// Meta
 	Width    []int32 `json:"width" bson:"width"`
