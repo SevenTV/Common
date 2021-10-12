@@ -2,61 +2,55 @@ package mongo
 
 import (
 	"context"
-	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var Database *mongo.Database
-
 var ErrNoDocuments = mongo.ErrNoDocuments
 
 type Pipeline = mongo.Pipeline
 
-func Setup(opt SetupOptions) {
+func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	clientOptions := options.Client().ApplyURI(opt.URI)
-	if opt.Direct {
-		clientOptions.SetDirect(true)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Send a Ping
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	Database = client.Database(opt.DB)
+	database := client.Database(opt.DB)
 
 	for _, ind := range opt.Indexes {
 		col := ind.Collection
-		if name, err := Database.Collection(string(col)).Indexes().CreateOne(ctx, ind.Index); err != nil {
+		if name, err := database.Collection(string(col)).Indexes().CreateOne(ctx, ind.Index); err != nil {
 			panic(err)
 		} else {
-			log.WithField("collection", col).Infof("Collection index created: %s", name)
+			logrus.WithField("collection", col).Infof("Collection index created: %s", name)
 		}
 	}
 
-	log.Info("mongo, ok")
-}
+	logrus.Info("mongo, ok")
 
-func Collection(name CollectionName) *mongo.Collection {
-	return Database.Collection(string(name))
+	return &mongoInst{
+		client: client,
+		db:     database,
+	}, nil
 }
 
 type CollectionName string
 
 var (
-	CollectionNameEmotes CollectionName = "emotes"
-	CollectionNameUsers  CollectionName = "users_v3"
+	CollectionNameEmotes       CollectionName = "emotes"
+	CollectionNameUsers        CollectionName = "users_v3"
+	CollectionNameEntitlements CollectionName = "entitlements"
 )
 
 type SetupOptions struct {

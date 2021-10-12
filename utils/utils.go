@@ -184,8 +184,3 @@ func GetSizeRatio(og []float64, nw []float64) (int32, int32) {
 }
 
 type Key string
-
-const (
-	UserKey = Key("user")
-	ReqKey  = Key("req")
-)
