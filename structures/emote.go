@@ -14,8 +14,8 @@ type EmoteBuilder struct {
 }
 
 // FetchByID: Get an emote by its ID
-func (b EmoteBuilder) FetchByID(ctx context.Context, id primitive.ObjectID) (*Emote, error) {
-	doc := mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
+func (b EmoteBuilder) FetchByID(ctx context.Context, inst mongo.Instance, id primitive.ObjectID) (*Emote, error) {
+	doc := inst.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"_id": id,
 	})
 	if err := doc.Err(); err != nil {

@@ -7,7 +7,7 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/utils"
 	"github.com/SevenTV/GQL/src/configure"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,23 +15,22 @@ import (
 
 type EntitlementBuilder struct {
 	Entitlement Entitlement
-	ctx         context.Context
 
 	User *User
 }
 
-func (b EntitlementBuilder) Write() (EntitlementBuilder, error) {
+func (b EntitlementBuilder) Write(ctx context.Context, inst mongo.Instance) (EntitlementBuilder, error) {
 	// Create new Object ID if this is a new entitlement
 	if b.Entitlement.ID.IsZero() {
 		b.Entitlement.ID = primitive.NewObjectID()
 	}
 
-	if _, err := mongo.Database.Collection("entitlements").UpdateByID(b.ctx, b.Entitlement.ID, bson.M{
+	if _, err := inst.Collection(mongo.CollectionNameEntitlements).UpdateByID(ctx, b.Entitlement.ID, bson.M{
 		"$set": b.Entitlement,
 	}, &options.UpdateOptions{
 		Upsert: utils.BoolPointer(true),
 	}); err != nil {
-		log.WithError(err).Error("mongo")
+		logrus.WithError(err).Error("mongo")
 		return b, err
 	}
 
@@ -39,12 +38,12 @@ func (b EntitlementBuilder) Write() (EntitlementBuilder, error) {
 }
 
 // GetUser: Fetch the user data from the user ID assigned to the entitlement
-func (b EntitlementBuilder) GetUser() (*UserBuilder, error) {
+func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*UserBuilder, error) {
 	if b.Entitlement.UserID.IsZero() {
 		return nil, fmt.Errorf("Entitlement does not have a user assigned")
 	}
 
-	ub, err := UserBuilder{}.FetchByID(b.ctx, b.Entitlement.UserID)
+	ub, err := UserBuilder{}.FetchByID(ctx, inst, b.Entitlement.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func (b EntitlementBuilder) SetEmoteSetData(data EntitledEmoteSet) EntitlementBu
 func (b EntitlementBuilder) marshalData(data interface{}) EntitlementBuilder {
 	d, err := bson.Marshal(data)
 	if err != nil {
-		log.WithError(err).Error("bson")
+		logrus.WithError(err).Error("bson")
 		return b
 	}
 
@@ -103,7 +102,7 @@ func (b EntitlementBuilder) marshalData(data interface{}) EntitlementBuilder {
 func (b EntitlementBuilder) ReadSubscriptionData() EntitledSubscription {
 	var e EntitledSubscription
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
-		log.WithError(err).Error("bson")
+		logrus.WithError(err).Error("bson")
 		return e
 	}
 	return e
@@ -113,7 +112,7 @@ func (b EntitlementBuilder) ReadSubscriptionData() EntitledSubscription {
 func (b EntitlementBuilder) ReadBadgeData() EntitledBadge {
 	var e EntitledBadge
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
-		log.WithError(err).Error("bson")
+		logrus.WithError(err).Error("bson")
 		return e
 	}
 	return e
@@ -123,7 +122,7 @@ func (b EntitlementBuilder) ReadBadgeData() EntitledBadge {
 func (b EntitlementBuilder) ReadRoleData() EntitledRole {
 	var e EntitledRole
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
-		log.WithError(err).Error("bson")
+		logrus.WithError(err).Error("bson")
 		return e
 	}
 	return e
@@ -133,14 +132,14 @@ func (b EntitlementBuilder) ReadRoleData() EntitledRole {
 func (b EntitlementBuilder) ReadEmoteSetData() EntitledEmoteSet {
 	var e EntitledEmoteSet
 	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
-		log.WithError(err).Error("bson")
+		logrus.WithError(err).Error("bson")
 		return e
 	}
 	return e
 }
 
 // FetchEntitlements: gets entitlement of specified kind
-func FetchEntitlements(ctx context.Context, opts struct {
+func FetchEntitlements(ctx context.Context, inst mongo.Instance, opts struct {
 	Kind            *EntitlementKind
 	ObjectReference primitive.ObjectID
 }) ([]EntitlementBuilder, error) {
@@ -178,11 +177,11 @@ func FetchEntitlements(ctx context.Context, opts struct {
 		}},
 	}
 
-	cur, err := mongo.Collection(configure.CollectionNameEntitlements).Aggregate(ctx, pipeline)
+	cur, err := inst.Collection(configure.CollectionNameEntitlements).Aggregate(ctx, pipeline)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	} else if err != nil {
-		log.WithError(err).Error("actions, UserBuilder, FetchEntitlements")
+		logrus.WithError(err).Error("actions, UserBuilder, FetchEntitlements")
 		return nil, err
 	}
 
@@ -196,7 +195,6 @@ func FetchEntitlements(ctx context.Context, opts struct {
 	for i, e := range entitlements {
 		builders[i] = EntitlementBuilder{
 			Entitlement: *e.Entitlement,
-			ctx:         ctx,
 			User:        e.User,
 		}
 	}
@@ -210,7 +208,7 @@ type entitlementWithUser struct {
 }
 
 func (b EntitlementBuilder) Log(str string) {
-	log.WithFields(log.Fields{
+	logrus.WithFields(logrus.Fields{
 		"id":      b.Entitlement.ID,
 		"kind":    b.Entitlement.Kind,
 		"user_id": b.Entitlement.UserID,
@@ -218,7 +216,7 @@ func (b EntitlementBuilder) Log(str string) {
 }
 
 func (b EntitlementBuilder) LogError(str string) {
-	log.WithFields(log.Fields{
+	logrus.WithFields(logrus.Fields{
 		"id":      b.Entitlement.ID,
 		"kind":    b.Entitlement.Kind,
 		"user_id": b.Entitlement.UserID,

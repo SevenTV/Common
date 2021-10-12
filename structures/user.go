@@ -15,8 +15,8 @@ type UserBuilder struct {
 }
 
 // FetchByID: Get a user by their ID
-func (b UserBuilder) FetchByID(ctx context.Context, id primitive.ObjectID) (*UserBuilder, error) {
-	doc := mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+func (b UserBuilder) FetchByID(ctx context.Context, inst mongo.Instance, id primitive.ObjectID) (*UserBuilder, error) {
+	doc := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 		"_id": id,
 	})
 	if err := doc.Err(); err != nil {
