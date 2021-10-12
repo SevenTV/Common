@@ -38,6 +38,7 @@ type User struct {
 	Username      string               `json:"username" bson:"username"`
 	Email         string               `json:"email" bson:"email"`
 	ChannelEmotes []UserEmote          `json:"channel_emotes" bson:"channel_emotes"`
+	Editors       []UserEditor         `json:"editors" bson:"editors"`
 	AvatarURL     string               `json:"avatar_url" bson:"avatar_url"`
 	Biography     string               `json:"biography" bson:"biography"`
 	TokenVersion  float32              `json:"token_version" bson:"token_version"`
@@ -105,3 +106,24 @@ type UserEmote struct {
 	// Whether or not the emote will be made zero width for the particular channel
 	ZeroWidth bool `json:"zero_width,omitempty" bson:"zero_width,omitempty"`
 }
+
+type UserEditor struct {
+	ID primitive.ObjectID `json:"id" bson:"id"`
+	// When this has 1 or more items, this editor will only have access to these connections (i.e specific twitch/youtube channels)
+	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+	// The permissions this editor has
+	Permissions UserEditorPermission `json:"permissions" bson:"permissions"`
+	// Whether or not that editor will be visible on the user's profile page
+	Visible bool `json:"visible" bson:"visible"`
+}
+
+type UserEditorPermission int32
+
+const (
+	UserEditorPermissionAddChannelEmotes    UserEditorPermission = 1 << iota // 1 - Allows adding emotes
+	UserEditorPermissionRemoveChannelEmotes                                  // 2 - Allows removing emotes
+	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
+	UserEditorPermissionMUsePrivateEmotes                                    // 32 - Allows using the user's private emotes
+)
