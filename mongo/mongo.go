@@ -14,7 +14,7 @@ var ErrNoDocuments = mongo.ErrNoDocuments
 type Pipeline = mongo.Pipeline
 
 func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
-	clientOptions := options.Client().ApplyURI(opt.URI)
+	clientOptions := options.Client().ApplyURI(opt.URI).SetDirect(opt.Direct)
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
