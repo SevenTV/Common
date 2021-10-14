@@ -17,7 +17,6 @@ type UserBuilder struct {
 func NewUserBuilder() *UserBuilder {
 	return &UserBuilder{
 		User: &User{
-			ID:            primitive.NewObjectID(),
 			ChannelEmotes: []UserEmote{},
 			Editors:       []UserEditor{},
 			Connections:   []primitive.ObjectID{},
@@ -44,7 +43,7 @@ func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 
 // User: A standard app user object
 type User struct {
-	ID            primitive.ObjectID   `json:"id" bson:"_id"`
+	ID            primitive.ObjectID   `json:"id,omitempty" bson:"_id,omitempty"`
 	Username      string               `json:"username" bson:"username"`
 	Email         string               `json:"email" bson:"email"`
 	ChannelEmotes []UserEmote          `json:"channel_emotes" bson:"channel_emotes"`
@@ -65,7 +64,7 @@ var (
 
 // UserConnection: Represents an external connection to a platform for a user
 type UserConnection struct {
-	ID       primitive.ObjectID     `json:"_id" bson:"_id"`
+	ID       primitive.ObjectID     `json:"id,omitempty" bson:"_id,omitempty"`
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
 	LinkedAt time.Time              `json:"linked_at" bson:"linked_at"`
 	Data     bson.Raw               `json:"data" bson:"data"`
@@ -79,9 +78,7 @@ type UserConnectionBuilder struct {
 // NewUserConnectionBuilder: create a new user connection builder
 func NewUserConnectionBuilder() *UserConnectionBuilder {
 	return &UserConnectionBuilder{
-		UserConnection: &UserConnection{
-			ID: primitive.NewObjectID(),
-		},
+		UserConnection: &UserConnection{},
 	}
 }
 
@@ -99,19 +96,16 @@ func (ucb *UserConnectionBuilder) SetLinkedAt(date time.Time) *UserConnectionBui
 
 // SetTwitchData: set the data for a twitch connection
 func (ucb *UserConnectionBuilder) SetTwitchData(data *TwitchConnection) *UserConnectionBuilder {
-	b, err := bson.Marshal(data)
-	if err != nil {
-		logrus.WithError(err).Error("bson")
-		return ucb
-	}
-
-	ucb.UserConnection.Data = b
-	return ucb
+	return ucb.setPlatformData(data)
 }
 
 // SetYouTubeData: set the data for a youtube connection
 func (ucb *UserConnectionBuilder) SetYouTubeData(data *YouTubeConnection) *UserConnectionBuilder {
-	b, err := bson.Marshal(data)
+	return ucb.setPlatformData(data)
+}
+
+func (ucb *UserConnectionBuilder) setPlatformData(v interface{}) *UserConnectionBuilder {
+	b, err := bson.Marshal(v)
 	if err != nil {
 		logrus.WithError(err).Error("bson")
 		return ucb
