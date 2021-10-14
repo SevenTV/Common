@@ -50,6 +50,7 @@ type CollectionName string
 var (
 	CollectionNameEmotes       CollectionName = "emotes"
 	CollectionNameUsers        CollectionName = "users_v3"
+	CollectionNameConnections  CollectionName = "user_connections"
 	CollectionNameEntitlements CollectionName = "entitlements"
 )
 
