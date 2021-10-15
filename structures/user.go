@@ -10,12 +10,14 @@ import (
 )
 
 type UserBuilder struct {
-	User *User
+	Update UpdateMap
+	User   *User
 }
 
 // NewUserBuilder: create a new user builder
 func NewUserBuilder() *UserBuilder {
 	return &UserBuilder{
+		Update: UpdateMap{},
 		User: &User{
 			ChannelEmotes: []UserEmote{},
 			Editors:       []UserEditor{},
@@ -27,17 +29,23 @@ func NewUserBuilder() *UserBuilder {
 // SetUsername: set the username for the user
 func (ub *UserBuilder) SetUsername(username string) *UserBuilder {
 	ub.User.Username = username
+	ub.Update.Set("username", username)
+
 	return ub
 }
 
 // SetEmail: set the email for the user
 func (ub *UserBuilder) SetEmail(email string) *UserBuilder {
 	ub.User.Email = email
+	ub.Update.Set("email", email)
+
 	return ub
 }
 
 func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 	ub.User.Connections = append(ub.User.Connections, id)
+	ub.Update = ub.Update.AddToSet("connections", &id)
+
 	return ub
 }
 
@@ -72,12 +80,14 @@ type UserConnection struct {
 
 // UserConnectionBuilder: utility for creating a new UserConnection
 type UserConnectionBuilder struct {
+	Update         UpdateMap
 	UserConnection *UserConnection
 }
 
 // NewUserConnectionBuilder: create a new user connection builder
 func NewUserConnectionBuilder() *UserConnectionBuilder {
 	return &UserConnectionBuilder{
+		Update:         UpdateMap{},
 		UserConnection: &UserConnection{},
 	}
 }
@@ -85,12 +95,16 @@ func NewUserConnectionBuilder() *UserConnectionBuilder {
 // SetPlatform: defines the platform a connection is for (i.e twitch/youtube)
 func (ucb *UserConnectionBuilder) SetPlatform(platform UserConnectionPlatform) *UserConnectionBuilder {
 	ucb.UserConnection.Platform = platform
+	ucb.Update.Set("platform", platform)
+
 	return ucb
 }
 
 // SetLinkedAt: set the time at which the connection was linked
 func (ucb *UserConnectionBuilder) SetLinkedAt(date time.Time) *UserConnectionBuilder {
 	ucb.UserConnection.LinkedAt = date
+	ucb.Update.Set("linked_at", date)
+
 	return ucb
 }
 
@@ -112,6 +126,7 @@ func (ucb *UserConnectionBuilder) setPlatformData(v interface{}) *UserConnection
 	}
 
 	ucb.UserConnection.Data = b
+	ucb.Update.Set("data", v)
 	return ucb
 }
 
