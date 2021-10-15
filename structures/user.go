@@ -2,6 +2,8 @@ package structures
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -34,6 +36,18 @@ func (ub *UserBuilder) SetUsername(username string) *UserBuilder {
 	return ub
 }
 
+func (ub *UserBuilder) SetDiscriminator(discrim string) *UserBuilder {
+	if discrim == "" {
+		for i := 0; i < 4; i++ {
+			discrim += strconv.Itoa(rand.Intn(9))
+		}
+	}
+
+	ub.User.Discriminator = discrim
+	ub.Update.Set("discriminator", discrim)
+	return ub
+}
+
 // SetEmail: set the email for the user
 func (ub *UserBuilder) SetEmail(email string) *UserBuilder {
 	ub.User.Email = email
@@ -53,6 +67,7 @@ func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 type User struct {
 	ID            primitive.ObjectID   `json:"id,omitempty" bson:"_id,omitempty"`
 	Username      string               `json:"username" bson:"username"`
+	Discriminator string               `json:"discriminator" bson:"discriminator"`
 	Email         string               `json:"email" bson:"email"`
 	ChannelEmotes []UserEmote          `json:"channel_emotes" bson:"channel_emotes"`
 	Editors       []UserEditor         `json:"editors" bson:"editors"`
@@ -61,6 +76,8 @@ type User struct {
 	TokenVersion  float32              `json:"token_version" bson:"token_version"`
 	Connections   []primitive.ObjectID `json:"connections" bson:"connections"`
 }
+
+type UserDiscriminator uint8
 
 // UserConnectionPlatform: Represents a platform that the app supports
 type UserConnectionPlatform string
@@ -76,6 +93,14 @@ type UserConnection struct {
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
 	LinkedAt time.Time              `json:"linked_at" bson:"linked_at"`
 	Data     bson.Raw               `json:"data" bson:"data"`
+	Grant    *UserConnectionGrant   `json:"-" bson:"grant"`
+}
+
+type UserConnectionGrant struct {
+	AccessToken  string    `json:"access_token" bson:"access_token"`
+	RefreshToken string    `json:"refresh_token" bson:"refresh_token"`
+	Scope        []string  `json:"scope" bson:"scope"`
+	ExpiresAt    time.Time `json:"expires_at" bson:"expires_at"`
 }
 
 // UserConnectionBuilder: utility for creating a new UserConnection
@@ -127,6 +152,19 @@ func (ucb *UserConnectionBuilder) setPlatformData(v interface{}) *UserConnection
 
 	ucb.UserConnection.Data = b
 	ucb.Update.Set("data", v)
+	return ucb
+}
+
+func (ucb *UserConnectionBuilder) SetGrant(at string, rt string, ex int, sc []string) *UserConnectionBuilder {
+	g := &UserConnectionGrant{
+		AccessToken:  at,
+		RefreshToken: rt,
+		Scope:        sc,
+		ExpiresAt:    time.Now().Add(time.Second * time.Duration(ex)),
+	}
+
+	ucb.UserConnection.Grant = g
+	ucb.Update.Set("grant", g)
 	return ucb
 }
 
