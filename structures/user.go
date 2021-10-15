@@ -66,6 +66,7 @@ func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 // User: A standard app user object
 type User struct {
 	ID            primitive.ObjectID   `json:"id,omitempty" bson:"_id,omitempty"`
+	UserType      UserType             `json:"type,omitempty" bson:"type,omitempty"`
 	Username      string               `json:"username" bson:"username"`
 	Discriminator string               `json:"discriminator" bson:"discriminator"`
 	Email         string               `json:"email" bson:"email"`
@@ -85,6 +86,14 @@ type UserConnectionPlatform string
 var (
 	UserConnectionPlatformTwitch  UserConnectionPlatform = "TWITCH"
 	UserConnectionPlatformYouTube UserConnectionPlatform = "YOUTUBE"
+)
+
+type UserType string
+
+var (
+	UserTypeRegular UserType = ""
+	UserTypeBot     UserType = "BOT"
+	UserTypeSystem  UserType = "SYSTEM"
 )
 
 // UserConnection: Represents an external connection to a platform for a user
