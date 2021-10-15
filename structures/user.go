@@ -74,7 +74,7 @@ type User struct {
 	Editors       []UserEditor         `json:"editors" bson:"editors"`
 	AvatarURL     string               `json:"avatar_url" bson:"avatar_url"`
 	Biography     string               `json:"biography" bson:"biography"`
-	TokenVersion  float32              `json:"token_version" bson:"token_version"`
+	TokenVersion  float64              `json:"token_version" bson:"token_version"`
 	Connections   []primitive.ObjectID `json:"connections" bson:"connections"`
 }
 

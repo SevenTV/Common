@@ -21,7 +21,7 @@ func SignJWT(secret string, claim jwt.Claims) (string, error) {
 
 type JWTClaimUser struct {
 	UserID       string  `json:"u"`
-	TokenVersion float32 `json:"v"`
+	TokenVersion float64 `json:"v"`
 
 	jwt.RegisteredClaims
 }
