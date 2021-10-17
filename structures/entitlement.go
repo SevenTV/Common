@@ -46,8 +46,7 @@ func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*
 	if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
 		return nil, err
 	}
-	ub := NewUserBuilder()
-	ub.User = user
+	ub := NewUserBuilder(user)
 
 	// role := datastructure.GetRole(ub.User.RoleID)
 	// ub.User.Role = &role

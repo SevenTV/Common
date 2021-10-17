@@ -18,14 +18,10 @@ type UserBuilder struct {
 }
 
 // NewUserBuilder: create a new user builder
-func NewUserBuilder() *UserBuilder {
+func NewUserBuilder(user *User) *UserBuilder {
 	return &UserBuilder{
 		Update: UpdateMap{},
-		User: &User{
-			ChannelEmotes: []*UserEmote{},
-			Editors:       []*UserEditor{},
-			Connections:   []primitive.ObjectID{},
-		},
+		User:   user,
 	}
 }
 
@@ -279,6 +275,9 @@ type UserEditor struct {
 	Permissions UserEditorPermission `json:"permissions" bson:"permissions"`
 	// Whether or not that editor will be visible on the user's profile page
 	Visible bool `json:"visible" bson:"visible"`
+
+	// Relational
+	User *User `json:"user" bson:"user,skip"`
 }
 
 type UserEditorPermission int32
