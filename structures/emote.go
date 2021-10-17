@@ -47,7 +47,7 @@ type Emote struct {
 	URLs [][]string `json:"urls" bson:"-"`
 
 	// Relational
-	Owner *User `json:"owner" bson:"-"`
+	Owner *User `json:"owner" bson:"owner_user,skip"`
 }
 
 const (
