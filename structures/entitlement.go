@@ -42,8 +42,8 @@ func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*
 		return nil, fmt.Errorf("Entitlement does not have a user assigned")
 	}
 
-	var user *User
-	if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(&user); err != nil {
+	user := &User{}
+	if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
 		return nil, err
 	}
 	ub := NewUserBuilder()
