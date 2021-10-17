@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,8 +22,8 @@ func NewUserBuilder() *UserBuilder {
 	return &UserBuilder{
 		Update: UpdateMap{},
 		User: &User{
-			ChannelEmotes: []UserEmote{},
-			Editors:       []UserEditor{},
+			ChannelEmotes: []*UserEmote{},
+			Editors:       []*UserEditor{},
 			Connections:   []primitive.ObjectID{},
 		},
 	}
@@ -56,6 +57,13 @@ func (ub *UserBuilder) SetEmail(email string) *UserBuilder {
 	return ub
 }
 
+func (ub *UserBuilder) SetAvatarURL(url string) *UserBuilder {
+	ub.User.AvatarURL = url
+	ub.Update.Set("avatar_url", url)
+
+	return ub
+}
+
 func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 	ub.User.Connections = append(ub.User.Connections, id)
 	ub.Update = ub.Update.AddToSet("connections", &id)
@@ -65,17 +73,48 @@ func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 
 // User: A standard app user object
 type User struct {
-	ID            primitive.ObjectID   `json:"id,omitempty" bson:"_id,omitempty"`
-	UserType      UserType             `json:"type,omitempty" bson:"type,omitempty"`
-	Username      string               `json:"username" bson:"username"`
-	Discriminator string               `json:"discriminator" bson:"discriminator"`
-	Email         string               `json:"email" bson:"email"`
-	ChannelEmotes []UserEmote          `json:"channel_emotes" bson:"channel_emotes"`
-	Editors       []UserEditor         `json:"editors" bson:"editors"`
-	AvatarURL     string               `json:"avatar_url" bson:"avatar_url"`
-	Biography     string               `json:"biography" bson:"biography"`
-	TokenVersion  float64              `json:"token_version" bson:"token_version"`
-	Connections   []primitive.ObjectID `json:"connections" bson:"connections"`
+	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
+	UserType UserType `json:"type,omitempty" bson:"type,omitempty"`
+	// the user's username
+	Username string `json:"username" bson:"username"`
+	// the user's display name
+	DisplayName string `json:"display_name" bson:"display_name"`
+	// the user's discriminatory space
+	Discriminator string `json:"discriminator" bson:"discriminator"`
+	// the user's email
+	Email string `json:"email" bson:"email"`
+	// the user's channel-bound emotes
+	ChannelEmotes []*UserEmote `json:"channel_emotes" bson:"channel_emotes"`
+	// list of role IDs directly bound to the user (not via an entitlement)
+	RoleIDs []primitive.ObjectID `json:"role_ids" bson:"role_ids"`
+	// the user's editors
+	Editors []*UserEditor `json:"editors" bson:"editors"`
+	// the user's avatar URL
+	AvatarURL string `json:"avatar_url" bson:"avatar_url"`
+	// the user's biography
+	Biography string `json:"biography" bson:"biography"`
+	// token version
+	TokenVersion float64 `json:"token_version" bson:"token_version"`
+	// third party connections. it's like third parties for a third party.
+	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+
+	// Relational
+	Roles []*Role `json:"roles" bson:"roles,skip"`
+}
+
+// HasPermission: checks relational roles against a permission bit
+func (u *User) HasPermission(bit RolePermission) bool {
+	total := RolePermission(0)
+	for _, r := range u.Roles {
+		a := r.Allowed
+		d := r.Denied
+
+		total |= a
+		total &= d
+	}
+
+	return utils.BitField.HasBits(int64(total), int64(bit))
 }
 
 type UserDiscriminator uint8

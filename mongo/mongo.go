@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -12,6 +13,20 @@ import (
 var ErrNoDocuments = mongo.ErrNoDocuments
 
 type Pipeline = mongo.Pipeline
+
+type Lookup struct {
+	From         CollectionName `bson:"from"`
+	LocalField   string         `bson:"localField"`
+	ForeignField string         `bson:"foreignField"`
+	As           string         `bson:"as"`
+}
+
+type LookupWithPipeline struct {
+	From     CollectionName  `bson:"from"`
+	Let      bson.M          `bson:"let"`
+	Pipeline *mongo.Pipeline `bson:"pipeline"`
+	As       string          `bson:"as"`
+}
 
 func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	clientOptions := options.Client().ApplyURI(opt.URI).SetDirect(opt.Direct)
@@ -50,6 +65,7 @@ type CollectionName string
 var (
 	CollectionNameEmotes       CollectionName = "emotes"
 	CollectionNameUsers        CollectionName = "users_v3"
+	CollectionNameRoles        CollectionName = "roles"
 	CollectionNameConnections  CollectionName = "user_connections"
 	CollectionNameEntitlements CollectionName = "entitlements"
 )

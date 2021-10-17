@@ -32,6 +32,7 @@ func (b EmoteBuilder) FetchByID(ctx context.Context, inst mongo.Instance, id pri
 
 type Emote struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	OwnerID    primitive.ObjectID `json:"owner_id" bson:"owner_id"`
 	Name       string             `json:"name" bson:"name"`
 	Visibility int32              `json:"visibility" bson:"visibility"`
 	Status     int32              `json:"status" bson:"status"`
@@ -44,6 +45,9 @@ type Emote struct {
 
 	// Non-structural
 	URLs [][]string `json:"urls" bson:"-"`
+
+	// Relational
+	Owner *User `json:"owner" bson:"-"`
 }
 
 const (
