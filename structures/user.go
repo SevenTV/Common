@@ -265,6 +265,9 @@ type UserEmote struct {
 	Alias string `json:"alias,omitempty" bson:"alias,omitempty"`
 	// Whether or not the emote will be made zero width for the particular channel
 	ZeroWidth bool `json:"zero_width,omitempty" bson:"zero_width,omitempty"`
+
+	// Relational
+	Emote *Emote `json:"emote" bson:"emote,skip"`
 }
 
 type UserEditor struct {
