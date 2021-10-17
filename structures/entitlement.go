@@ -6,7 +6,6 @@ import (
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/utils"
-	"github.com/SevenTV/GQL/src/configure"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,10 +42,12 @@ func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*
 		return nil, fmt.Errorf("Entitlement does not have a user assigned")
 	}
 
-	ub, err := UserBuilder{}.FetchByID(ctx, inst, b.Entitlement.UserID)
-	if err != nil {
+	user := &User{}
+	if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
 		return nil, err
 	}
+	ub := NewUserBuilder()
+	ub.User = user
 
 	// role := datastructure.GetRole(ub.User.RoleID)
 	// ub.User.Role = &role
@@ -177,7 +178,7 @@ func FetchEntitlements(ctx context.Context, inst mongo.Instance, opts struct {
 		}},
 	}
 
-	cur, err := inst.Collection(configure.CollectionNameEntitlements).Aggregate(ctx, pipeline)
+	cur, err := inst.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, pipeline)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	} else if err != nil {
