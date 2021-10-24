@@ -39,14 +39,18 @@ type Emote struct {
 	Tags       []string           `json:"tags" bson:"tags"`
 
 	// Meta
-	Width    []int32 `json:"width" bson:"width"`
-	Height   []int32 `json:"height" bson:"height"`
-	Animated bool    `json:"animated" bson:"animated"`
+	Width    []int32 `json:"width" bson:"width"`       // The pixel width of the emote
+	Height   []int32 `json:"height" bson:"height"`     // The pixel height of the emote
+	Animated bool    `json:"animated" bson:"animated"` // Whether or not the emote is animated
+	AVIF     bool    `json:"avif" bson:"avif"`         // Whether or not the emote is available in AVIF (AV1 Image File) Format
+	ByteSize int32   `json:"byte_size,omitempty" bson:"byte_size,omitempty"`
 
 	// Non-structural
-	URLs [][]string `json:"urls" bson:"-"`
+
+	Links [][]string `json:"urls" bson:"-"` // CDN URLs
 
 	// Relational
+
 	Owner *User `json:"owner" bson:"owner_user,skip"`
 }
 
