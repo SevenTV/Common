@@ -29,7 +29,8 @@ type EmoteSet struct {
 	Selection []primitive.ObjectID `json:"selection" bson:"selection"`
 
 	// Relational
-	Editors []*User `json:"editors" bson:"-"`
+	Editors []*User  `json:"editors" bson:"editors,skip"`
+	Emotes  []*Emote `json:"emotes" bson:"emotes,skip"`
 }
 
 // The type of emote set

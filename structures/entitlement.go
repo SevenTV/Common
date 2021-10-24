@@ -273,13 +273,6 @@ type EntitledRole struct {
 
 // (Data) Emote Set binding in an Entitlement
 type EntitledEmoteSet struct {
-	ID              string               `json:"id" bson:"-"`
-	ObjectReference primitive.ObjectID   `json:"-" bson:"ref"`
-	UnicodeTag      string               `json:"unicode_tag" bson:"unicode_tag"`
-	EmoteIDs        []primitive.ObjectID `json:"emote_ids" bson:"emotes"`
-
-	// Relational
-
-	// A list of emotes for this emote set entitlement
-	Emotes []*Emote `json:"emotes" bson:"-"`
+	ID              string             `json:"id" bson:"-"`
+	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
 }
