@@ -51,7 +51,8 @@ type Emote struct {
 
 	// Relational
 
-	Owner *User `json:"owner" bson:"owner_user,skip"`
+	Owner    *User `json:"owner" bson:"owner_user,skip"`
+	Channels []*User
 }
 
 const (
