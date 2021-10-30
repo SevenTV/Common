@@ -1,6 +1,8 @@
 package structures
 
 import (
+	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -33,3 +35,24 @@ func (u UpdateMap) AddToSet(key string, value UpdateValue) UpdateMap {
 
 	return u
 }
+
+func (u UpdateMap) Pull(key string, value UpdateValue) UpdateMap {
+	if _, ok := u["$pull"]; !ok {
+		u["$pull"] = bson.M{
+			key: value,
+		}
+	} else {
+		m := u["$pull"].(bson.M)
+		m[key] = value
+	}
+
+	return u
+}
+
+var (
+	ErrUnknownEmote          error = fmt.Errorf("unknown emote")
+	ErrUnknownUser           error = fmt.Errorf("unknown user")
+	ErrInsufficientPrivilege error = fmt.Errorf("insufficient privilege")
+	ErrInternalError         error = fmt.Errorf("internal error occured")
+	ErrIncompleteMutation    error = fmt.Errorf("the mutation struct was not set up properly")
+)

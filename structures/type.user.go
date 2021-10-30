@@ -107,9 +107,12 @@ func (u *User) HasPermission(bit RolePermission) bool {
 		d := r.Denied
 
 		total |= a
-		total &= d
+		a &= d
 	}
 
+	if (total & RolePermissionSuperAdministrator) == RolePermissionSuperAdministrator {
+		return true
+	}
 	return utils.BitField.HasBits(int64(total), int64(bit))
 }
 
@@ -260,14 +263,14 @@ type YouTubeConnection struct {
 type UserEmote struct {
 	ID primitive.ObjectID `json:"id" bson:"id"`
 	// When this has 1 or more items, the emote will only be availablle for these connections (i.e specific twitch/youtube channels)
-	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+	Connections []primitive.ObjectID `json:"connections" bson:"connections,omitempty"`
 	// An alias for this emote
 	Alias string `json:"alias,omitempty" bson:"alias,omitempty"`
 	// Whether or not the emote will be made zero width for the particular channel
 	ZeroWidth bool `json:"zero_width,omitempty" bson:"zero_width,omitempty"`
 
 	// Relational
-	Emote *Emote `json:"emote" bson:"emote,skip"`
+	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
 }
 
 type UserEditor struct {

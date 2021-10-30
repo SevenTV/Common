@@ -14,6 +14,8 @@ type EmoteSet struct {
 	NumericID string `json:"id" bson:"id"`
 	// Whether or not the emote set can be edited
 	Immutable bool `json:"immutable" bson:"immutable"`
+	// If true, the set is "privileged" and can only be modified by its editors, regardless of the "Edit Any Emote Set" permission
+	Privileged bool `json:"privilleged" bson:"privileged"`
 	// Whether or not the set is active. When false, the set isn't returned in various API endpoints
 	Active bool `json:"active" bson:"active"`
 	// The emotes assigned to this set
