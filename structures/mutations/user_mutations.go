@@ -2,10 +2,12 @@ package mutations
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures"
 	"github.com/SevenTV/Common/utils"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -52,15 +54,39 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 
 	// Assign the emote
 	switch opt.Action {
-	case ListItemActionAdd:
+	case ListItemActionAdd: // Add Emote
 		um.UserBuilder.Update.AddToSet("channel_emotes", &structures.UserEmote{
 			ID:    opt.EmoteID,
 			Alias: opt.Alias,
 		})
-	case ListItemActionRemove:
+	case ListItemActionUpdate: // Update Emote
+		ind := -1
+		emotes := um.UserBuilder.User.ChannelEmotes
+		for i, em := range emotes {
+			if em.ID != opt.EmoteID {
+				continue
+			}
+
+			ind = i
+			break
+		}
+		if ind == -1 {
+			return nil, fmt.Errorf("emote not enabled")
+		}
+
+		um.UserBuilder.Update.Set(fmt.Sprintf("channel_emotes.%d", ind), &structures.UserEmote{
+			ID:    opt.EmoteID,
+			Alias: opt.Alias,
+		})
+	case ListItemActionRemove: // Remove Emote
 		um.UserBuilder.Update.Pull("channel_emotes", bson.M{
 			"id": opt.EmoteID,
 		})
+	}
+	// Update the document
+	if _, err := inst.Collection(mongo.CollectionNameUsers).UpdateByID(ctx, targetUser.ID, um.UserBuilder.Update); err != nil {
+		logrus.WithError(err).Error("mongo")
+		return nil, structures.ErrInternalError
 	}
 
 	return um, nil
