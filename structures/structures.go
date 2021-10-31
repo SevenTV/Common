@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UpdateMap bson.M
@@ -56,3 +57,5 @@ var (
 	ErrInternalError         error = fmt.Errorf("internal error occured")
 	ErrIncompleteMutation    error = fmt.Errorf("the mutation struct was not set up properly")
 )
+
+type ObjectID = primitive.ObjectID

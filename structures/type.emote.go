@@ -1,42 +1,42 @@
 package structures
 
-import (
-	"context"
-
-	"github.com/SevenTV/Common/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
 // EmoteBuilder: Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
-	Emote *Emote
+	Update UpdateMap
+	Emote  *Emote
 }
 
-// FetchByID: Get an emote by its ID
-func (b EmoteBuilder) FetchByID(ctx context.Context, inst mongo.Instance, id primitive.ObjectID) (*Emote, error) {
-	doc := inst.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
-		"_id": id,
-	})
-	if err := doc.Err(); err != nil {
-		return nil, err
+// SetPrivacy: change the private state of the emote
+func (eb *EmoteBuilder) SetPrivacy(isPrivate bool) *EmoteBuilder {
+	if isPrivate {
+		eb.Emote.Flags |= EmoteFlagsPrivate
+	} else {
+		eb.Emote.Flags &= EmoteFlagsPrivate
 	}
 
-	var emote Emote
-	if err := doc.Decode(&emote); err != nil {
-		return nil, err
+	eb.Update.Set("flags", eb.Emote.Flags)
+	return eb
+}
+
+// SetListed: change the listing state of the emote
+func (eb *EmoteBuilder) SetListed(isListed bool) *EmoteBuilder {
+	if isListed {
+		eb.Emote.Flags |= EmoteFlagsListed
+	} else {
+		eb.Emote.Flags &= EmoteFlagsListed
 	}
 
-	return &emote, nil
+	eb.Update.Set("flags", eb.Emote.Flags)
+	return eb
 }
 
 type Emote struct {
-	ID         primitive.ObjectID `json:"id" bson:"_id"`
-	OwnerID    primitive.ObjectID `json:"owner_id" bson:"owner_id"`
-	Name       string             `json:"name" bson:"name"`
-	Visibility int32              `json:"visibility" bson:"visibility"`
-	Status     int32              `json:"status" bson:"status"`
-	Tags       []string           `json:"tags" bson:"tags"`
+	ID      ObjectID  `json:"id" bson:"_id"`
+	OwnerID ObjectID  `json:"owner_id" bson:"owner_id"`
+	Name    string    `json:"name" bson:"name"`
+	Flags   EmoteFlag `json:"visibility" bson:"visibility"` // DEPRECATED: no longer used in v3
+	Status  int32     `json:"status" bson:"status"`
+	Tags    []string  `json:"tags" bson:"tags"`
 
 	// Meta
 	Width    []int32 `json:"width" bson:"width"`       // The pixel width of the emote
@@ -44,6 +44,9 @@ type Emote struct {
 	Animated bool    `json:"animated" bson:"animated"` // Whether or not the emote is animated
 	AVIF     bool    `json:"avif" bson:"avif"`         // Whether or not the emote is available in AVIF (AV1 Image File) Format
 	ByteSize int32   `json:"byte_size,omitempty" bson:"byte_size,omitempty"`
+
+	// Moderation Data
+	Moderation *EmoteModeration `json:"moderation,omitempty" bson:"moderation,omitempty"`
 
 	// Non-structural
 
@@ -55,23 +58,27 @@ type Emote struct {
 	Channels []*User
 }
 
+type EmoteStatus int32
+
 const (
-	EmoteStatusDeleted int32 = iota - 1
+	EmoteStatusDeleted EmoteStatus = iota - 1
 	EmoteStatusProcessing
 	EmoteStatusPending
 	EmoteStatusDisabled
 	EmoteStatusLive
 )
 
-const (
-	EmoteVisibilityPrivate int32 = 1 << iota
-	EmoteVisibilityGlobal
-	EmoteVisibilityUnlisted
-	EmoteVisibilityOverrideBTTV
-	EmoteVisibilityOverrideFFZ
-	EmoteVisibilityOverrideTwitchGlobal
-	EmoteVisibilityOverrideTwitchSubscriber
-	EmoteVisibilityZeroWidth
+type EmoteFlag int32
 
-	EmoteVisibilityAll int32 = (1 << iota) - 1
+const (
+	EmoteFlagsPrivate   EmoteFlag = 1 << 0
+	EmoteFlagsListed    EmoteFlag = 1 << 1
+	EmoteFlagsZeroWidth EmoteFlag = 1 << 8
+
+	EmoteFlagsAll int32 = (1 << iota) - 1
 )
+
+type EmoteModeration struct {
+	// The reason given by a moderator for the emote not being allowed in public listing
+	RejectionReason string `json:"reject_reason,omitempty" bson:"reject_reason,omitempty"`
+}
