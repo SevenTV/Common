@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserMutation struct {
@@ -84,7 +85,12 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 		})
 	}
 	// Update the document
-	if _, err := inst.Collection(mongo.CollectionNameUsers).UpdateByID(ctx, targetUser.ID, um.UserBuilder.Update); err != nil {
+	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": targetUser.ID},
+		um.UserBuilder.Update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(targetUser); err != nil {
 		logrus.WithError(err).Error("mongo")
 		return nil, structures.ErrInternalError
 	}
