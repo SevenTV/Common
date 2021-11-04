@@ -1,6 +1,10 @@
 package structures
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 // EmoteBuilder: Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
@@ -94,5 +98,8 @@ type EmoteVersioning struct {
 	// The displayed label for the version
 	Tag string `json:"tag" bson:"tag"`
 	// Whether or not this version is diverging (i.e a holiday variant)
+	// If true, this emote will never be prompted as an update
 	Diverged bool `json:"diverged" bson:"diverged"`
+	// The time at which the emote became a version
+	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 }
