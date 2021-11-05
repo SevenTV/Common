@@ -1,5 +1,11 @@
 package structures
 
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 // EmoteBuilder: Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
 	Update UpdateMap
@@ -39,14 +45,19 @@ type Emote struct {
 	Tags    []string  `json:"tags" bson:"tags"`
 
 	// Meta
-	Width    []int32 `json:"width" bson:"width"`       // The pixel width of the emote
-	Height   []int32 `json:"height" bson:"height"`     // The pixel height of the emote
-	Animated bool    `json:"animated" bson:"animated"` // Whether or not the emote is animated
-	AVIF     bool    `json:"avif" bson:"avif"`         // Whether or not the emote is available in AVIF (AV1 Image File) Format
+	Width    []int32 `json:"width" bson:"width"`                   // The pixel width of the emote
+	Height   []int32 `json:"height" bson:"height"`                 // The pixel height of the emote
+	Animated bool    `json:"animated" bson:"animated"`             // Whether or not the emote is animated
+	AVIF     bool    `json:"avif,omitempty" bson:"avif,omitempty"` // Whether or not the emote is available in AVIF (AV1 Image File) Format
 	ByteSize int32   `json:"byte_size,omitempty" bson:"byte_size,omitempty"`
 
 	// Moderation Data
 	Moderation *EmoteModeration `json:"moderation,omitempty" bson:"moderation,omitempty"`
+
+	// Versioning
+
+	ParentID   *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id"`
+	Versioning *EmoteVersioning    `json:"version,omitempty" bson:"version,omitempty"`
 
 	// Non-structural
 
@@ -81,4 +92,14 @@ const (
 type EmoteModeration struct {
 	// The reason given by a moderator for the emote not being allowed in public listing
 	RejectionReason string `json:"reject_reason,omitempty" bson:"reject_reason,omitempty"`
+}
+
+type EmoteVersioning struct {
+	// The displayed label for the version
+	Tag string `json:"tag" bson:"tag"`
+	// Whether or not this version is diverging (i.e a holiday variant)
+	// If true, this emote will never be prompted as an update
+	Diverged bool `json:"diverged" bson:"diverged"`
+	// The time at which the emote became a version
+	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 }
