@@ -286,6 +286,13 @@ type UserEditor struct {
 	User *User `json:"user" bson:"user,skip"`
 }
 
+// HasPermission: checks relational roles against a permission bit
+func (u *UserEditor) HasPermission(bit UserEditorPermission) bool {
+	total := UserEditorPermission(0)
+
+	return utils.BitField.HasBits(int64(total), int64(bit))
+}
+
 type UserEditorPermission int32
 
 const (
@@ -294,5 +301,5 @@ const (
 	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
 	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
 	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
-	UserEditorPermissionMUsePrivateEmotes                                    // 32 - Allows using the user's private emotes
+	UserEditorPermissionUsePrivateEmotes                                     // 32 - Allows using the user's private emotes
 )

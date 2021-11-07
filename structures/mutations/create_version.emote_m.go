@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// CreateVersion: Transform an emote into a versioned emote
-func (em *EmoteMutation) CreateVersion(
+// ToVersion: Transform an emote into a versioned emote
+func (em *EmoteMutation) ToVersion(
 	ctx context.Context,
 	inst mongo.Instance,
 	parentEmote *structures.Emote,
@@ -92,6 +92,50 @@ func (em *EmoteMutation) CreateVersion(
 	).Decode(targetEmote); err != nil {
 		logrus.WithError(err).Error("mongo")
 		return nil, structures.ErrInternalError
+	}
+
+	// If version is not diverged, the current version should change
+	if !em.EmoteBuilder.Emote.Versioning.Diverged {
+		if _, err := em.SetCurrentVersion(ctx, inst, parentEmote); err != nil {
+			return nil, err
+		}
+		em.EmoteBuilder.Emote.ParentID = nil
+		em.EmoteBuilder.Emote.Versioning = nil
+	}
+
+	return em, nil
+}
+
+// SetCurrentVersion: Change the current version of an emote.
+// This will change the "parent" emote, meaning the previous emote and all its versions will belong to this one
+func (em *EmoteMutation) SetCurrentVersion(ctx context.Context, inst mongo.Instance, emote *structures.Emote) (*EmoteMutation, error) {
+	if em.EmoteBuilder == nil || em.EmoteBuilder.Emote == nil {
+		return nil, structures.ErrIncompleteMutation
+	}
+
+	// Update parent of versioned emotes
+	if _, err := inst.Collection(mongo.CollectionNameEmotes).UpdateMany(ctx, bson.M{
+		"_id": bson.M{
+			"$not": bson.M{"$eq": emote.ID},
+		},
+		"parent_id": em.EmoteBuilder.Emote.ID,
+		"status":    structures.EmoteStatusLive,
+	}, bson.M{
+		"parent_id": emote.ID,
+	}); err != nil {
+		return nil, err
+	}
+
+	// Remove versioning data for the emote that became current version
+	if _, err := inst.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
+		"_id": emote.ID,
+	}, bson.M{
+		"$unset": bson.M{
+			"parent_id": 1,
+			"version":   1,
+		},
+	}); err != nil {
+		return nil, err
 	}
 
 	return em, nil
