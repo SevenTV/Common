@@ -61,7 +61,7 @@ func (ub *UserBuilder) SetAvatarURL(url string) *UserBuilder {
 }
 
 func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
-	ub.User.Connections = append(ub.User.Connections, id)
+	ub.User.ConnectionIDs = append(ub.User.ConnectionIDs, id)
 	ub.Update = ub.Update.AddToSet("connections", &id)
 
 	return ub
@@ -93,10 +93,12 @@ type User struct {
 	// token version
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
 	// third party connections. it's like third parties for a third party.
-	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+	ConnectionIDs []primitive.ObjectID `json:"connection_ids" bson:"connections_ids"`
 
 	// Relational
-	Roles []*Role `json:"roles" bson:"roles,skip"`
+
+	Roles       []*Role           `json:"roles" bson:"roles,skip"`
+	Connections []*UserConnection `json:"connections" bson:"connections,skip"`
 }
 
 // HasPermission: checks relational roles against a permission bit
