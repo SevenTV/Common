@@ -68,7 +68,7 @@ var UserRelationEditors = []bson.D{
 			From:         mongo.CollectionNameUsers,
 			LocalField:   "editors.id",
 			ForeignField: "_id",
-			As:           "editor_users",
+			As:           "_ed",
 		},
 	}},
 	{{
@@ -83,8 +83,8 @@ var UserRelationEditors = []bson.D{
 							bson.M{
 								"user": bson.M{
 									"$arrayElemAt": bson.A{
-										"$editor_users",
-										bson.M{"$indexOfArray": bson.A{"$editor_users.id", "$$this.id"}},
+										"$_ed",
+										bson.M{"$indexOfArray": bson.A{"$_ed._id", "$$this.id"}},
 									},
 								},
 							},
