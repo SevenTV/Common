@@ -99,6 +99,7 @@ type User struct {
 
 	Roles       []*Role           `json:"roles" bson:"roles,skip"`
 	Connections []*UserConnection `json:"connections" bson:"connections,skip"`
+	OwnedEmotes []*Emote          `json:"owned_emotes" bson:"owned_emotes,skip"`
 }
 
 // HasPermission: checks relational roles against a permission bit
@@ -259,7 +260,9 @@ type TwitchConnection struct {
 }
 
 type YouTubeConnection struct {
-	ID string `json:"id" bson:"id"`
+	ID          string `json:"id" bson:"id"`
+	Title       string `json:"title" bson:"title"`
+	Description string `json:"description" bson:"description"`
 }
 
 type UserEmote struct {

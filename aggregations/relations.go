@@ -68,22 +68,30 @@ var UserRelationEditors = []bson.D{
 			From:         mongo.CollectionNameUsers,
 			LocalField:   "editors.id",
 			ForeignField: "_id",
-			As:           "editor_user",
+			As:           "editor_users",
 		},
 	}},
-	// Step 2: iterate over editors with user index
 	{{
-		Key: "$unwind",
+		Key: "$set",
 		Value: bson.M{
-			"path":              "$editor_user",
-			"includeArrayIndex": "user",
-		},
-	}},
-	// Step 3: Set "user" property to each editor object in the original editors array
-	{{
-		Key: "$addFields",
-		Value: bson.M{
-			"editors.user": "$editor_user",
+			"editors": bson.M{
+				"$map": bson.M{
+					"input": "$editors",
+					"in": bson.M{
+						"$mergeObjects": bson.A{
+							"$$this",
+							bson.M{
+								"user": bson.M{
+									"$arrayElemAt": bson.A{
+										"$editor_users",
+										bson.M{"$indexOfArray": bson.A{"$editor_users.id", "$$this.id"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}},
 }
@@ -92,7 +100,7 @@ var UserRelationEditors = []bson.D{
 //
 // Input: User
 // Adds Field: "channel_emotes" as []UserEmote with the "emote" field added to each UserEmote object
-// Output: Emote
+// Output: User
 var UserRelationChannelEmotes = []bson.D{
 	// Step 1: Lookup user editors
 	{{
@@ -126,6 +134,23 @@ var UserRelationChannelEmotes = []bson.D{
 					},
 				},
 			},
+		},
+	}},
+}
+
+// User Owned Emote Relations
+//
+// Input: User
+// Adds Field: "owned_emotes" as []Emote
+// Output: User
+var UserRelationOwnedEmotes = []bson.D{
+	{{
+		Key: "$lookup",
+		Value: mongo.Lookup{
+			From:         mongo.CollectionNameEmotes,
+			LocalField:   "_id",
+			ForeignField: "owner",
+			As:           "owned_emotes",
 		},
 	}},
 }
