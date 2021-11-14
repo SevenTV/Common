@@ -15,3 +15,7 @@ const (
 type UserMutation struct {
 	UserBuilder *structures.UserBuilder
 }
+
+type RoleMutation struct {
+	RoleBuilder *structures.RoleBuilder
+}

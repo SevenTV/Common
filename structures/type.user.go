@@ -3,6 +3,7 @@ package structures
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"strconv"
 	"time"
 
@@ -117,6 +118,18 @@ func (u *User) HasPermission(bit RolePermission) bool {
 		return true
 	}
 	return utils.BitField.HasBits(int64(total), int64(bit))
+}
+
+func (u *User) SortRoles() {
+	if len(u.Roles) == 0 {
+		return
+	}
+	sort.Slice(u.Roles, func(i, j int) bool {
+		a := u.Roles[i]
+		b := u.Roles[j]
+
+		return a.Position > b.Position
+	})
 }
 
 type UserDiscriminator uint8
