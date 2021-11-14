@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/structures"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -18,17 +17,27 @@ func (um *UserMutation) SetRole(ctx context.Context, inst mongo.Instance, opt Se
 	}
 
 	// Check for actor's permission to do this
-	if opt.Actor != nil && !opt.Actor.HasPermission(structures.RolePermissionManageRoles) {
-		return nil, structures.ErrInsufficientPrivilege
+	actor := opt.Actor
+	if actor != nil {
+		if !actor.HasPermission(structures.RolePermissionManageRoles) {
+			return nil, structures.ErrInsufficientPrivilege
+		}
+		if len(actor.Roles) == 0 {
+			return nil, structures.ErrInsufficientPrivilege
+		}
+		highestRole := actor.Roles[0]
+		if opt.Role.Position >= highestRole.Position {
+			return nil, structures.ErrInsufficientPrivilege
+		}
 	}
 
 	target := um.UserBuilder.User
 	// Change the role
 	switch opt.Action {
 	case ListItemActionAdd:
-		um.UserBuilder.Update.AddToSet("role_ids", opt.RoleID)
+		um.UserBuilder.Update.AddToSet("role_ids", opt.Role.ID)
 	case ListItemActionRemove:
-		um.UserBuilder.Update.Pull("role_ids", opt.RoleID)
+		um.UserBuilder.Update.Pull("role_ids", opt.Role.ID)
 	}
 
 	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
@@ -45,7 +54,7 @@ func (um *UserMutation) SetRole(ctx context.Context, inst mongo.Instance, opt Se
 }
 
 type SetUserRoleOptions struct {
-	RoleID primitive.ObjectID
+	Role   *structures.Role
 	Actor  *structures.User
 	Action ListItemAction
 }
