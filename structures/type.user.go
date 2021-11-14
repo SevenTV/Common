@@ -62,7 +62,7 @@ func (ub *UserBuilder) SetAvatarURL(url string) *UserBuilder {
 
 func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 	ub.User.ConnectionIDs = append(ub.User.ConnectionIDs, id)
-	ub.Update = ub.Update.AddToSet("connections", &id)
+	ub.Update = ub.Update.AddToSet("connection_ids", &id)
 
 	return ub
 }
@@ -93,7 +93,7 @@ type User struct {
 	// token version
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
 	// third party connections. it's like third parties for a third party.
-	ConnectionIDs []primitive.ObjectID `json:"connection_ids" bson:"connections_ids"`
+	ConnectionIDs []primitive.ObjectID `json:"connection_ids" bson:"connection_ids"`
 
 	// Relational
 
