@@ -53,8 +53,9 @@ const (
 const (
 	RolePermissionManageBans      RolePermission = 1 << 30 // 1073741824 - (Mod) Allows creating or deleting bans
 	RolePermissionManageRoles     RolePermission = 1 << 31 // 2147483648 - (Mod) Allows creating, deleting and assigning roles to users
-	RolePermissionEditAnyEmote    RolePermission = 1 << 32 // 4294967296 - (Mod) Allows editing any emote
-	RolePermissionEditAnyEmoteSet RolePermission = 1 << 33 // 8589934592 - (Mod) Allows editing any emote set, unless it is a privileged set
+	RolePermissionManageReports   RolePermission = 1 << 32 // 4294967296 - (Mod) Allows managing reports
+	RolePermissionEditAnyEmote    RolePermission = 1 << 41 // 2199023255552 - (Mod) Allows editing any emote
+	RolePermissionEditAnyEmoteSet RolePermission = 1 << 42 // 4398046511104 - (Mod) Allows editing any emote set, unless it is a privileged set
 )
 
 // Administration
