@@ -13,10 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type UserMutation struct {
-	UserBuilder *structures.UserBuilder
-}
-
+// SetChannelEmote: add, update or remove a channel emote for the user
 func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance, opt SetChannelEmoteOptions) (*UserMutation, error) {
 	if um.UserBuilder == nil || um.UserBuilder.User == nil {
 		return nil, structures.ErrIncompleteMutation
