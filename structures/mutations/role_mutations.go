@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Create: create the new role
@@ -41,6 +42,41 @@ func (rm *RoleMutation) Create(ctx context.Context, inst mongo.Instance, opt Rol
 	logrus.WithFields(logrus.Fields{
 		"role_id": rm.RoleBuilder.Role.ID,
 	}).Info("Role Created")
+	return rm, nil
+}
+
+// Edit: edit the role. Modify the RoleBuilder beforehand!
+func (rm *RoleMutation) Edit(ctx context.Context, inst mongo.Instance, opt RoleEditOptions) (*RoleMutation, error) {
+	if rm.RoleBuilder == nil || rm.RoleBuilder.Role == nil {
+		return nil, structures.ErrIncompleteMutation
+	}
+
+	// Check actor's permissions
+	actor := opt.Actor
+	if actor != nil {
+		if !actor.HasPermission(structures.RolePermissionManageRoles) {
+			return nil, structures.ErrInsufficientPrivilege
+		}
+		if len(opt.Actor.Roles) > 0 {
+			// ensure that the actor's role is higher than the role being deleted
+			actor.SortRoles()
+			highestRole := actor.Roles[0]
+			if opt.OriginalPosition >= highestRole.Position {
+				return nil, structures.ErrInsufficientPrivilege
+			}
+		}
+	}
+
+	// Update the role
+	if err := inst.Collection(mongo.CollectionNameRoles).FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": rm.RoleBuilder.Role.ID},
+		rm.RoleBuilder.Update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(rm.RoleBuilder.Role); err != nil {
+		return nil, err
+	}
+
 	return rm, nil
 }
 
@@ -93,4 +129,9 @@ func (rm *RoleMutation) Delete(ctx context.Context, inst mongo.Instance, opt Rol
 
 type RoleMutationOptions struct {
 	Actor *structures.User
+}
+
+type RoleEditOptions struct {
+	Actor            *structures.User
+	OriginalPosition int32
 }

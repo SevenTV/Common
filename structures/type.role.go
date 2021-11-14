@@ -78,3 +78,33 @@ func NewRoleBuilder(role *Role) *RoleBuilder {
 		Role:   role,
 	}
 }
+
+func (rb *RoleBuilder) SetName(name string) *RoleBuilder {
+	rb.Role.Name = name
+	rb.Update.Set("name", name)
+	return rb
+}
+
+func (rb *RoleBuilder) SetPosition(pos int32) *RoleBuilder {
+	rb.Role.Position = pos
+	rb.Update.Set("position", pos)
+	return rb
+}
+
+func (rb *RoleBuilder) SetColor(color int32) *RoleBuilder {
+	rb.Role.Color = color
+	rb.Update.Set("color", color)
+	return rb
+}
+
+func (rb *RoleBuilder) SetAllowed(allowed RolePermission) *RoleBuilder {
+	rb.Role.Allowed = allowed
+	rb.Update.Set("allowed", allowed)
+	return rb
+}
+
+func (rb *RoleBuilder) SetDenied(denied RolePermission) *RoleBuilder {
+	rb.Role.Denied = denied
+	rb.Update.Set("denied", denied)
+	return rb
+}
