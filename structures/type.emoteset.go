@@ -11,7 +11,10 @@ type EmoteSet struct {
 	ID primitive.ObjectID `json:"-" bson:"_id,omitempty"`
 	// Numeric unique ID for the set
 	// Starts from 1 and increments per set created
-	NumericID string `json:"id" bson:"id"`
+	NumericID string `json:"id" bson:"num_id"`
+	// A unique tag for the set, between 2 and 5 characters (letters and numbers only)
+	// This can be used for targeting and parsing
+	Tag string `json:"tag" bson:"tag"`
 	// Whether or not the emote set can be edited
 	Immutable bool `json:"immutable" bson:"immutable"`
 	// If true, the set is "privileged" and can only be modified by its editors, regardless of the "Edit Any Emote Set" permission
@@ -19,7 +22,7 @@ type EmoteSet struct {
 	// Whether or not the set is active. When false, the set isn't returned in various API endpoints
 	Active bool `json:"active" bson:"active"`
 	// The emotes assigned to this set
-	EmoteIDs []primitive.ObjectID `json:"emote_ids" bson:"emote_ids"`
+	Emotes []*ActiveEmote `json:"emote_ids" bson:"emote_ids"`
 	// The maximum amount of emotes this set is allowed to contain
 	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
 	// The set's editors, who are allowed to edit the set's emotes
@@ -31,8 +34,7 @@ type EmoteSet struct {
 	Selection []primitive.ObjectID `json:"selection" bson:"selection"`
 
 	// Relational
-	Editors []*User  `json:"editors" bson:"editors,skip"`
-	Emotes  []*Emote `json:"emotes" bson:"emotes,skip"`
+	Editors []*User `json:"editors" bson:"editors,skip"`
 }
 
 // The type of emote set
@@ -44,3 +46,12 @@ var (
 	// Selective Sets apply only to select channels
 	EmoteSetTypeSelective EmoteSetType = "SELECTIVE"
 )
+
+type ActiveEmote struct {
+	ID    primitive.ObjectID `json:"id" bson:"id"`
+	Alias string             `json:"alias,omitempty" bson:"alias,omitempty"`
+
+	// Relational
+
+	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
+}
