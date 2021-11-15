@@ -24,6 +24,11 @@ type Report struct {
 	Status ReportStatus `json:"status" bson:"status"`
 	// The date on which the report was created
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+
+	// Relational
+
+	Target   *User `json:"target" bson:"target,skip"`
+	Reporter *User `json:"reporter" bson:"reporter,skip"`
 }
 
 // The type of object being reported
