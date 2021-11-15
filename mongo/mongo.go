@@ -69,6 +69,7 @@ var (
 	CollectionNameRoles        CollectionName = "roles"
 	CollectionNameConnections  CollectionName = "user_connections"
 	CollectionNameEntitlements CollectionName = "entitlements"
+	CollectionNameReports      CollectionName = "reports"
 )
 
 type SetupOptions struct {
