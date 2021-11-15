@@ -89,3 +89,9 @@ func (rb *ReportBuilder) SetBody(body string) *ReportBuilder {
 	rb.Update.Set("body", body)
 	return rb
 }
+
+func (rb *ReportBuilder) SetCreatedAt(t time.Time) *ReportBuilder {
+	rb.Report.CreatedAt = t
+	rb.Update.Set("created_at", t)
+	return rb
+}
