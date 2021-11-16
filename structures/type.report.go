@@ -31,8 +31,9 @@ type Report struct {
 
 	// Relational
 
-	Target   *User `json:"target" bson:"target,skip"`
-	Reporter *User `json:"reporter" bson:"reporter,skip"`
+	Target    *User   `json:"target" bson:"target,skip"`
+	Reporter  *User   `json:"reporter" bson:"reporter,skip"`
+	Assignees []*User `json:"assignees" bson:"assignees,skip"`
 }
 
 // The type of object being reported
@@ -135,15 +136,16 @@ func (rb *ReportBuilder) AddAssignee(id primitive.ObjectID) *ReportBuilder {
 }
 
 func (rb *ReportBuilder) RemoveAssignee(id primitive.ObjectID) *ReportBuilder {
+	if len(rb.Report.AssigneeIDs) == 0 {
+		return rb
+	}
+
 	ind := 0
 	for i, a := range rb.Report.AssigneeIDs {
 		if a == id {
 			ind = i
 			break
 		}
-	}
-	if ind == 0 {
-		return rb
 	}
 
 	rb.Report.AssigneeIDs = append(rb.Report.AssigneeIDs[:ind], rb.Report.AssigneeIDs[ind+1:]...)
