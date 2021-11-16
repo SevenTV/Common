@@ -24,6 +24,10 @@ type Report struct {
 	Status ReportStatus `json:"status" bson:"status"`
 	// The date on which the report was created
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	// The IDs of users assigned to this report
+	AssigneeIDs []primitive.ObjectID `json:"assignee_ids" bson:"assignee_ids"`
+	// Notes (moderator comments)
+	Notes []*ReportNote `json:"notes" bson:"notes"`
 
 	// Relational
 
@@ -50,6 +54,22 @@ const (
 type ReportBuilder struct {
 	Update UpdateMap
 	Report *Report
+}
+
+type ReportNote struct {
+	// The time at which the note was created
+	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
+	// The ID of the user who wrote this note
+	AuthorID primitive.ObjectID `json:"author_id" bson:"author_id"`
+	// The text content of the note
+	Content string `json:"comment" bson:"comment"`
+	// If true, the note is only visible to other privileged users
+	// it will not be visible to the reporter
+	Internal bool `json:"internal" bson:"internal"`
+	// Whether or not the note was read by the reporter
+	Read bool `json:"read" bson:"read"`
+	// A reply to the note by the reporter
+	Reply string `json:"reply" bson:"reply"`
 }
 
 // NewReportBuilder: create a new report builder
@@ -93,5 +113,46 @@ func (rb *ReportBuilder) SetBody(body string) *ReportBuilder {
 func (rb *ReportBuilder) SetCreatedAt(t time.Time) *ReportBuilder {
 	rb.Report.CreatedAt = t
 	rb.Update.Set("created_at", t)
+	return rb
+}
+
+func (rb *ReportBuilder) SetPriority(p int32) *ReportBuilder {
+	rb.Report.Priority = p
+	rb.Update.Set("priority", p)
+	return rb
+}
+
+func (rb *ReportBuilder) SetStatus(s ReportStatus) *ReportBuilder {
+	rb.Report.Status = s
+	rb.Update.Set("status", s)
+	return rb
+}
+
+func (rb *ReportBuilder) AddAssignee(id primitive.ObjectID) *ReportBuilder {
+	rb.Report.AssigneeIDs = append(rb.Report.AssigneeIDs, id)
+	rb.Update.AddToSet("assignee_ids", id)
+	return rb
+}
+
+func (rb *ReportBuilder) RemoveAssignee(id primitive.ObjectID) *ReportBuilder {
+	ind := 0
+	for i, a := range rb.Report.AssigneeIDs {
+		if a == id {
+			ind = i
+			break
+		}
+	}
+	if ind == 0 {
+		return rb
+	}
+
+	rb.Report.AssigneeIDs = append(rb.Report.AssigneeIDs[:ind], rb.Report.AssigneeIDs[ind+1:]...)
+	rb.Update.Pull("assignee_ids", id)
+	return rb
+}
+
+func (rb *ReportBuilder) AddNote(note *ReportNote) *ReportBuilder {
+	rb.Report.Notes = append(rb.Report.Notes, note)
+	rb.Update.AddToSet("notes", note)
 	return rb
 }
