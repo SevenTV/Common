@@ -42,3 +42,15 @@ var ReportRelationReporter = []bson.D{
 	}},
 	{{Key: "$unset", Value: bson.A{"reporters"}}},
 }
+
+var ReportRelationAssignees = []bson.D{
+	{{
+		Key: "$lookup",
+		Value: mongo.Lookup{
+			From:         mongo.CollectionNameUsers,
+			LocalField:   "assignee_ids",
+			ForeignField: "_id",
+			As:           "assignees",
+		},
+	}},
+}

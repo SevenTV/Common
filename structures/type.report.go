@@ -31,9 +31,9 @@ type Report struct {
 
 	// Relational
 
-	Target    *User   `json:"target" bson:"target,skip"`
-	Reporter  *User   `json:"reporter" bson:"reporter,skip"`
-	Assignees []*User `json:"assignees" bson:"assignees,skip"`
+	Target    *User   `json:"target" bson:"target,skip,omitempty"`
+	Reporter  *User   `json:"reporter" bson:"reporter,skip,omitempty"`
+	Assignees []*User `json:"assignees" bson:"assignees,skip,omitempty"`
 }
 
 // The type of object being reported
@@ -63,7 +63,7 @@ type ReportNote struct {
 	// The ID of the user who wrote this note
 	AuthorID primitive.ObjectID `json:"author_id" bson:"author_id"`
 	// The text content of the note
-	Content string `json:"comment" bson:"comment"`
+	Content string `json:"content" bson:"content"`
 	// If true, the note is only visible to other privileged users
 	// it will not be visible to the reporter
 	Internal bool `json:"internal" bson:"internal"`
