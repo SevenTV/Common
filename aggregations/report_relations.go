@@ -5,25 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var ReportRelationTarget = []bson.D{
-	{{
-		Key: "$lookup",
-		Value: mongo.Lookup{
-			From:         mongo.CollectionNameUsers,
-			LocalField:   "target_id",
-			ForeignField: "_id",
-			As:           "targets",
-		},
-	}},
-	{{
-		Key: "$set",
-		Value: bson.M{
-			"target": bson.M{"$first": "$targets"},
-		},
-	}},
-	{{Key: "$unset", Value: bson.A{"targets"}}},
-}
-
 var ReportRelationReporter = []bson.D{
 	{{
 		Key: "$lookup",
