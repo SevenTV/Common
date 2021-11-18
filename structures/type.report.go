@@ -130,8 +130,12 @@ func (rb *ReportBuilder) SetStatus(s ReportStatus) *ReportBuilder {
 }
 
 func (rb *ReportBuilder) AddAssignee(id primitive.ObjectID) *ReportBuilder {
+	if len(rb.Report.AssigneeIDs) == 0 {
+		rb.Update.Set("assignee_ids", []primitive.ObjectID{id})
+	} else {
+		rb.Update.AddToSet("assignee_ids", id)
+	}
 	rb.Report.AssigneeIDs = append(rb.Report.AssigneeIDs, id)
-	rb.Update.AddToSet("assignee_ids", id)
 	return rb
 }
 

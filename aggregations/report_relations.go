@@ -5,6 +5,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// Report Relations
+//
+// Input: Report
+// Adds Field: "reporter" as User
+// Output: Report
 var ReportRelationReporter = []bson.D{
 	{{
 		Key: "$lookup",
@@ -24,14 +29,35 @@ var ReportRelationReporter = []bson.D{
 	{{Key: "$unset", Value: bson.A{"reporters"}}},
 }
 
-var ReportRelationAssignees = []bson.D{
-	{{
-		Key: "$lookup",
-		Value: mongo.Lookup{
-			From:         mongo.CollectionNameUsers,
-			LocalField:   "assignee_ids",
-			ForeignField: "_id",
-			As:           "assignees",
-		},
-	}},
+// Report Relations
+//
+// Input: Report
+// Adds Field: "assignees" as []User
+// Output: Report
+func ReportRelationAssignees() mongo.Pipeline {
+	sp := mongo.Pipeline{
+		{{
+			Key: "$match",
+			Value: bson.M{
+				"$expr": bson.M{
+					"$in": bson.A{"$_id", "$$user_ids"},
+				},
+			},
+		}},
+	}
+	sp = append(sp, UserRelationRoles...)
+
+	p := []bson.D{
+		{{
+			Key: "$lookup",
+			Value: mongo.LookupWithPipeline{
+				From:     mongo.CollectionNameUsers,
+				Let:      bson.M{"user_ids": "$assignee_ids"},
+				Pipeline: &sp,
+				As:       "assignees",
+			},
+		}},
+	}
+
+	return p
 }
