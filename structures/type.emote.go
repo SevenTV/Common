@@ -12,6 +12,27 @@ type EmoteBuilder struct {
 	Emote  *Emote
 }
 
+// NewEmoteBuilder: create a new emote builder
+func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
+	return &EmoteBuilder{
+		Update: UpdateMap{},
+		Emote:  emote,
+	}
+}
+
+// SetName: change the name of the emote
+func (eb *EmoteBuilder) SetName(name string) *EmoteBuilder {
+	eb.Emote.Name = name
+	eb.Update.Set("flags", eb.Emote.Flags)
+	return eb
+}
+
+func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
+	eb.Emote.OwnerID = id
+	eb.Update.Set("owner_id", id)
+	return eb
+}
+
 // SetPrivacy: change the private state of the emote
 func (eb *EmoteBuilder) SetPrivacy(isPrivate bool) *EmoteBuilder {
 	if isPrivate {
@@ -36,20 +57,39 @@ func (eb *EmoteBuilder) SetListed(isListed bool) *EmoteBuilder {
 	return eb
 }
 
+// SetStatus: change the emote's status
+func (eb *EmoteBuilder) SetStatus(status EmoteStatus) *EmoteBuilder {
+	eb.Emote.Status = status
+	eb.Update.Set("status", status)
+	return eb
+}
+
+// AddSize: add a size reference to the emote
+func (eb *EmoteBuilder) AddSize(name string, width int32, height int32, byteSize int) *EmoteBuilder {
+	size := EmoteSize{
+		Name:     name,
+		Width:    width,
+		Height:   height,
+		ByteSize: byteSize,
+	}
+	eb.Emote.Sizes = append(eb.Emote.Sizes, size)
+	eb.Update.AddToSet("sizes", size)
+	return eb
+}
+
 type Emote struct {
-	ID      ObjectID  `json:"id" bson:"_id"`
-	OwnerID ObjectID  `json:"owner_id" bson:"owner_id"`
-	Name    string    `json:"name" bson:"name"`
-	Flags   EmoteFlag `json:"visibility" bson:"visibility"` // DEPRECATED: no longer used in v3
-	Status  int32     `json:"status" bson:"status"`
-	Tags    []string  `json:"tags" bson:"tags"`
+	ID      ObjectID    `json:"id" bson:"_id"`
+	OwnerID ObjectID    `json:"owner_id" bson:"owner_id"`
+	Name    string      `json:"name" bson:"name"`
+	Flags   EmoteFlag   `json:"visibility" bson:"visibility"` // DEPRECATED: no longer used in v3
+	Status  EmoteStatus `json:"status" bson:"status"`
+	Tags    []string    `json:"tags" bson:"tags"`
 
 	// Meta
-	Width    []int32 `json:"width" bson:"width"`                   // The pixel width of the emote
-	Height   []int32 `json:"height" bson:"height"`                 // The pixel height of the emote
-	Animated bool    `json:"animated" bson:"animated"`             // Whether or not the emote is animated
-	AVIF     bool    `json:"avif,omitempty" bson:"avif,omitempty"` // Whether or not the emote is available in AVIF (AV1 Image File) Format
-	ByteSize int32   `json:"byte_size,omitempty" bson:"byte_size,omitempty"`
+
+	Sizes    []EmoteSize   `json:"sizes" bson:"sizes"`
+	Animated bool          `json:"animated" bson:"animated"`                   // Whether or not the emote is animated
+	Formats  []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // Whether or not the emote is available in AVIF (AV1 Image File) Format
 
 	// Moderation Data
 	Moderation *EmoteModeration `json:"moderation,omitempty" bson:"moderation,omitempty"`
@@ -87,6 +127,24 @@ const (
 	EmoteFlagsZeroWidth EmoteFlag = 1 << 8
 
 	EmoteFlagsAll int32 = (1 << iota) - 1
+)
+
+type EmoteSize struct {
+	Name     string `json:"n" bson:"name"`   // The name of the size
+	Width    int32  `json:"w" bson:"width"`  // The pixel width of the emote
+	Height   int32  `json:"h" bson:"height"` // The pixel height of the emote
+	ByteSize int    `json:"b" bson:"b"`
+
+	Link string `json:"l" bson:"-"` // The CDN URL to the emote
+}
+
+type EmoteFormat string
+
+const (
+	EmoteFormatWEBP EmoteFormat = "WEBP"
+	EmoteFormatGIF  EmoteFormat = "GIF"
+	EmoteFormatAVIF EmoteFormat = "AVIF"
+	EmoteFormatPNG  EmoteFormat = "PNG"
 )
 
 type EmoteModeration struct {

@@ -63,7 +63,7 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 type CollectionName string
 
 var (
-	CollectionNameEmotes       CollectionName = "emotes"
+	CollectionNameEmotes       CollectionName = "emotes_v3"
 	CollectionNameEmoteSets    CollectionName = "emotes_sets"
 	CollectionNameUsers        CollectionName = "users_v3"
 	CollectionNameRoles        CollectionName = "roles"
