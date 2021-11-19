@@ -87,9 +87,8 @@ type Emote struct {
 
 	// Meta
 
-	Sizes    []EmoteSize   `json:"sizes" bson:"sizes"`
-	Animated bool          `json:"animated" bson:"animated"`                   // Whether or not the emote is animated
-	Formats  []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // Whether or not the emote is available in AVIF (AV1 Image File) Format
+	FrameCount int32         `json:"frame_count" bson:"frame_count"`             // The amount of frames this image has
+	Formats    []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // All formats the emote is available is, with width/height/length of each responsive size
 
 	// Moderation Data
 	Moderation *EmoteModeration `json:"moderation,omitempty" bson:"moderation,omitempty"`
@@ -129,22 +128,25 @@ const (
 	EmoteFlagsAll int32 = (1 << iota) - 1
 )
 
-type EmoteSize struct {
-	Name     string `json:"n" bson:"name"`   // The name of the size
-	Width    int32  `json:"w" bson:"width"`  // The pixel width of the emote
-	Height   int32  `json:"h" bson:"height"` // The pixel height of the emote
-	ByteSize int    `json:"b" bson:"b"`
-
-	Link string `json:"l" bson:"-"` // The CDN URL to the emote
+type EmoteFormat struct {
+	Name  EmoteFormatName `json:"name" bson:"name"`
+	Sizes []EmoteSize     `json:"sizes" bson:"sizes"`
 }
 
-type EmoteFormat string
+type EmoteSize struct {
+	Scale  int8  `json:"s" bson:"scale"`  // The responsive scale
+	Width  int32 `json:"w" bson:"width"`  // The pixel width of the emote
+	Height int32 `json:"h" bson:"height"` // The pixel height of the emote
+	Length int   `json:"b" bson:"length"` // The file size in bytes
+}
+
+type EmoteFormatName string
 
 const (
-	EmoteFormatWEBP EmoteFormat = "WEBP"
-	EmoteFormatGIF  EmoteFormat = "GIF"
-	EmoteFormatAVIF EmoteFormat = "AVIF"
-	EmoteFormatPNG  EmoteFormat = "PNG"
+	EmoteFormatNameWEBP EmoteFormatName = "WEBP"
+	EmoteFormatNameAVIF EmoteFormatName = "AVIF"
+	EmoteFormatNameGIF  EmoteFormatName = "GIF"
+	EmoteFormatNamePNG  EmoteFormatName = "PNG"
 )
 
 type EmoteModeration struct {
