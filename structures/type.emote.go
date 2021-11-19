@@ -64,19 +64,6 @@ func (eb *EmoteBuilder) SetStatus(status EmoteStatus) *EmoteBuilder {
 	return eb
 }
 
-// AddSize: add a size reference to the emote
-func (eb *EmoteBuilder) AddSize(name string, width int32, height int32, byteSize int) *EmoteBuilder {
-	size := EmoteSize{
-		Name:     name,
-		Width:    width,
-		Height:   height,
-		ByteSize: byteSize,
-	}
-	eb.Emote.Sizes = append(eb.Emote.Sizes, size)
-	eb.Update.AddToSet("sizes", size)
-	return eb
-}
-
 type Emote struct {
 	ID      ObjectID    `json:"id" bson:"_id"`
 	OwnerID ObjectID    `json:"owner_id" bson:"owner_id"`
