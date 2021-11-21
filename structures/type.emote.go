@@ -103,6 +103,7 @@ const (
 	EmoteStatusPending
 	EmoteStatusDisabled
 	EmoteStatusLive
+	EmoteStatusFailed EmoteStatus = -2
 )
 
 type EmoteFlag int32
