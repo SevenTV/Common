@@ -149,7 +149,7 @@ var UserRelationOwnedEmotes = []bson.D{
 		Value: mongo.Lookup{
 			From:         mongo.CollectionNameEmotes,
 			LocalField:   "_id",
-			ForeignField: "owner",
+			ForeignField: "owner_id",
 			As:           "owned_emotes",
 		},
 	}},
@@ -194,7 +194,7 @@ func GetEmoteRelationshipOwner(opt UserRelationshipOptions) []bson.D {
 			Key: "$lookup",
 			Value: mongo.LookupWithPipeline{
 				From:     mongo.CollectionNameUsers,
-				Let:      bson.M{"owner_id": "$owner"},
+				Let:      bson.M{"owner_id": "$owner_id"},
 				Pipeline: &up,
 				As:       "owner_user",
 			},
