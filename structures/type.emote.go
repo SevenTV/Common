@@ -82,7 +82,7 @@ type Emote struct {
 
 	// Versioning
 
-	ParentID   *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id"`
+	ParentID   *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 	Versioning *EmoteVersioning    `json:"version,omitempty" bson:"version,omitempty"`
 
 	// Non-structural
@@ -91,8 +91,8 @@ type Emote struct {
 
 	// Relational
 
-	Owner    *User `json:"owner" bson:"owner_user,skip"`
-	Channels []*User
+	Owner    *User   `json:"owner" bson:"owner_user,skip,omitempty"`
+	Channels []*User `json:"channels" bson:"channels,skip,omitempty"`
 }
 
 type EmoteStatus int32
@@ -122,19 +122,21 @@ type EmoteFormat struct {
 }
 
 type EmoteSize struct {
-	Scale  int8  `json:"s" bson:"scale"`  // The responsive scale
-	Width  int32 `json:"w" bson:"width"`  // The pixel width of the emote
-	Height int32 `json:"h" bson:"height"` // The pixel height of the emote
-	Length int   `json:"b" bson:"length"` // The file size in bytes
+	Scale          string `json:"s" bson:"scale"`    // The responsive scale
+	Width          int32  `json:"w" bson:"width"`    // The pixel width of the emote
+	Height         int32  `json:"h" bson:"height"`   // The pixel height of the emote
+	Animated       bool   `json:"a" bson:"animated"` // Whether or not this size is animated
+	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this size to be processed
+	Length         int    `json:"b" bson:"length"`   // The file size in bytes
 }
 
 type EmoteFormatName string
 
 const (
-	EmoteFormatNameWEBP EmoteFormatName = "WEBP"
-	EmoteFormatNameAVIF EmoteFormatName = "AVIF"
-	EmoteFormatNameGIF  EmoteFormatName = "GIF"
-	EmoteFormatNamePNG  EmoteFormatName = "PNG"
+	EmoteFormatNameWEBP EmoteFormatName = "image/webp"
+	EmoteFormatNameAVIF EmoteFormatName = "image/avif"
+	EmoteFormatNameGIF  EmoteFormatName = "image/gif"
+	EmoteFormatNamePNG  EmoteFormatName = "image/png"
 )
 
 type EmoteModeration struct {
