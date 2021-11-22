@@ -96,6 +96,56 @@ var UserRelationEditors = []bson.D{
 	}},
 }
 
+// User Relations
+//
+// Input: User
+// Add Fields: "editor_of" as []UserEditor with the "user" field added to each UserEditor object
+// Output: User
+var UserRelationEditorOf = []bson.D{
+	{{
+		Key: "$lookup",
+		Value: mongo.LookupWithPipeline{
+			From: mongo.CollectionNameUsers,
+			Let:  bson.M{"user_id": "$_id"},
+			Pipeline: &mongo.Pipeline{
+				{{
+					Key: "$match",
+					Value: bson.M{
+						"$expr": bson.M{"$in": bson.A{"$$user_id", "$editors.id"}},
+					},
+				}},
+				{{
+					Key: "$project",
+					Value: bson.M{
+						"user": "$$ROOT",
+						"as_editor": bson.M{
+							"$mergeObjects": bson.M{
+								"$filter": bson.M{
+									"input": "$editors",
+									"as":    "u_editor_of",
+									"cond":  bson.M{"$eq": bson.A{"$$u_editor_of.id", "$$user_id"}},
+								},
+							},
+						},
+					},
+				}},
+				{{
+					Key: "$project",
+					Value: bson.M{
+						"id":          "$_id", // Replace the _id field with "id"
+						"permissions": "$as_editor.permissions",
+						"connections": "$as_editor.connections",
+						"visible":     "$as_editor.visible",
+						"user":        "$user",
+					},
+				}},
+				{{Key: "$unset", Value: bson.A{"_id"}}}, // Remove the "_id" field (it's id)
+			},
+			As: "editor_of",
+		},
+	}},
+}
+
 // User Emote Relations
 //
 // Input: User
