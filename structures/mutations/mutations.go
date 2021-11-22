@@ -19,3 +19,7 @@ type UserMutation struct {
 type RoleMutation struct {
 	RoleBuilder *structures.RoleBuilder
 }
+
+type EmoteMutation struct {
+	EmoteBuilder *structures.EmoteBuilder
+}
