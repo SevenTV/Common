@@ -1,6 +1,7 @@
 package structures
 
 import (
+	"regexp"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +24,7 @@ func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
 // SetName: change the name of the emote
 func (eb *EmoteBuilder) SetName(name string) *EmoteBuilder {
 	eb.Emote.Name = name
-	eb.Update.Set("flags", eb.Emote.Flags)
+	eb.Update.Set("name", eb.Emote.Name)
 	return eb
 }
 
@@ -33,27 +34,33 @@ func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
 	return eb
 }
 
-// SetPrivacy: change the private state of the emote
-func (eb *EmoteBuilder) SetPrivacy(isPrivate bool) *EmoteBuilder {
-	if isPrivate {
-		eb.Emote.Flags |= EmoteFlagsPrivate
-	} else {
-		eb.Emote.Flags &= EmoteFlagsPrivate
-	}
-
-	eb.Update.Set("flags", eb.Emote.Flags)
+func (eb *EmoteBuilder) SetFlags(sum EmoteFlag) *EmoteBuilder {
+	eb.Emote.Flags = sum
+	eb.Update.Set("flags", sum)
 	return eb
 }
 
-// SetListed: change the listing state of the emote
-func (eb *EmoteBuilder) SetListed(isListed bool) *EmoteBuilder {
-	if isListed {
-		eb.Emote.Flags |= EmoteFlagsListed
-	} else {
-		eb.Emote.Flags &= EmoteFlagsListed
+func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
+	uniqueTags := map[string]bool{}
+	for _, v := range tags {
+		if v == "" {
+			continue
+		}
+		if !emoteTagRegex.MatchString(v) {
+			continue
+		}
+		uniqueTags[v] = true
 	}
 
-	eb.Update.Set("flags", eb.Emote.Flags)
+	tags = make([]string, len(uniqueTags))
+	i := 0
+	for k := range uniqueTags {
+		tags[i] = k
+		i++
+	}
+
+	eb.Emote.Tags = tags
+	eb.Update.Set("tags", tags)
 	return eb
 }
 
@@ -64,16 +71,18 @@ func (eb *EmoteBuilder) SetStatus(status EmoteStatus) *EmoteBuilder {
 	return eb
 }
 
+var emoteTagRegex = regexp.MustCompile(`^[0-9a-z]{3,30}$`)
+
 type Emote struct {
-	ID      ObjectID    `json:"id" bson:"_id"`
-	OwnerID ObjectID    `json:"owner_id" bson:"owner_id"`
-	Name    string      `json:"name" bson:"name"`
-	Flags   EmoteFlag   `json:"visibility" bson:"visibility"` // DEPRECATED: no longer used in v3
-	Status  EmoteStatus `json:"status" bson:"status"`
-	Tags    []string    `json:"tags" bson:"tags"`
+	ID      ObjectID  `json:"id" bson:"_id"`
+	OwnerID ObjectID  `json:"owner_id" bson:"owner_id"`
+	Name    string    `json:"name" bson:"name"`
+	Flags   EmoteFlag `json:"flags" bson:"flags"`
+	Tags    []string  `json:"tags" bson:"tags"`
 
 	// Meta
 
+	Status     EmoteStatus   `json:"status" bson:"status"`
 	FrameCount int32         `json:"frame_count" bson:"frame_count"`             // The amount of frames this image has
 	Formats    []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // All formats the emote is available is, with width/height/length of each responsive size
 
@@ -113,7 +122,7 @@ const (
 	EmoteFlagsListed    EmoteFlag = 1 << 1
 	EmoteFlagsZeroWidth EmoteFlag = 1 << 8
 
-	EmoteFlagsAll int32 = (1 << iota) - 1
+	EmoteFlagsAll EmoteFlag = (1 << iota) - 1
 )
 
 type EmoteFormat struct {
