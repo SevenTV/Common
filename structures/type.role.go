@@ -44,8 +44,8 @@ const (
 const (
 	RolePermissionReportCreate RolePermission = 1 << 13 // 8192 - Allows creating reports
 
-	RolePermissionUseZeroWidthEmoteType RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
-	RolePermissionAnimateProfilePicture RolePermission = 1 << 24 // 16777216 - Allows the user's profile picture to be animated
+	RolePermissionFeatureZeroWidthEmoteType      RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
+	RolePermissionFeatureProfilePictureAnimation RolePermission = 1 << 24 // 16777216 - Allows the user's profile picture to be animated
 )
 
 // Moderation
@@ -64,6 +64,7 @@ const (
 	RolePermissionSuperAdministrator RolePermission = 1 << 62 // 4611686018427387904 - (Admin) GRANTS EVERY PERMISSION /!\
 	RolePermissionManageNews         RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows creating and editing news
 	RolePermissionManageStack        RolePermission = 1 << 55 // 36028797018963968 - (Admin) Allows managing the application stack
+	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
 )
 
 type RoleBuilder struct {
