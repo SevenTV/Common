@@ -17,3 +17,8 @@ var DeletedUser = &User{
 	TokenVersion:  0,
 	Connections:   nil,
 }
+
+var NilRole = &Role{
+	ID:   primitive.NilObjectID,
+	Name: "NULL",
+}

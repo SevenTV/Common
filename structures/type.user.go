@@ -133,6 +133,15 @@ func (u *User) SortRoles() {
 	})
 }
 
+func (u *User) GetHighestRole() *Role {
+	u.SortRoles()
+	if len(u.Roles) == 0 {
+		return NilRole
+	}
+
+	return u.Roles[0]
+}
+
 type UserDiscriminator uint8
 
 // UserConnectionPlatform: Represents a platform that the app supports
