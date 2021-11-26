@@ -1,8 +1,13 @@
 package structures
 
 import (
+	"context"
 	"fmt"
+	"sync"
+	"time"
 
+	"github.com/SevenTV/Common/mongo"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -59,3 +64,32 @@ var (
 )
 
 type ObjectID = primitive.ObjectID
+
+var (
+	DefaultRoles     []*Role = nil
+	defaultRolesLock sync.Mutex
+)
+
+func FetchDefaultRoles(ctx context.Context, mngo mongo.Instance) []*Role {
+	defaultRolesLock.Lock()
+	defer defaultRolesLock.Unlock()
+	if DefaultRoles != nil {
+		return DefaultRoles
+	}
+	go func() {
+		time.Sleep(time.Minute)
+		DefaultRoles = nil
+	}()
+
+	roles := []*Role{}
+	cur, err := mngo.Collection(mongo.CollectionNameRoles).Find(ctx, bson.M{"default": true})
+	if err != nil {
+		logrus.WithError(err).Error("mongo, could not fetch default roles")
+	}
+	if err = cur.All(ctx, &roles); err != nil {
+		logrus.WithError(err).Error("mongo, could not fetch default roles")
+	}
+
+	DefaultRoles = roles
+	return roles
+}

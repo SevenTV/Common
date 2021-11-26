@@ -110,16 +110,35 @@ func (u *User) HasPermission(bit RolePermission) bool {
 	total := RolePermission(0)
 	for _, r := range u.Roles {
 		a := r.Allowed
-		d := r.Denied
 
 		total |= a
-		a &= d
+	}
+	for _, r := range u.Roles {
+		d := r.Denied
+
+		total &= ^d
 	}
 
 	if (total & RolePermissionSuperAdministrator) == RolePermissionSuperAdministrator {
 		return true
 	}
 	return utils.BitField.HasBits(int64(total), int64(bit))
+}
+
+func (u *User) AddRoles(roles ...*Role) {
+	for _, r := range roles {
+		exists := false
+		for _, ur := range u.Roles {
+			if r.ID == ur.ID {
+				exists = true
+				break
+			}
+		}
+		if exists {
+			continue
+		}
+		u.Roles = append(u.Roles, r)
+	}
 }
 
 func (u *User) SortRoles() {

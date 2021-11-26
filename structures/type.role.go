@@ -18,7 +18,9 @@ type Role struct {
 	// the role's denied permission bits
 	Denied RolePermission `json:"denied" bson:"denied"`
 	// whether or not this role is the default role
-	Default bool `json:"default" bson:"default"`
+	Default bool `json:"default" bson:"default,omitempty"`
+	// whether or not the role
+	Invisible bool `json:"invisible" bson:"invisible,omitempty"`
 }
 
 // HasPermissionBit: Check for specific bit in the role's allowed permissions
