@@ -68,14 +68,14 @@ var UserRelationBans = []bson.D{
 				{{
 					Key: "$match",
 					Value: bson.M{
+						"$expr": bson.M{
+							"$eq": bson.A{"$victim_id", "$$user_id"},
+						},
 						"$or": bson.A{
 							bson.M{"expire_at": time.Time{}},
 							bson.M{
 								"expire_at": bson.M{"$gt": time.Now()},
 							},
-						},
-						"$expr": bson.M{
-							"victim_id": "$$user_id",
 						},
 					},
 				}},
