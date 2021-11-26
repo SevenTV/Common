@@ -41,6 +41,15 @@ const (
 	BanEffectBlockedIP BanEffect = "IP_BLOCKED"
 )
 
+func (b *Ban) HasEffect(eff BanEffect) bool {
+	for _, e := range b.Effects {
+		if e == eff {
+			return true
+		}
+	}
+	return false
+}
+
 type BanBuilder struct {
 	Ban    *Ban
 	Update UpdateMap
