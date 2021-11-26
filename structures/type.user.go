@@ -315,8 +315,9 @@ type UserEditorPermission int32
 const (
 	UserEditorPermissionAddChannelEmotes    UserEditorPermission = 1 << iota // 1 - Allows adding emotes
 	UserEditorPermissionRemoveChannelEmotes                                  // 2 - Allows removing emotes
-	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
-	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
-	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
-	UserEditorPermissionMUsePrivateEmotes                                    // 32 - Allows using the user's private emotes
+	UserEditorPermissionMUsePrivateEmotes                                    // 4 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile                                        // 8 - Allows managing the user's public profile
+	UserEditorPermissionManageBilling                                        // 16 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionManageOwnedEmotes                                    // 32 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets                                      // 64 - Allows managing the user's owned emote sets
 )
