@@ -98,9 +98,10 @@ type User struct {
 
 	// Relational
 
-	Roles       []*Role           `json:"roles" bson:"roles,skip"`
-	Connections []*UserConnection `json:"connections" bson:"connections,skip"`
-	OwnedEmotes []*Emote          `json:"owned_emotes" bson:"owned_emotes,skip"`
+	Roles       []*Role           `json:"roles" bson:"roles,skip,omitempty"`
+	Connections []*UserConnection `json:"connections" bson:"connections,skip,omitempty"`
+	OwnedEmotes []*Emote          `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
+	EditorOf    []*UserEditor     `json:"editor_of" bson:"editor_of,skip,omitempty"`
 }
 
 // HasPermission: checks relational roles against a permission bit
@@ -301,7 +302,12 @@ type UserEditor struct {
 	Visible bool `json:"visible" bson:"visible"`
 
 	// Relational
-	User *User `json:"user" bson:"user,skip"`
+	User *User `json:"user" bson:"user,skip,omitempty"`
+}
+
+// HasPermission: check whether or not the editor has a permission
+func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
+	return utils.BitField.HasBits(int64(ed.Permissions), int64(bit))
 }
 
 type UserEditorPermission int32
