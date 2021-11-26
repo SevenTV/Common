@@ -1,6 +1,8 @@
 package aggregations
 
 import (
+	"time"
+
 	"github.com/SevenTV/Common/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -47,6 +49,38 @@ var BanRelationActor = []bson.D{
 		Key: "$set",
 		Value: bson.M{
 			"actor": bson.M{"$first": "$actors"},
+		},
+	}},
+}
+
+// User Relations
+//
+// Input: User
+// Adds Field: "bans" as []Ban
+// Output: User
+var UserRelationBans = []bson.D{
+	{{
+		Key: "$lookup",
+		Value: mongo.LookupWithPipeline{
+			From: mongo.CollectionNameBans,
+			Let:  bson.M{"user_id": "$_id"},
+			Pipeline: &mongo.Pipeline{
+				{{
+					Key: "$match",
+					Value: bson.M{
+						"$or": bson.A{
+							bson.M{"expire_at": time.Time{}},
+							bson.M{
+								"expire_at": bson.M{"$gt": time.Now()},
+							},
+						},
+						"$expr": bson.M{
+							"victim_id": "$$user_id",
+						},
+					},
+				}},
+			},
+			As: "bans",
 		},
 	}},
 }

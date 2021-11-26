@@ -67,6 +67,15 @@ const (
 	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
 )
 
+// All permissions
+const (
+	RolePermissionAll = RolePermissionCreateEmote | RolePermissionEditEmote | RolePermissionSetChannelEmote |
+		RolePermissionReportCreate | RolePermissionFeatureZeroWidthEmoteType | RolePermissionFeatureProfilePictureAnimation |
+		RolePermissionManageBans | RolePermissionManageRoles | RolePermissionManageReports |
+		RolePermissionEditAnyEmote | RolePermissionEditAnyEmoteSet | RolePermissionSuperAdministrator |
+		RolePermissionManageNews | RolePermissionManageStack | RolePermissionManageCosmetics
+)
+
 type RoleBuilder struct {
 	Update UpdateMap
 	Role   *Role

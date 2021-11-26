@@ -102,6 +102,7 @@ type User struct {
 	Connections []*UserConnection `json:"connections" bson:"connections,skip,omitempty"`
 	OwnedEmotes []*Emote          `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
 	EditorOf    []*UserEditor     `json:"editor_of" bson:"editor_of,skip,omitempty"`
+	Bans        []*Ban            `json:"bans" bson:"bans,skip,omitempty"`
 }
 
 // HasPermission: checks relational roles against a permission bit

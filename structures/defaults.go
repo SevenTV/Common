@@ -18,7 +18,15 @@ var DeletedUser = &User{
 	Connections:   nil,
 }
 
+var RevocationRole = &Role{
+	ID:       [12]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32},
+	Name:     "NORIGHTS",
+	Denied:   RolePermissionAll,
+	Position: 0,
+}
+
 var NilRole = &Role{
-	ID:   primitive.NilObjectID,
-	Name: "NULL",
+	ID:       primitive.NilObjectID,
+	Name:     "NULL",
+	Position: 0,
 }
