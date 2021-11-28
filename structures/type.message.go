@@ -50,12 +50,11 @@ type MessageDataEmoteComment struct {
 }
 
 type MessageDataInbox struct {
-	RecipientIDs []primitive.ObjectID `json:"recipient_ids" bson:"recipient_ids"`
-	Subject      string               `json:"subject" bson:"subject"`
-	Content      string               `json:"content" bson:"content"`
-	Important    bool                 `json:"important,omitempty" bson:"important,omitempty"`
-	Starred      bool                 `json:"starred,omitempty" bson:"starred,omitempty"`
-	Pinned       bool                 `json:"pinned,omitempty" bson:"pinned,omitempty"`
+	Subject   string `json:"subject" bson:"subject"`
+	Content   string `json:"content" bson:"content"`
+	Important bool   `json:"important,omitempty" bson:"important,omitempty"`
+	Starred   bool   `json:"starred,omitempty" bson:"starred,omitempty"`
+	Pinned    bool   `json:"pinned,omitempty" bson:"pinned,omitempty"`
 }
 
 func (md MessageData) DecodeEmoteComment() *MessageDataEmoteComment {
@@ -130,8 +129,9 @@ func (mb *MessageBuilder) encodeData(i interface{}) {
 
 // MessageRead: read/unread state for a message
 type MessageRead struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	MessageID primitive.ObjectID `json:"message_id" bson:"message_id"`
-	Read      bool               `json:"read" bson:"read"`
-	ReadAt    time.Time          `json:"read_at,omitempty" bson:"read_at,omitempty"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	MessageID   primitive.ObjectID `json:"message_id" bson:"message_id"`
+	RecipientID primitive.ObjectID `json:"recipient_id" bson:"recipient_id"`
+	Read        bool               `json:"read" bson:"read"`
+	ReadAt      time.Time          `json:"read_at,omitempty" bson:"read_at,omitempty"`
 }

@@ -13,6 +13,9 @@ import (
 var ErrNoDocuments = mongo.ErrNoDocuments
 
 type Pipeline = mongo.Pipeline
+type WriteModel = mongo.WriteModel
+type InsertOneModel = mongo.InsertOneModel
+type UpdateOneModel = mongo.UpdateOneModel
 
 type Lookup struct {
 	From         CollectionName `bson:"from"`
