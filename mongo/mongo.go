@@ -66,11 +66,13 @@ var (
 	CollectionNameEmotes       CollectionName = "emotes_v3"
 	CollectionNameEmoteSets    CollectionName = "emotes_sets"
 	CollectionNameUsers        CollectionName = "users_v3"
-	CollectionNameRoles        CollectionName = "roles"
 	CollectionNameConnections  CollectionName = "user_connections"
+	CollectionNameRoles        CollectionName = "roles"
 	CollectionNameEntitlements CollectionName = "entitlements"
 	CollectionNameReports      CollectionName = "reports"
 	CollectionNameBans         CollectionName = "bans_v3"
+	CollectionNameMessages     CollectionName = "messages"
+	CollectionNameMessagesRead CollectionName = "messages_read"
 )
 
 type SetupOptions struct {
