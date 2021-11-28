@@ -95,6 +95,8 @@ type User struct {
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
 	// third party connections. it's like third parties for a third party.
 	ConnectionIDs []primitive.ObjectID `json:"connection_ids" bson:"connection_ids"`
+	// the ID of users who have been blocked by the user
+	BlockedUserIDs []primitive.ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 
 	// Relational
 
