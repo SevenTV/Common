@@ -20,7 +20,7 @@ type Message struct {
 	// The date on which this message was cretaed
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	// Message data
-	Data MessageData `json:"data" bson:"data"`
+	Data bson.Raw `json:"data" bson:"data"`
 
 	// Relational
 
@@ -55,21 +55,6 @@ type MessageDataInbox struct {
 	Important bool   `json:"important,omitempty" bson:"important,omitempty"`
 	Starred   bool   `json:"starred,omitempty" bson:"starred,omitempty"`
 	Pinned    bool   `json:"pinned,omitempty" bson:"pinned,omitempty"`
-}
-
-func (md MessageData) DecodeEmoteComment() *MessageDataEmoteComment {
-	return md.unmarshal(&MessageDataEmoteComment{}).(*MessageDataEmoteComment)
-}
-
-func (md MessageData) DecodeInbox() *MessageDataInbox {
-	return md.unmarshal(&MessageDataInbox{}).(*MessageDataInbox)
-}
-
-func (md MessageData) unmarshal(i interface{}) interface{} {
-	if err := bson.Unmarshal(md, i); err != nil {
-		logrus.WithError(err).Error("message, decoding message data failed")
-	}
-	return i
 }
 
 type MessageBuilder struct {
@@ -125,6 +110,21 @@ func (mb *MessageBuilder) encodeData(i interface{}) {
 		return
 	}
 	mb.Message.Data = b
+}
+
+func (mb *MessageBuilder) DecodeEmoteComment() *MessageDataEmoteComment {
+	return mb.unmarshal(&MessageDataEmoteComment{}).(*MessageDataEmoteComment)
+}
+
+func (mb *MessageBuilder) DecodeInbox() *MessageDataInbox {
+	return mb.unmarshal(&MessageDataInbox{}).(*MessageDataInbox)
+}
+
+func (mb *MessageBuilder) unmarshal(i interface{}) interface{} {
+	if err := bson.Unmarshal(mb.Message.Data, i); err != nil {
+		logrus.WithError(err).Error("message, decoding message data failed")
+	}
+	return i
 }
 
 // MessageRead: read/unread state for a message

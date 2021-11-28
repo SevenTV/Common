@@ -31,7 +31,7 @@ func (r *Role) HasPermissionBit(bit RolePermission) bool {
 }
 
 // RolePermission: Role permission bits
-type RolePermission uint64
+type RolePermission int64
 
 // Emotes
 // Range: 1 << 1 - 1 << 12
@@ -66,7 +66,7 @@ const (
 // Administration
 // Range: 1 << 54 - 1 << 63
 const (
-	RolePermissionSuperAdministrator RolePermission = 1 << 63 // 9223372036854775808 - (Admin) GRANTS EVERY PERMISSION /!\
+	RolePermissionSuperAdministrator RolePermission = 1 << 62 // 4611686018427387904 - (Admin) GRANTS EVERY PERMISSION /!\
 	RolePermissionManageNews         RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows creating and editing news
 	RolePermissionManageStack        RolePermission = 1 << 55 // 36028797018963968 - (Admin) Allows managing the application stack
 	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
