@@ -45,6 +45,7 @@ const (
 // Range: 1 << 13 - 1 << 1 << 29
 const (
 	RolePermissionReportCreate RolePermission = 1 << 13 // 8192 - Allows creating reports
+	RolePermissionSendMessages RolePermission = 1 << 14 // 16384 - Allows sending messages (i.e comments or user inboxs)
 
 	RolePermissionFeatureZeroWidthEmoteType      RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
 	RolePermissionFeatureProfilePictureAnimation RolePermission = 1 << 24 // 16777216 - Allows the user's profile picture to be animated
