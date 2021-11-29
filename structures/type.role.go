@@ -45,6 +45,7 @@ const (
 // Range: 1 << 13 - 1 << 1 << 29
 const (
 	RolePermissionReportCreate RolePermission = 1 << 13 // 8192 - Allows creating reports
+	RolePermissionSendMessages RolePermission = 1 << 14 // 16384 - Allows sending messages (i.e comments or user inboxs)
 
 	RolePermissionFeatureZeroWidthEmoteType      RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
 	RolePermissionFeatureProfilePictureAnimation RolePermission = 1 << 24 // 16777216 - Allows the user's profile picture to be animated
@@ -56,12 +57,14 @@ const (
 	RolePermissionManageBans      RolePermission = 1 << 30 // 1073741824 - (Mod) Allows creating or deleting bans
 	RolePermissionManageRoles     RolePermission = 1 << 31 // 2147483648 - (Mod) Allows creating, deleting and assigning roles to users
 	RolePermissionManageReports   RolePermission = 1 << 32 // 4294967296 - (Mod) Allows managing reports
+	RolePermissionManageUsers     RolePermission = 1 << 33 // 8589934592 - (Mod) Allows managing users
 	RolePermissionEditAnyEmote    RolePermission = 1 << 41 // 2199023255552 - (Mod) Allows editing any emote
 	RolePermissionEditAnyEmoteSet RolePermission = 1 << 42 // 4398046511104 - (Mod) Allows editing any emote set, unless it is a privileged set
+	RolePermissionBypassPrivacy   RolePermission = 1 << 48 // 281474976710656 - (Mod) Lets the user see all non-public content
 )
 
 // Administration
-// Range: 1 << 54 - 1 << 62
+// Range: 1 << 54 - 1 << 63
 const (
 	RolePermissionSuperAdministrator RolePermission = 1 << 62 // 4611686018427387904 - (Admin) GRANTS EVERY PERMISSION /!\
 	RolePermissionManageNews         RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows creating and editing news
