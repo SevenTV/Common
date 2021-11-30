@@ -25,6 +25,7 @@ type Message struct {
 	// Relational
 
 	Author *User `json:"author,omitempty" bson:"author,skip,omitempty"`
+	Read   bool  `json:"read,omitempty" bson:"read,omitempty"`
 }
 
 type MessageKind string
