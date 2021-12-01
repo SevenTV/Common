@@ -51,12 +51,17 @@ type MessageDataEmoteComment struct {
 }
 
 type MessageDataInbox struct {
-	Subject      string   `json:"subject" bson:"subject"`
-	Content      string   `json:"content" bson:"content"`
-	Important    bool     `json:"important,omitempty" bson:"important,omitempty"`
-	Starred      bool     `json:"starred,omitempty" bson:"starred,omitempty"`
-	Pinned       bool     `json:"pinned,omitempty" bson:"pinned,omitempty"`
-	Placeholders []string `json:"placeholders,omitempty" bson:"placeholders,omitempty"`
+	Subject      string            `json:"subject" bson:"subject"`
+	Content      string            `json:"content" bson:"content"`
+	Important    bool              `json:"important,omitempty" bson:"important,omitempty"`
+	Starred      bool              `json:"starred,omitempty" bson:"starred,omitempty"`
+	Pinned       bool              `json:"pinned,omitempty" bson:"pinned,omitempty"`
+	Placeholders map[string]string `json:"placeholders,omitempty" bson:"placeholders,omitempty"`
+}
+
+type MessageDataPlaceholder struct {
+	Key   string
+	Value string
 }
 
 type MessageBuilder struct {
