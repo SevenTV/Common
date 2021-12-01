@@ -27,3 +27,7 @@ type EmoteMutation struct {
 type EmoteSetMutation struct {
 	EmoteSetBuilder *structures.EmoteSetBuilder
 }
+
+type MessageMutation struct {
+	MessageBuilder *structures.MessageBuilder
+}
