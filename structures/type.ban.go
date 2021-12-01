@@ -18,7 +18,7 @@ type Ban struct {
 	// The time at which the ban will expire
 	ExpireAt time.Time `json:"expire_at" bson:"expire_at"`
 	// The effects that this ban will have
-	Effects []BanEffect `json:"effects" bson:"effects"`
+	Effects BanEffect `json:"effects" bson:"effects"`
 
 	// Relational
 
@@ -26,28 +26,31 @@ type Ban struct {
 	Actor  *User `json:"actor" bson:"actor,skip,omitempty"`
 }
 
-type BanEffect string
+type BanEffect uint32
 
 const (
 	// Strip the banned user of all permissions
-	BanEffectNoPermissions BanEffect = "NO_PERMISSIONS"
+	BanEffectNoPermissions BanEffect = 1 << 0
 	// Prevents the banned user from authenticating
-	BanEffectNoAuth BanEffect = "NO_AUTH"
+	BanEffectNoAuth BanEffect = 1 << 1
 	// Any object owned by the banned user will no longer be returned by the API
-	BanEffectNoOwnership BanEffect = "NO_OWNERSHIP"
+	BanEffectNoOwnership BanEffect = 1 << 2
 	// The banned user is never returned by the API to non-privileged users
-	BanEffectMemoryHole BanEffect = "MEMORY_HOLE"
+	BanEffectMemoryHole BanEffect = 1 << 3
 	// The banned user's IP will be blocked from accessing all services
-	BanEffectBlockedIP BanEffect = "IP_BLOCKED"
+	BanEffectBlockedIP BanEffect = 1 << 4
 )
 
+var BanEffectMap = map[string]BanEffect{
+	"NO_PERMISSIONS": BanEffectNoPermissions,
+	"NO_AUTH":        BanEffectNoAuth,
+	"NO_OWNERSHIP":   BanEffectNoOwnership,
+	"MEMORY_HOLE":    BanEffectMemoryHole,
+	"IP_BLOCKED":     BanEffectBlockedIP,
+}
+
 func (b *Ban) HasEffect(eff BanEffect) bool {
-	for _, e := range b.Effects {
-		if e == eff {
-			return true
-		}
-	}
-	return false
+	return (b.Effects & eff) == eff
 }
 
 type BanBuilder struct {
@@ -87,7 +90,7 @@ func (bb *BanBuilder) SetExpireAt(t time.Time) *BanBuilder {
 	return bb
 }
 
-func (bb *BanBuilder) SetEffects(a []BanEffect) *BanBuilder {
+func (bb *BanBuilder) SetEffects(a BanEffect) *BanBuilder {
 	bb.Ban.Effects = a
 	bb.Update.Set("effects", a)
 	return bb
