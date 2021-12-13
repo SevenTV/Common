@@ -30,7 +30,7 @@ func (r *Role) HasPermissionBit(bit RolePermission) bool {
 	return utils.BitField.HasBits(int64(sum), int64(bit))
 }
 
-// RolePermission: Role permission bits
+// RolePermission Role permission bits
 type RolePermission int64
 
 // Emotes

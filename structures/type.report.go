@@ -36,7 +36,7 @@ type Report struct {
 	Assignees []*User `json:"assignees" bson:"assignees,skip,omitempty"`
 }
 
-// The type of object being reported
+// ReportTargetKind The type of object being reported
 type ReportTargetKind string
 
 const (

@@ -134,7 +134,7 @@ func (mb *MessageBuilder) unmarshal(i interface{}) interface{} {
 	return i
 }
 
-// MessageRead: read/unread state for a message
+// MessageRead read/unread state for a message
 type MessageRead struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	MessageID   primitive.ObjectID `json:"message_id" bson:"message_id"`

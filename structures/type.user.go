@@ -68,7 +68,7 @@ func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
 	return ub
 }
 
-// User: A standard app user object
+// User A standard app user object
 type User struct {
 	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
@@ -107,24 +107,23 @@ type User struct {
 	Bans        []*Ban            `json:"bans" bson:"bans,skip,omitempty"`
 }
 
-// HasPermission: checks relational roles against a permission bit
+// HasPermission checks relational roles against a permission bit
 func (u *User) HasPermission(bit RolePermission) bool {
-	total := RolePermission(0)
-	for _, r := range u.Roles {
-		a := r.Allowed
+	total := u.FinalPermission()
 
-		total |= a
-	}
-	for _, r := range u.Roles {
-		d := r.Denied
-
-		total &= ^d
-	}
-
-	if (total & RolePermissionSuperAdministrator) == RolePermissionSuperAdministrator {
+	if (total & RolePermissionSuperAdministrator) != 0 {
 		return true
 	}
+
 	return utils.BitField.HasBits(int64(total), int64(bit))
+}
+
+func (u *User) FinalPermission() (total RolePermission) {
+	for _, r := range u.Roles {
+		total &= ^r.Denied
+		total |= r.Allowed
+	}
+	return
 }
 
 func (u *User) AddRoles(roles ...*Role) {
@@ -166,7 +165,7 @@ func (u *User) GetHighestRole() *Role {
 
 type UserDiscriminator uint8
 
-// UserConnectionPlatform: Represents a platform that the app supports
+// UserConnectionPlatform Represents a platform that the app supports
 type UserConnectionPlatform string
 
 var (
@@ -182,7 +181,7 @@ var (
 	UserTypeSystem  UserType = "SYSTEM"
 )
 
-// UserConnection: Represents an external connection to a platform for a user
+// UserConnection Represents an external connection to a platform for a user
 type UserConnection struct {
 	ID       primitive.ObjectID     `json:"id,omitempty" bson:"_id,omitempty"`
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
@@ -198,7 +197,7 @@ type UserConnectionGrant struct {
 	ExpiresAt    time.Time `json:"expires_at" bson:"expires_at"`
 }
 
-// UserConnectionBuilder: utility for creating a new UserConnection
+// UserConnectionBuilder utility for creating a new UserConnection
 type UserConnectionBuilder struct {
 	Update         UpdateMap
 	UserConnection *UserConnection
@@ -315,9 +314,9 @@ type UserEmote struct {
 	// When this has 1 or more items, the emote will only be availablle for these connections (i.e specific twitch/youtube channels)
 	Connections []primitive.ObjectID `json:"connections" bson:"connections,omitempty"`
 	// An alias for this emote
-	Alias string `json:"alias,omitempty" bson:"alias,omitempty"`
-	// Whether or not the emote will be made zero width for the particular channel
-	ZeroWidth bool `json:"zero_width,omitempty" bson:"zero_width,omitempty"`
+	Alias *string `json:"alias,omitempty" bson:"alias,omitempty"`
+
+	AddedAt time.Time `json:"added_at,omitempty" bson:"added_at,omitempty"`
 
 	// Relational
 	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
@@ -332,6 +331,8 @@ type UserEditor struct {
 	// Whether or not that editor will be visible on the user's profile page
 	Visible bool `json:"visible" bson:"visible"`
 
+	AddedAt time.Time `json:"added_at,omitempty" bson:"added_at,omitempty"`
+
 	// Relational
 	User *User `json:"user" bson:"user,skip,omitempty"`
 }
@@ -344,11 +345,10 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionAddChannelEmotes    UserEditorPermission = 1 << iota // 1 - Allows adding emotes
-	UserEditorPermissionRemoveChannelEmotes                                  // 2 - Allows removing emotes
-	UserEditorPermissionMUsePrivateEmotes                                    // 4 - Allows using the user's private emotes
-	UserEditorPermissionManageProfile                                        // 8 - Allows managing the user's public profile
-	UserEditorPermissionManageBilling                                        // 16 - Allows managing billing and payments, such as subscriptions
-	UserEditorPermissionManageOwnedEmotes                                    // 32 - Allows managing the user's owned emotes
-	UserEditorPermissionManageEmoteSets                                      // 64 - Allows managing the user's owned emote sets
+	UserEditorPermissionModifyChannelEmotes UserEditorPermission = 1 << iota // 1 - Allows adding emotes
+	UserEditorPermissionUsePrivateEmotes                                     // 2 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets                                      // 32 - Allows managing the user's owned emote sets
 )

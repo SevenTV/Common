@@ -238,7 +238,7 @@ type Entitlement struct {
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
 }
 
-// A string representing an Entitlement Kind
+// EntitlementKind A string representing a kind of entitlement
 type EntitlementKind string
 
 var (
@@ -248,14 +248,14 @@ var (
 	EntitlementKindEmoteSet     = EntitlementKind("EMOTE_SET")    // Emote Set Entitlement
 )
 
-// (Data) Subscription binding in an Entitlement
+// EntitledSubscription Subscription binding in an Entitlement
 type EntitledSubscription struct {
 	ID string `json:"id" bson:"-"`
 	// The ID of the subscription
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
 }
 
-// (Data) Badge binding in an Entitlement
+// EntitledBadge Badge binding in an Entitlement
 type EntitledBadge struct {
 	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
@@ -265,13 +265,13 @@ type EntitledBadge struct {
 	RoleBindingID *string             `json:"role_binding_id" bson:"-"`
 }
 
-// (Data) Role binding in an Entitlement
+// EntitledRole Role binding in an Entitlement
 type EntitledRole struct {
 	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
 }
 
-// (Data) Emote Set binding in an Entitlement
+// EntitledEmoteSet Emote Set binding in an Entitlement
 type EntitledEmoteSet struct {
 	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`

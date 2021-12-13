@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// EmoteBuilder: Wraps an Emote and offers methods to fetch and mutate emote data
+// EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
 	Update UpdateMap
 	Emote  *Emote
