@@ -12,7 +12,7 @@ var DeletedUser = &User{
 	ChannelEmotes: nil,
 	RoleIDs:       nil,
 	Editors:       nil,
-	AvatarURL:     "",
+	AvatarID:      "",
 	Biography:     "",
 	TokenVersion:  0,
 	Connections:   nil,

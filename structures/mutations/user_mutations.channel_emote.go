@@ -37,9 +37,9 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 
 			switch opt.Action {
 			case ListItemActionAdd: // Check permissions for ADD
-				ok = utils.BitField.HasBits(int64(ed.Permissions), int64(structures.UserEditorPermissionAddChannelEmotes))
+				ok = utils.BitField.HasBits(int64(ed.Permissions), int64(structures.UserEditorPermissionModifyChannelEmotes))
 			case ListItemActionRemove: // Check permissions for REMOVE
-				ok = utils.BitField.HasBits(int64(ed.Permissions), int64(structures.UserEditorPermissionRemoveChannelEmotes))
+				ok = utils.BitField.HasBits(int64(ed.Permissions), int64(structures.UserEditorPermissionModifyChannelEmotes))
 			default:
 				ok = true
 			}
@@ -54,8 +54,7 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 	switch opt.Action {
 	case ListItemActionAdd: // Add Emote
 		um.UserBuilder.Update.AddToSet("channel_emotes", &structures.UserEmote{
-			ID:    opt.EmoteID,
-			Alias: opt.Alias,
+			ID: opt.EmoteID,
 		})
 	case ListItemActionUpdate: // Update Emote
 		ind := -1
@@ -73,8 +72,7 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 		}
 
 		um.UserBuilder.Update.Set(fmt.Sprintf("channel_emotes.%d", ind), &structures.UserEmote{
-			ID:    opt.EmoteID,
-			Alias: opt.Alias,
+			ID: opt.EmoteID,
 		})
 	case ListItemActionRemove: // Remove Emote
 		um.UserBuilder.Update.Pull("channel_emotes", bson.M{

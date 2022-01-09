@@ -54,16 +54,22 @@ func (ub *UserBuilder) SetEmail(email string) *UserBuilder {
 	return ub
 }
 
-func (ub *UserBuilder) SetAvatarURL(url string) *UserBuilder {
-	ub.User.AvatarURL = url
+func (ub *UserBuilder) SetAvatarID(url string) *UserBuilder {
+	ub.User.AvatarID = url
 	ub.Update.Set("avatar_url", url)
 
 	return ub
 }
 
-func (ub *UserBuilder) AddConnection(id primitive.ObjectID) *UserBuilder {
-	ub.User.ConnectionIDs = append(ub.User.ConnectionIDs, id)
-	ub.Update = ub.Update.AddToSet("connection_ids", &id)
+func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
+	for _, c := range ub.User.Connections {
+		if c.ID == conn.ID {
+			return ub // connection already exists.
+		}
+	}
+
+	ub.User.Connections = append(ub.User.Connections, conn)
+	ub.Update = ub.Update.AddToSet("connections", conn)
 
 	return ub
 }
@@ -88,23 +94,27 @@ type User struct {
 	// the user's editors
 	Editors []*UserEditor `json:"editors" bson:"editors"`
 	// the user's avatar URL
-	AvatarURL string `json:"avatar_url" bson:"avatar_url"`
+	AvatarID string `json:"avatar_id" bson:"avatar_id"`
 	// the user's biography
 	Biography string `json:"biography" bson:"biography"`
 	// token version
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
 	// third party connections. it's like third parties for a third party.
-	ConnectionIDs []primitive.ObjectID `json:"connection_ids" bson:"connection_ids"`
+	Connections []*UserConnection `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
 	BlockedUserIDs []primitive.ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 
 	// Relational
 
-	Roles       []*Role           `json:"roles" bson:"roles,skip,omitempty"`
-	Connections []*UserConnection `json:"connections" bson:"connections,skip,omitempty"`
-	OwnedEmotes []*Emote          `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
-	EditorOf    []*UserEditor     `json:"editor_of" bson:"editor_of,skip,omitempty"`
-	Bans        []*Ban            `json:"bans" bson:"bans,skip,omitempty"`
+	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
+	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
+	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
+
+	// API-specific
+
+	Roles     []*Role       `json:"roles" bson:"roles,skip,omitempty"`
+	EditorOf  []*UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
+	AvatarURL string        `json:"avatar_url" bson:"-"`
 }
 
 // HasPermission checks relational roles against a permission bit
@@ -183,7 +193,7 @@ var (
 
 // UserConnection Represents an external connection to a platform for a user
 type UserConnection struct {
-	ID       primitive.ObjectID     `json:"id,omitempty" bson:"_id,omitempty"`
+	ID       string                 `json:"id,omitempty" bson:"id,omitempty"`
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
 	LinkedAt time.Time              `json:"linked_at" bson:"linked_at"`
 	Data     bson.Raw               `json:"data" bson:"data"`
@@ -209,6 +219,12 @@ func NewUserConnectionBuilder() *UserConnectionBuilder {
 		Update:         UpdateMap{},
 		UserConnection: &UserConnection{},
 	}
+}
+
+func (ucb *UserConnectionBuilder) SetID(id string) *UserConnectionBuilder {
+	ucb.UserConnection.ID = id
+	ucb.Update.Set("id", id)
+	return ucb
 }
 
 // SetPlatform: defines the platform a connection is for (i.e twitch/youtube)
