@@ -4,6 +4,7 @@ import "fmt"
 
 type APIError interface {
 	Error() string
+	Code() int
 }
 
 var (
@@ -49,8 +50,23 @@ var (
 	X[...] - any increment.
 */
 
-func DefineError(code int, msg string) error {
-	return fmt.Errorf("[%d] %s", code, msg)
+type apiError struct {
+	s    string
+	code int
+}
+
+func (e *apiError) Error() string {
+	return e.s
+}
+
+func (e *apiError) Code() int {
+	return e.code
+}
+
+func DefineError(code int, s string) APIError {
+	return &apiError{
+		s, code,
+	}
 }
 
 func AppendErrorDetail(err error, txt string, placeholders ...string) error {
