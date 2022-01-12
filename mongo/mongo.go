@@ -12,11 +12,6 @@ import (
 
 var ErrNoDocuments = mongo.ErrNoDocuments
 
-type Pipeline = mongo.Pipeline
-type WriteModel = mongo.WriteModel
-type InsertOneModel = mongo.InsertOneModel
-type UpdateOneModel = mongo.UpdateOneModel
-
 type Lookup struct {
 	From         CollectionName `bson:"from"`
 	LocalField   string         `bson:"localField"`
@@ -32,9 +27,7 @@ type LookupWithPipeline struct {
 }
 
 func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
-	clientOptions := options.Client().ApplyURI(opt.URI).SetDirect(opt.Direct)
-
-	client, err := mongo.Connect(ctx, clientOptions)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(opt.URI).SetDirect(opt.Direct))
 	if err != nil {
 		return nil, err
 	}
@@ -63,20 +56,6 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	}, nil
 }
 
-type CollectionName string
-
-var (
-	CollectionNameEmotes       CollectionName = "emotes"
-	CollectionNameEmoteSets    CollectionName = "emotes_sets"
-	CollectionNameUsers        CollectionName = "users"
-	CollectionNameRoles        CollectionName = "roles"
-	CollectionNameEntitlements CollectionName = "entitlements"
-	CollectionNameReports      CollectionName = "reports"
-	CollectionNameBans         CollectionName = "bans"
-	CollectionNameMessages     CollectionName = "messages"
-	CollectionNameMessagesRead CollectionName = "messages_read"
-)
-
 type SetupOptions struct {
 	URI     string
 	DB      string
@@ -89,4 +68,10 @@ type IndexRef struct {
 	Index      mongo.IndexModel
 }
 
-type IndexModel = mongo.IndexModel
+type (
+	Pipeline       = mongo.Pipeline
+	WriteModel     = mongo.WriteModel
+	InsertOneModel = mongo.InsertOneModel
+	UpdateOneModel = mongo.UpdateOneModel
+	IndexModel     = mongo.IndexModel
+)
