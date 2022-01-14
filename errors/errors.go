@@ -1,12 +1,15 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type APIError interface {
 	Error() string
 	Message() string
 	Code() int
 	SetDetail(str string, a ...string) *apiError
+	SetFields(d Fields) *apiError
 }
 
 var (
@@ -33,13 +36,15 @@ var (
 
 	// Other Client Errors
 
-	ErrEmoteNotEnabled     APIError = DefineError(704610, "emote not enabled")     // client wants to disable an emote which was not enabled to begin with
-	ErrEmoteAlreadyEnabled APIError = DefineError(704611, "emote already enabled") // client wants to enable an emote which is already added
-	ErrEmoteNameConflict   APIError = DefineError(704611, "emote name conflict")
+	ErrEmoteNotEnabled      APIError = DefineError(704610, "emote not enabled")     // client wants to disable an emote which was not enabled to begin with
+	ErrEmoteAlreadyEnabled  APIError = DefineError(704611, "emote already enabled") // client wants to enable an emote which is already added
+	ErrEmoteNameConflict    APIError = DefineError(704612, "emote name conflict")   // client wants to enable an emote but its name conflict with another
+	ErrMissingRequiredField APIError = DefineError(704613, "missing field")
 
 	// Server Errors
 
-	ErrInternalServerError APIError = DefineError(70500, "internal server error")
+	ErrInternalServerError        APIError = DefineError(70500, "internal server error")
+	ErrInternalIncompleteMutation APIError = DefineError(70560, "incomplete mutation (internal)")
 )
 
 /*
@@ -55,7 +60,10 @@ var (
 type apiError struct {
 	s    string
 	code int
+	d    Fields
 }
+
+type Fields map[string]string
 
 func (e *apiError) Error() string {
 	return fmt.Sprintf("[%d] %s", e.code, e.s)
@@ -74,8 +82,13 @@ func (e *apiError) SetDetail(str string, a ...string) *apiError {
 	return e
 }
 
+func (e *apiError) SetFields(d Fields) *apiError {
+	e.d = d
+	return e
+}
+
 func DefineError(code int, s string) APIError {
 	return &apiError{
-		s, code,
+		s, code, Fields{},
 	}
 }

@@ -8,6 +8,8 @@ require (
 	go.mongodb.org/mongo-driver v1.7.3
 )
 
+require github.com/hashicorp/errwrap v1.0.0 // indirect
+
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -15,6 +17,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect

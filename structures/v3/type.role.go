@@ -34,12 +34,16 @@ func (r *Role) HasPermissionBit(bit RolePermission) bool {
 type RolePermission int64
 
 // Emotes
-// Range: 1 << 1 - 1 << 12
+// Range: 1 << 0 - 1 << 5
 const (
-	RolePermissionCreateEmote     RolePermission = 1 << 0 // 1 - Allows creating emotes
-	RolePermissionEditEmote       RolePermission = 1 << 1 // 2 - Allows editing / creating new versions of an emote
-	RolePermissionSetChannelEmote RolePermission = 1 << 2 // 4 - Allows adding or removing channel emotes
+	RolePermissionCreateEmote  RolePermission = 1 << 0 // 1 - Allows creating emotes
+	RolePermissionEditEmote    RolePermission = 1 << 1 // 2 - Allows editing emotes
+	RolePermissionEditEmoteSet RolePermission = 1 << 2 // 4 - Allows creating and modifying emote sets
 )
+
+// Unused Space
+// Range: 1 << 6 - 1 << 12
+const ()
 
 // User / Misc / Special
 // Range: 1 << 13 - 1 << 1 << 29
@@ -74,7 +78,7 @@ const (
 
 // All permissions
 const (
-	RolePermissionAll = RolePermissionCreateEmote | RolePermissionEditEmote | RolePermissionSetChannelEmote |
+	RolePermissionAll = RolePermissionCreateEmote | RolePermissionEditEmote | RolePermissionEditEmoteSet |
 		RolePermissionReportCreate | RolePermissionFeatureZeroWidthEmoteType | RolePermissionFeatureProfilePictureAnimation |
 		RolePermissionManageBans | RolePermissionManageRoles | RolePermissionManageReports |
 		RolePermissionEditAnyEmote | RolePermissionEditAnyEmoteSet | RolePermissionSuperAdministrator |
