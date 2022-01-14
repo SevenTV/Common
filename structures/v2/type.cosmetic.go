@@ -70,8 +70,6 @@ type CosmeticDataPaint struct {
 	DropShadow CosmeticPaintDropShadow `json:"drop_shadow,omitempty" bson:"drop_shadow,omitempty"`
 	// A list of drop shadows. There may be any amount, which can be stacked onto each other
 	DropShadows []CosmeticPaintDropShadow `json:"drop_shadows,omitempty" bson:"drop_shadows,omitempty"`
-	// Animation instructions, if any
-	Animation CosmeticPaintAnimation `json:"animation,omitempty" bson:"animation,omitempty"`
 }
 
 type CosmeticPaintFunction string
