@@ -147,48 +147,6 @@ var UserRelationEditorOf = []bson.D{
 	}},
 }
 
-// User Emote Relations
-//
-// Input: User
-// Adds Field: "channel_emotes" as []UserEmote with the "emote" field added to each UserEmote object
-// Output: User
-var UserRelationChannelEmotes = []bson.D{
-	// Step 1: Lookup user editors
-	{{
-		Key: "$lookup",
-		Value: mongo.Lookup{
-			From:         structures.CollectionNameEmotes,
-			LocalField:   "channel_emotes.id",
-			ForeignField: "_id",
-			As:           "_ce",
-		},
-	}},
-	// Step 3: Set "emote" property to each UserEmote object in the original emotes array
-	{{
-		Key: "$set",
-		Value: bson.M{
-			"channel_emotes": bson.M{
-				"$map": bson.M{
-					"input": "$channel_emotes",
-					"in": bson.M{
-						"$mergeObjects": bson.A{
-							"$$this",
-							bson.M{
-								"emote": bson.M{
-									"$arrayElemAt": bson.A{
-										"$_ce",
-										bson.M{"$indexOfArray": bson.A{"$_ce._id", "$$this.id"}},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}},
-}
-
 // User Owned Emote Relations
 //
 // Input: User
