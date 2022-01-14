@@ -87,8 +87,8 @@ type User struct {
 	Discriminator string `json:"discriminator" bson:"discriminator"`
 	// the user's email
 	Email string `json:"email" bson:"email"`
-	// the user's channel-bound emotes
-	ChannelEmotes []*UserEmote `json:"channel_emotes" bson:"channel_emotes"`
+	// the user's bound emote sets
+	EmoteSetIDs []primitive.ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
 	// list of role IDs directly bound to the user (not via an entitlement)
 	RoleIDs []primitive.ObjectID `json:"role_ids" bson:"role_ids"`
 	// the user's editors
@@ -97,15 +97,17 @@ type User struct {
 	AvatarID string `json:"avatar_id" bson:"avatar_id"`
 	// the user's biography
 	Biography string `json:"biography" bson:"biography"`
-	// token version
+	// token version. When this value changes all existing auth tokens are invalidated
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
-	// third party connections. it's like third parties for a third party.
+	// third party connections. Who's the third party now?
 	Connections []*UserConnection `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
 	BlockedUserIDs []primitive.ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 
 	// Relational
 
+	EmoteSets    []*EmoteSet    `json:"emote_sets" bson:"emote_sets"`
+	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
 	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
 	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
 	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
@@ -323,19 +325,6 @@ type YouTubeConnection struct {
 	ID          string `json:"id" bson:"id"`
 	Title       string `json:"title" bson:"title"`
 	Description string `json:"description" bson:"description"`
-}
-
-type UserEmote struct {
-	ID primitive.ObjectID `json:"id" bson:"id"`
-	// When this has 1 or more items, the emote will only be availablle for these connections (i.e specific twitch/youtube channels)
-	Connections []primitive.ObjectID `json:"connections" bson:"connections,omitempty"`
-	// An alias for this emote
-	Alias *string `json:"alias,omitempty" bson:"alias,omitempty"`
-
-	AddedAt time.Time `json:"added_at,omitempty" bson:"added_at,omitempty"`
-
-	// Relational
-	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
 }
 
 type UserEditor struct {
