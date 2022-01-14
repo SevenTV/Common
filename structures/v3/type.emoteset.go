@@ -8,13 +8,8 @@ import (
 
 type EmoteSet struct {
 	ID primitive.ObjectID `json:"-" bson:"_id,omitempty"`
-	// Numeric unique ID for the set
-	// Starts from 1 and increments per set created
-	NumericID uint64 `json:"id" bson:"num_id"`
-	// A unique tag for the set, between 2 and 5 characters (letters and numbers only)
-	// This can be used for targeting and parsing
-	// May also be an empty string, meaning no tag.
-	Tag string `json:"tag,omitempty" bson:"tag,omitempty"`
+	// Search tags for the emote set
+	Tags []string `json:"tags,omitempty" bson:"tags,omitempty"`
 	// Whether or not the emote set can be edited
 	Immutable bool `json:"immutable" bson:"immutable"`
 	// If true, the set is "privileged" and can only be modified by its owner or a super administrator, regardless of the "Edit Any Emote Set" permission
@@ -50,15 +45,9 @@ type EmoteSetBuilder struct {
 	EmoteSet *EmoteSet
 }
 
-func (esb *EmoteSetBuilder) SetNumericID(i uint64) *EmoteSetBuilder {
-	esb.EmoteSet.NumericID = i
-	esb.Update.Set("num_id", i)
-	return esb
-}
-
-func (esb *EmoteSetBuilder) SetTag(tag string) *EmoteSetBuilder {
-	esb.EmoteSet.Tag = tag
-	esb.Update.Set("tag", tag)
+func (esb *EmoteSetBuilder) SetTags(tags []string) *EmoteSetBuilder {
+	esb.EmoteSet.Tags = tags
+	esb.Update.Set("tags", tags)
 	return esb
 }
 
