@@ -8,6 +8,8 @@ import (
 
 type EmoteSet struct {
 	ID primitive.ObjectID `json:"-" bson:"_id,omitempty"`
+	// The emote set's name
+	Name string `json:"name" bson:"name"`
 	// Search tags for the emote set
 	Tags []string `json:"tags,omitempty" bson:"tags,omitempty"`
 	// Whether or not the emote set can be edited
