@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures"
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -40,7 +40,7 @@ func (um *UserMutation) SetRole(ctx context.Context, inst mongo.Instance, opt Se
 		um.UserBuilder.Update.Pull("role_ids", opt.Role.ID)
 	}
 
-	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
+	if err := inst.Collection(structures.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": target.ID},
 		um.UserBuilder.Update,

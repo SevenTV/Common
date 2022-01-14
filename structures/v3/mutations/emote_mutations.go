@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures"
+	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -47,7 +47,7 @@ func (em *EmoteMutation) Edit(ctx context.Context, inst mongo.Instance, opt Emot
 	}
 
 	// Update the emote
-	if err := inst.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
+	if err := inst.Collection(structures.CollectionNameEmotes).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": emote.ID},
 		em.EmoteBuilder.Update,

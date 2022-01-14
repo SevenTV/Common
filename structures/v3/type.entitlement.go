@@ -24,7 +24,7 @@ func (b EntitlementBuilder) Write(ctx context.Context, inst mongo.Instance) (Ent
 		b.Entitlement.ID = primitive.NewObjectID()
 	}
 
-	if _, err := inst.Collection(mongo.CollectionNameEntitlements).UpdateByID(ctx, b.Entitlement.ID, bson.M{
+	if _, err := inst.Collection(CollectionNameEntitlements).UpdateByID(ctx, b.Entitlement.ID, bson.M{
 		"$set": b.Entitlement,
 	}, &options.UpdateOptions{
 		Upsert: utils.BoolPointer(true),
@@ -43,7 +43,7 @@ func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*
 	}
 
 	user := &User{}
-	if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
+	if err := inst.Collection(CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
 		return nil, err
 	}
 	ub := NewUserBuilder(user)
@@ -177,7 +177,7 @@ func FetchEntitlements(ctx context.Context, inst mongo.Instance, opts struct {
 		}},
 	}
 
-	cur, err := inst.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, pipeline)
+	cur, err := inst.Collection(CollectionNameEntitlements).Aggregate(ctx, pipeline)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	} else if err != nil {

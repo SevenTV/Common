@@ -2,6 +2,7 @@ package aggregations
 
 import (
 	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -15,7 +16,7 @@ var UserRelationRoles = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.LookupWithPipeline{
-			From: mongo.CollectionNameEntitlements,
+			From: structures.CollectionNameEntitlements,
 			Let:  bson.M{"user_id": "$_id"},
 			Pipeline: &mongo.Pipeline{
 				bson.D{{
@@ -47,7 +48,7 @@ var UserRelationRoles = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         mongo.CollectionNameRoles,
+			From:         structures.CollectionNameRoles,
 			LocalField:   "role_ids",
 			ForeignField: "_id",
 			As:           "roles",
@@ -65,7 +66,7 @@ var UserRelationEditors = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         mongo.CollectionNameUsers,
+			From:         structures.CollectionNameUsers,
 			LocalField:   "editors.id",
 			ForeignField: "_id",
 			As:           "_ed",
@@ -105,7 +106,7 @@ var UserRelationEditorOf = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.LookupWithPipeline{
-			From: mongo.CollectionNameUsers,
+			From: structures.CollectionNameUsers,
 			Let:  bson.M{"user_id": "$_id"},
 			Pipeline: &mongo.Pipeline{
 				{{
@@ -156,7 +157,7 @@ var UserRelationChannelEmotes = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         mongo.CollectionNameEmotes,
+			From:         structures.CollectionNameEmotes,
 			LocalField:   "channel_emotes.id",
 			ForeignField: "_id",
 			As:           "_ce",
@@ -197,7 +198,7 @@ var UserRelationOwnedEmotes = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         mongo.CollectionNameEmotes,
+			From:         structures.CollectionNameEmotes,
 			LocalField:   "_id",
 			ForeignField: "owner_id",
 			As:           "owned_emotes",
@@ -243,7 +244,7 @@ func GetEmoteRelationshipOwner(opt UserRelationshipOptions) []bson.D {
 		{{
 			Key: "$lookup",
 			Value: mongo.LookupWithPipeline{
-				From:     mongo.CollectionNameUsers,
+				From:     structures.CollectionNameUsers,
 				Let:      bson.M{"owner_id": "$owner_id"},
 				Pipeline: &up,
 				As:       "owner_user",

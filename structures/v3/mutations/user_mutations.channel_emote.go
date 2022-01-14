@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures"
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -80,7 +80,7 @@ func (um *UserMutation) SetChannelEmote(ctx context.Context, inst mongo.Instance
 		})
 	}
 	// Update the document
-	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
+	if err := inst.Collection(structures.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": targetUser.ID},
 		um.UserBuilder.Update,

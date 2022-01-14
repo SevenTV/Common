@@ -1,7 +1,7 @@
 package mutations
 
 import (
-	"github.com/SevenTV/Common/structures"
+	"github.com/SevenTV/Common/structures/v3"
 )
 
 type ListItemAction string
