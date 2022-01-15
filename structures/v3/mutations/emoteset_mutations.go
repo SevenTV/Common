@@ -201,7 +201,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			return nil, err
 		}
 		for _, e := range targetEmotes {
-			if v, ok := targetEmoteMap[e.ID]; ok {
+			if v, ok := targetEmoteMap[e.ID]; ok && v.Emote != nil {
 				targetEmoteMap[e.ID] = v
 			}
 		}
@@ -236,6 +236,8 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
+		tgt.Alias = tgt.Emote.Name
+
 		switch opt.Action {
 		// ADD EMOTE
 		case ListItemActionAdd:
@@ -275,7 +277,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 					return nil, errors.ErrEmoteAlreadyEnabled
 				}
 				// Cannot have the same emote name as another active emote
-				if (tgt.Alias != "" && e.Alias != "") && tgt.Alias == e.Alias || tgt.Emote.Name == e.Emote.Name {
+				if tgt.Alias == e.Alias {
 					return nil, errors.ErrEmoteNameConflict
 				}
 			}
