@@ -41,12 +41,23 @@ const (
 type ActiveEmote struct {
 	ID        primitive.ObjectID `json:"id" bson:"id"`
 	Alias     string             `json:"alias,omitempty" bson:"alias,omitempty"`
+	Flags     ActiveEmoteFlag    `json:"flags" bson:"flags"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 
 	// Relational
 
 	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
 }
+
+type ActiveEmoteFlag int32
+
+const (
+	ActiveEmoteFlagZeroWidth                ActiveEmoteFlag = 1 << 0 //   1 - Emote is zero-width
+	ActiveEmoteFlagOverrideTwitchGlobal     ActiveEmoteFlag = 1 << 6 //  64 - Overrides Twitch Global emotes with the same name
+	ActiveEmoteFlagOverrideTwitchSubscriber ActiveEmoteFlag = 1 << 7 // 128 - Overrides Twitch Subscriber emotes with the same name
+	ActiveEmoteFlagOverrideBetterTTV        ActiveEmoteFlag = 1 << 8 // 256 - Overrides BetterTTV emotes with the same name
+	ActiveEmoteFlagOverrideFrankerFaceZ     ActiveEmoteFlag = 1 << 9 // 512 - Overrides FrankerFaceZ emotes with the same name
+)
 
 type EmoteSetBuilder struct {
 	Update   UpdateMap
