@@ -2,6 +2,7 @@ package mutations
 
 import (
 	"context"
+	"time"
 
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
@@ -12,10 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Create: create the new emote set
 func (esm *EmoteSetMutation) Create(ctx context.Context, inst mongo.Instance, opt EmoteSetMutationOptions) (*EmoteSetMutation, error) {
+	esm.l.Lock()
+	defer esm.l.Unlock()
 	if esm.EmoteSetBuilder == nil || esm.EmoteSetBuilder.EmoteSet == nil {
 		return nil, errors.ErrInternalIncompleteMutation
 	}
@@ -49,6 +53,8 @@ func (esm *EmoteSetMutation) Create(ctx context.Context, inst mongo.Instance, op
 }
 
 func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, opt SetEmoteSetEmoteOptions) (*EmoteSetMutation, error) {
+	esm.l.Lock()
+	defer esm.l.Unlock()
 	if esm.EmoteSetBuilder == nil || esm.EmoteSetBuilder.EmoteSet == nil {
 		return nil, errors.ErrInternalIncompleteMutation
 	}
@@ -69,9 +75,11 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	{
 		// Find emote set owner
 		if set.Owner == nil {
-			if err := inst.Collection(structures.CollectionNameUsers).FindOne(ctx, bson.M{
-				"_id": esm.EmoteSetBuilder.EmoteSet.OwnerID,
-			}).Decode(set.Owner); err != nil {
+			cur, err := inst.Collection(structures.CollectionNameUsers).Aggregate(ctx, append(mongo.Pipeline{
+				{{Key: "$match", Value: bson.M{"_id": set.OwnerID}}},
+			}, aggregations.UserRelationEditors...))
+			cur.Next(ctx)
+			if err = multierror.Append(err, cur.Decode(set.Owner), cur.Close(ctx)); err != nil {
 				if err == mongo.ErrNoDocuments {
 					return nil, errors.ErrUnknownUser.SetDetail("emote set owner")
 				}
@@ -82,14 +90,10 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 
 		// Fetch set emotes
 		if len(set.Emotes) > 0 {
-			pipeline := append(mongo.Pipeline{
-				{{ // Match only the target set
-					Key:   "$match",
-					Value: bson.M{"_id": set.ID},
-				}},
-			}, aggregations.EmoteSetRelationActiveEmotes...) // add "emote" field in active emotes
-
-			cur, err := inst.Collection(structures.CollectionNameEmoteSets).Aggregate(ctx, pipeline)
+			cur, err := inst.Collection(structures.CollectionNameEmoteSets).Aggregate(ctx, append(mongo.Pipeline{
+				// Match only the target set
+				{{Key: "$match", Value: bson.M{"_id": set.ID}}},
+			}, aggregations.EmoteSetRelationActiveEmotes...))
 			if err = multierror.Append(err, cur.All(ctx, set.Emotes)).ErrorOrNil(); err != nil {
 				logrus.WithError(err).Error("failed to fetch emote data of active emote set emotes")
 				return nil, err
@@ -118,6 +122,26 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		}
 	}
 
+	// The actor must have access to the emote set
+	if set.OwnerID != actor.ID && !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
+		if set.Privileged && !actor.HasPermission(structures.RolePermissionSuperAdministrator) {
+			return nil, errors.ErrInsufficientPrivilege.SetDetail("emote set is privileged")
+		}
+		if set.Owner != nil {
+			for _, ed := range set.Owner.Editors {
+				if ed.ID != actor.ID {
+					continue
+				}
+				if !ed.HasPermission(structures.UserEditorPermissionModifyActiveEmotes) {
+					return nil, errors.ErrInsufficientPrivilege.SetFields(errors.Fields{
+						"MISSING_EDITOR_PERMISSION": "MODIFY_EMOTES",
+					})
+				}
+				break
+			}
+		}
+	}
+
 	// Make a map of active set emotes
 	activeEmotes := map[primitive.ObjectID]*structures.Emote{}
 	for _, e := range set.Emotes {
@@ -130,6 +154,36 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		switch opt.Action {
 		// ADD EMOTE
 		case ListItemActionAdd:
+			// Handle emote privacy
+			if utils.BitField.HasBits(int64(tgt.Emote.Flags), int64(structures.EmoteFlagsPrivate)) {
+				usable := false
+				// Usable if user has Bypass Privacy permission
+				if actor.HasPermission(structures.RolePermissionBypassPrivacy) {
+					usable = true
+				}
+				// Usable if actor is an editor of emote owner
+				// and has the correct permission
+				if tgt.Emote.Owner != nil {
+					var editor *structures.UserEditor
+					for _, ed := range tgt.Emote.Owner.Editors {
+						if opt.Actor.ID == ed.ID {
+							editor = ed
+							break
+						}
+					}
+					if editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
+						usable = true
+					}
+				}
+
+				if !usable {
+					return nil, errors.ErrInsufficientPrivilege.SetFields(errors.Fields{
+						"EMOTE_ID": tgt.ID.Hex(),
+					}).SetDetail("emote is private")
+				}
+			}
+
+			// Check for conflicts with existing emotes
 			for _, e := range set.Emotes {
 				// Cannot enable the same emote twice
 				if tgt.ID == e.ID {
@@ -139,22 +193,38 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 				if (tgt.Alias != "" && e.Alias != "") && tgt.Alias == e.Alias || tgt.Emote.Name == e.Emote.Name {
 					return nil, errors.ErrEmoteNameConflict
 				}
+			}
 
-				// Emote is private
-				if utils.BitField.HasBits(int64(tgt.Emote.Flags), int64(structures.EmoteFlagsPrivate)) {
-					usable := false
-					if actor.HasPermission(structures.RolePermissionBypassPrivacy) {
-						usable = true
-					}
-
-					if !usable {
-						return nil, errors.ErrInsufficientPrivilege.SetFields(errors.Fields{
-							"EMOTE_ID": tgt.ID.Hex(),
-						}).SetDetail("emote is private")
-					}
+			// Add active emote
+			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Alias, time.Now())
+		case ListItemActionUpdate, ListItemActionRemove:
+			// The emote must already be active
+			for _, e := range set.Emotes {
+				if e.ID == tgt.ID {
+					return nil, errors.ErrEmoteNotEnabled.SetFields(errors.Fields{
+						"EMOTE_ID": tgt.ID.Hex(),
+					})
 				}
 			}
+
+			if opt.Action == ListItemActionUpdate {
+				esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Alias)
+			} else if opt.Action == ListItemActionRemove {
+				esm.EmoteSetBuilder.RemoveActiveEmote(tgt.ID)
+			}
 		}
+	}
+
+	// Update the document
+	if err := inst.Collection(structures.CollectionNameEmoteSets).FindOneAndUpdate(
+		ctx,
+		bson.M{
+			"_id": set.ID,
+		},
+		esm.EmoteSetBuilder.Update, options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(esm.EmoteSetBuilder.EmoteSet); err != nil {
+		logrus.WithError(err).WithField("emote_set_id", set.ID).Error("mongo, failed to update emote set")
+		return nil, errors.ErrInternalServerError.SetDetail(err.Error())
 	}
 
 	return esm, nil

@@ -1,6 +1,8 @@
 package mutations
 
 import (
+	"sync"
+
 	"github.com/SevenTV/Common/structures/v3"
 )
 
@@ -26,6 +28,7 @@ type EmoteMutation struct {
 
 type EmoteSetMutation struct {
 	EmoteSetBuilder *structures.EmoteSetBuilder
+	l               sync.Mutex
 }
 
 type MessageMutation struct {

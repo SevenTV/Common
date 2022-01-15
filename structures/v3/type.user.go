@@ -349,10 +349,10 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionModifyEmotes      UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
-	UserEditorPermissionUsePrivateEmotes  UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
-	UserEditorPermissionManageProfile     UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
-	UserEditorPermissionManageOwnedEmotes UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
-	UserEditorPermissionManageEmoteSets   UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
-	UserEditorPermissionManageBilling     UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionModifyActiveEmotes UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
+	UserEditorPermissionUsePrivateEmotes   UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile      UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageOwnedEmotes  UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets    UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
+	UserEditorPermissionManageBilling      UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
 )
