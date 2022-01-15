@@ -4,7 +4,9 @@ import "fmt"
 
 type APIError interface {
 	Error() string
+	Message() string
 	Code() int
+	SetDetail(str string, a ...string) *apiError
 }
 
 var (
@@ -56,6 +58,10 @@ type apiError struct {
 }
 
 func (e *apiError) Error() string {
+	return fmt.Sprintf("[%d] %s", e.code, e.s)
+}
+
+func (e *apiError) Message() string {
 	return e.s
 }
 
@@ -63,12 +69,13 @@ func (e *apiError) Code() int {
 	return e.code
 }
 
+func (e *apiError) SetDetail(str string, a ...string) *apiError {
+	e.s = e.s + ": " + fmt.Sprintf(str, a)
+	return e
+}
+
 func DefineError(code int, s string) APIError {
 	return &apiError{
 		s, code,
 	}
-}
-
-func AppendErrorDetail(err error, txt string, placeholders ...string) error {
-	return fmt.Errorf(fmt.Sprintf(err.Error()+": "+txt, placeholders))
 }

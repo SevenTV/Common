@@ -2,6 +2,7 @@ package aggregations
 
 import (
 	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -14,7 +15,7 @@ var ReportRelationReporter = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         mongo.CollectionNameUsers,
+			From:         structures.CollectionNameUsers,
 			LocalField:   "reporter_id",
 			ForeignField: "_id",
 			As:           "reporters",
@@ -51,7 +52,7 @@ func ReportRelationAssignees() mongo.Pipeline {
 		{{
 			Key: "$lookup",
 			Value: mongo.LookupWithPipeline{
-				From:     mongo.CollectionNameUsers,
+				From:     structures.CollectionNameUsers,
 				Let:      bson.M{"user_ids": "$assignee_ids"},
 				Pipeline: &sp,
 				As:       "assignees",

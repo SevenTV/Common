@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures"
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -28,14 +28,14 @@ func (rm *RoleMutation) Create(ctx context.Context, inst mongo.Instance, opt Rol
 
 	// Create the role
 	rm.RoleBuilder.Role.ID = primitive.NewObjectID()
-	result, err := inst.Collection(mongo.CollectionNameRoles).InsertOne(ctx, rm.RoleBuilder.Role)
+	result, err := inst.Collection(structures.CollectionNameRoles).InsertOne(ctx, rm.RoleBuilder.Role)
 	if err != nil {
 		logrus.WithError(err).Error("mongo")
 		return nil, err
 	}
 
 	// Get the newly created role
-	if inst.Collection(mongo.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rm.RoleBuilder.Role); err != nil {
+	if inst.Collection(structures.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rm.RoleBuilder.Role); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (rm *RoleMutation) Edit(ctx context.Context, inst mongo.Instance, opt RoleE
 	}
 
 	// Update the role
-	if err := inst.Collection(mongo.CollectionNameRoles).FindOneAndUpdate(
+	if err := inst.Collection(structures.CollectionNameRoles).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": rm.RoleBuilder.Role.ID},
 		rm.RoleBuilder.Update,
@@ -103,13 +103,13 @@ func (rm *RoleMutation) Delete(ctx context.Context, inst mongo.Instance, opt Rol
 	}
 
 	// Delete the role
-	if _, err := inst.Collection(mongo.CollectionNameRoles).DeleteOne(ctx, bson.M{"_id": rm.RoleBuilder.Role.ID}); err != nil {
+	if _, err := inst.Collection(structures.CollectionNameRoles).DeleteOne(ctx, bson.M{"_id": rm.RoleBuilder.Role.ID}); err != nil {
 		logrus.WithError(err).Error("mongo")
 		return nil, err
 	}
 
 	// Remove the role from any user who had it
-	ur, err := inst.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
+	ur, err := inst.Collection(structures.CollectionNameUsers).UpdateMany(ctx, bson.M{
 		"role_ids": rm.RoleBuilder.Role.ID,
 	}, bson.M{
 		"$pull": bson.M{
