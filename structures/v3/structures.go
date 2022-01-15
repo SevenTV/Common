@@ -58,6 +58,12 @@ func (u UpdateMap) Pull(key string, value UpdateValue) UpdateMap {
 	return u
 }
 
+func (u UpdateMap) Clear() {
+	for k := range u {
+		delete(u, k)
+	}
+}
+
 var (
 	ErrUnknownEmote          error = fmt.Errorf("unknown emote")
 	ErrUnknownUser           error = fmt.Errorf("unknown user")

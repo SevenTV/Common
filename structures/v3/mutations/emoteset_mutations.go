@@ -49,6 +49,7 @@ func (esm *EmoteSetMutation) Create(ctx context.Context, inst mongo.Instance, op
 		"actor_id":     opt.Actor,
 		"emote_set_id": esm.EmoteSetBuilder.EmoteSet.ID,
 	}).Info("Emote Set Created")
+	esm.EmoteSetBuilder.Update.Clear()
 	return esm, nil
 }
 
@@ -79,7 +80,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 				{{Key: "$match", Value: bson.M{"_id": set.OwnerID}}},
 			}, aggregations.UserRelationEditors...))
 			cur.Next(ctx)
-			if err = multierror.Append(err, cur.Decode(set.Owner), cur.Close(ctx)); err != nil {
+			if err = multierror.Append(err, cur.Decode(set.Owner), cur.Close(ctx)).ErrorOrNil(); err != nil {
 				if err == mongo.ErrNoDocuments {
 					return nil, errors.ErrUnknownUser.SetDetail("emote set owner")
 				}
@@ -227,6 +228,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		return nil, errors.ErrInternalServerError.SetDetail(err.Error())
 	}
 
+	esm.EmoteSetBuilder.Update.Clear()
 	return esm, nil
 }
 
