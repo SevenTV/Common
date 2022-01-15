@@ -10,7 +10,6 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserBuilder struct {
@@ -76,7 +75,7 @@ func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
 
 // User A standard app user object
 type User struct {
-	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
 	UserType UserType `json:"type,omitempty" bson:"type,omitempty"`
 	// the user's username
@@ -88,9 +87,9 @@ type User struct {
 	// the user's email
 	Email string `json:"email" bson:"email"`
 	// the user's bound emote sets
-	EmoteSetIDs []primitive.ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
+	EmoteSetIDs []ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
 	// list of role IDs directly bound to the user (not via an entitlement)
-	RoleIDs []primitive.ObjectID `json:"role_ids" bson:"role_ids"`
+	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
 	// the user's editors
 	Editors []*UserEditor `json:"editors" bson:"editors"`
 	// the user's avatar URL
@@ -102,7 +101,7 @@ type User struct {
 	// third party connections. Who's the third party now?
 	Connections []*UserConnection `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
-	BlockedUserIDs []primitive.ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
+	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 
 	// Relational
 
@@ -328,9 +327,9 @@ type YouTubeConnection struct {
 }
 
 type UserEditor struct {
-	ID primitive.ObjectID `json:"id" bson:"id"`
+	ID ObjectID `json:"id" bson:"id"`
 	// When this has 1 or more items, this editor will only have access to these connections (i.e specific twitch/youtube channels)
-	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+	Connections []ObjectID `json:"connections" bson:"connections"`
 	// The permissions this editor has
 	Permissions UserEditorPermission `json:"permissions" bson:"permissions"`
 	// Whether or not that editor will be visible on the user's profile page
@@ -350,10 +349,10 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionModifyChannelEmotes UserEditorPermission = 1 << iota // 1 - Allows adding emotes
-	UserEditorPermissionUsePrivateEmotes                                     // 2 - Allows using the user's private emotes
-	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
-	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
-	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
-	UserEditorPermissionManageEmoteSets                                      // 32 - Allows managing the user's owned emote sets
+	UserEditorPermissionModifyEmotes      UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
+	UserEditorPermissionUsePrivateEmotes  UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile     UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageOwnedEmotes UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets   UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
+	UserEditorPermissionManageBilling     UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
 )
