@@ -1,6 +1,7 @@
 package structures
 
 import (
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -83,28 +84,48 @@ func (esb *EmoteSetBuilder) SetOwnerID(id primitive.ObjectID) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) AddActiveEmote(emote *ActiveEmote) *EmoteSetBuilder {
+func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Time) *EmoteSetBuilder {
 	for _, e := range esb.EmoteSet.Emotes {
-		if e.ID == emote.ID {
+		if e.ID == id {
 			return esb // emote already added.
 		}
 	}
 
-	esb.EmoteSet.Emotes = append(esb.EmoteSet.Emotes, emote)
-	esb.Update.AddToSet("emotes", emote)
+	v := &ActiveEmote{
+		ID:        id,
+		Alias:     alias,
+		Timestamp: at,
+	}
+	esb.EmoteSet.Emotes = append(esb.EmoteSet.Emotes, v)
+	esb.Update.AddToSet("emotes", v)
 	return esb
 }
 
-func (esb *EmoteSetBuilder) RemoveActiveEmote(emote *ActiveEmote) *EmoteSetBuilder {
-	ind := int32(-1)
+func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteSetBuilder {
+	ind := -1
+	for i, e := range esb.EmoteSet.Emotes {
+		if e.ID == id {
+			ind = i
+			break
+		}
+	}
+
+	v := esb.EmoteSet.Emotes[ind]
+	v.Alias = alias
+	esb.Update.Set(fmt.Sprintf("emotes.%d", ind), v)
+	return esb
+}
+
+func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
+	ind := -1
 	for i := range esb.EmoteSet.Emotes {
 		if esb.EmoteSet.Emotes[i] == nil {
 			continue
 		}
-		if esb.EmoteSet.Emotes[i].ID != emote.ID {
+		if esb.EmoteSet.Emotes[i].ID != id {
 			continue
 		}
-		ind = int32(i)
+		ind = i
 		break
 	}
 	if ind == -1 {
@@ -114,6 +135,6 @@ func (esb *EmoteSetBuilder) RemoveActiveEmote(emote *ActiveEmote) *EmoteSetBuild
 	copy(esb.EmoteSet.Emotes[ind:], esb.EmoteSet.Emotes[ind+1:])
 	esb.EmoteSet.Emotes[len(esb.EmoteSet.Emotes)-1] = nil
 	esb.EmoteSet.Emotes = esb.EmoteSet.Emotes[:len(esb.EmoteSet.Emotes)-1]
-	esb.Update.Pull("emotes.id", emote.ID)
+	esb.Update.Pull("emotes.id", id)
 	return esb
 }
