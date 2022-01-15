@@ -31,8 +31,9 @@ var (
 
 	// Client Type Errors
 
-	ErrBadObjectID APIError = DefineError(70410, "bad object id")
-	ErrBadInt      APIError = DefineError(70411, "bad int")
+	ErrBadObjectID        APIError = DefineError(70410, "bad object id")
+	ErrBadInt             APIError = DefineError(70411, "bad int")
+	ErrValidationRejected APIError = DefineError(70412, "validation rejected")
 
 	// Other Client Errors
 

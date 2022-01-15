@@ -33,6 +33,11 @@ type EmoteSet struct {
 	Owner *User `json:"owner" bson:"owner"`
 }
 
+const (
+	EmoteSetNameLengthLeast int = 48
+	EmoteSetNameLengthMost  int = 3
+)
+
 type ActiveEmote struct {
 	ID        primitive.ObjectID `json:"id" bson:"id"`
 	Alias     string             `json:"alias,omitempty" bson:"alias,omitempty"`
@@ -46,6 +51,26 @@ type ActiveEmote struct {
 type EmoteSetBuilder struct {
 	Update   UpdateMap
 	EmoteSet *EmoteSet
+
+	Initial EmoteSet
+}
+
+func NewEmoteSetBuilder(emoteSet *EmoteSet) *EmoteSetBuilder {
+	var init EmoteSet
+	if emoteSet != nil {
+		init = *emoteSet
+	}
+	return &EmoteSetBuilder{
+		Update:   map[string]interface{}{},
+		EmoteSet: emoteSet,
+		Initial:  init,
+	}
+}
+
+func (esb *EmoteSetBuilder) SetName(name string) *EmoteSetBuilder {
+	esb.EmoteSet.Name = name
+	esb.Update.Set("name", name)
+	return esb
 }
 
 func (esb *EmoteSetBuilder) SetTags(tags []string) *EmoteSetBuilder {
