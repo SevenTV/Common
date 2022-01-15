@@ -236,7 +236,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
-		tgt.Alias = tgt.Emote.Name
+		tgt.Name = tgt.Emote.Name
 
 		switch opt.Action {
 		// ADD EMOTE
@@ -277,13 +277,13 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 					return nil, errors.ErrEmoteAlreadyEnabled
 				}
 				// Cannot have the same emote name as another active emote
-				if tgt.Alias == e.Alias {
+				if tgt.Name == e.Name {
 					return nil, errors.ErrEmoteNameConflict
 				}
 			}
 
 			// Add active emote
-			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Alias, time.Now())
+			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Name, time.Now())
 		case ListItemActionUpdate, ListItemActionRemove:
 			// The emote must already be active
 			for _, e := range set.Emotes {
@@ -295,7 +295,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			}
 
 			if opt.Action == ListItemActionUpdate {
-				esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Alias)
+				esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Name)
 			} else if opt.Action == ListItemActionRemove {
 				esm.EmoteSetBuilder.RemoveActiveEmote(tgt.ID)
 			}

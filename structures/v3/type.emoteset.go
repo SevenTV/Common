@@ -40,7 +40,7 @@ const (
 
 type ActiveEmote struct {
 	ID        primitive.ObjectID `json:"id" bson:"id"`
-	Alias     string             `json:"alias,omitempty" bson:"alias,omitempty"`
+	Name      string             `json:"alias,omitempty" bson:"alias,omitempty"`
 	Flags     ActiveEmoteFlag    `json:"flags" bson:"flags"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 
@@ -129,7 +129,7 @@ func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Ti
 
 	v := &ActiveEmote{
 		ID:        id,
-		Alias:     alias,
+		Name:      alias,
 		Timestamp: at,
 	}
 	esb.EmoteSet.Emotes = append(esb.EmoteSet.Emotes, v)
@@ -147,7 +147,7 @@ func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteS
 	}
 
 	v := esb.EmoteSet.Emotes[ind]
-	v.Alias = alias
+	v.Name = alias
 	esb.Update.Set(fmt.Sprintf("emotes.%d", ind), v)
 	return esb
 }
