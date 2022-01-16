@@ -2,8 +2,6 @@ package mongo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,9 +9,6 @@ import (
 
 func collSync(ctx context.Context, inst Instance) error {
 	for _, col := range collections {
-		b, _ := json.Marshal(col.Validator)
-		fmt.Println(string(b))
-
 		if err := inst.RawDatabase().RunCommand(ctx, bson.D{
 			{Key: "collMod", Value: col.Name},
 			{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
@@ -41,8 +36,11 @@ type jsonSchema struct {
 	Description string `json:"description" bson:"description"`
 	// A list of fields that are required to be present in the collection's documents
 	Required []string `json:"required,omitempty" bson:"required,omitempty"`
-	Maximum  *int64   `json:"maximum,omitempty" bson:"maximum,omitempty"`
-	Minimum  *int64   `json:"minimum,omitempty" bson:"minimum,omitempty"`
+
+	Pattern string   `json:"pattern,omitempty" bson:"pattern,omitempty"`
+	Enum    []string `json:"enum,omitempty" bson:"enum,omitempty"`
+	Maximum *int64   `json:"maximum,omitempty" bson:"maximum,omitempty"`
+	Minimum *int64   `json:"minimum,omitempty" bson:"minimum,omitempty"`
 	// Indicates the maximum length of the field
 	MaxLength *int64 `json:"maxLength,omitempty" bson:"maxLength,omitempty"`
 	// Indicates the minimum length of the field
@@ -62,6 +60,8 @@ type jsonSchema struct {
 	OneOf []*jsonSchema `json:"oneOf,omitempty" bson:"oneOf,omitempty"`
 	// Field must not match the schema
 	Not *jsonSchema `json:"not,omitempty" bson:"not,omitempty"`
+	// Must be either a valid JSON Schema, or an array of valid JSON Schemas
+	Items []*jsonSchema `json:"items,omitempty" bson:"items,omitempty"`
 }
 
 type BSONType string
@@ -85,90 +85,3 @@ const (
 	BSONTypeMinkey     BSONType = "minKey"
 	BSONTypeMaxkey     BSONType = "maxKey"
 )
-
-/*
-db.createCollection('users', {
-  validator: {
-    $jsonSchema: {
-      bsonType: 'object',
-      title: 'users',
-      required: ['editors', 'emotes', 'role'],
-      properties: {
-        broadcaster_type: {
-          bsonType: 'string'
-        },
-        description: {
-          bsonType: 'string'
-        },
-        display_name: {
-          bsonType: 'string'
-        },
-        editors: {
-          bsonType: 'array',
-          items: {
-            bsonType: 'objectId'
-          }
-        },
-        email: {
-          bsonType: 'string'
-        },
-        emote_slots: {
-          bsonType: 'int'
-        },
-        emotes: {
-          bsonType: 'array',
-          items: {
-            bsonType: 'objectId'
-          }
-        },
-        id: {
-          bsonType: 'string'
-        },
-        login: {
-          bsonType: 'string'
-        },
-        offline_image_url: {
-          bsonType: 'string'
-        },
-        profile_image_url: {
-          bsonType: 'string'
-        },
-        profile_picture_id: {
-          bsonType: 'objectId'
-        },
-        rank: {
-          bsonType: 'int'
-        },
-        role: {
-          bsonType: 'objectId'
-        },
-        token_version: {
-          bsonType: 'string'
-        },
-        twitch_created_at: {
-          bsonType: 'date'
-        },
-        view_count: {
-          bsonType: 'int'
-        },
-        yt_description: {
-          bsonType: 'string'
-        },
-        yt_id: {
-          bsonType: 'string'
-        },
-        yt_profile_image_url: {
-          bsonType: 'string'
-        },
-        yt_subscriber_count: {
-          bsonType: 'int'
-        },
-        yt_view_count: {
-          bsonType: 'int'
-        }
-      }
-    }
-  }
-});
-
-*/
