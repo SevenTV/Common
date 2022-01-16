@@ -49,11 +49,13 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	}
 
 	logrus.Info("mongo, ok")
-
-	return &mongoInst{
+	inst := &mongoInst{
 		client: client,
 		db:     database,
-	}, nil
+	}
+
+	collSync(ctx, inst)
+	return inst, nil
 }
 
 type SetupOptions struct {
