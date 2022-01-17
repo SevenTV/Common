@@ -86,8 +86,6 @@ type User struct {
 	Discriminator string `json:"discriminator" bson:"discriminator"`
 	// the user's email
 	Email string `json:"email" bson:"email"`
-	// the user's bound emote sets
-	EmoteSetIDs []ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
 	// list of role IDs directly bound to the user (not via an entitlement)
 	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
 	// the user's editors
@@ -105,7 +103,6 @@ type User struct {
 
 	// Relational
 
-	EmoteSets    []*EmoteSet    `json:"emote_sets" bson:"emote_sets"`
 	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
 	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
 	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
@@ -192,13 +189,21 @@ var (
 	UserTypeSystem  UserType = "SYSTEM"
 )
 
-// UserConnection Represents an external connection to a platform for a user
+// UserConnection: Represents an external connection to a platform for a user
 type UserConnection struct {
-	ID       string                 `json:"id,omitempty" bson:"id,omitempty"`
+	ID string `json:"id,omitempty" bson:"id,omitempty"`
+	// the platform of this connection
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
-	LinkedAt time.Time              `json:"linked_at" bson:"linked_at"`
-	Data     bson.Raw               `json:"data" bson:"data"`
-	Grant    *UserConnectionGrant   `json:"-" bson:"grant"`
+	// the time at which this connection was linked
+	LinkedAt time.Time `json:"linked_at" bson:"linked_at"`
+	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
+	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_sllots,omitempty"`
+	// emote sets bound to this connection / channel
+	EmoteSetIDs []ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
+	// third-party connection data
+	Data bson.Raw `json:"data" bson:"data"`
+	// a full oauth2 token grant
+	Grant *UserConnectionGrant `json:"-" bson:"grant"`
 }
 
 type UserConnectionGrant struct {
@@ -208,7 +213,7 @@ type UserConnectionGrant struct {
 	ExpiresAt    time.Time `json:"expires_at" bson:"expires_at"`
 }
 
-// UserConnectionBuilder utility for creating a new UserConnection
+// UserConnectionBuilder: utility for creating a new UserConnection
 type UserConnectionBuilder struct {
 	Update         UpdateMap
 	UserConnection *UserConnection

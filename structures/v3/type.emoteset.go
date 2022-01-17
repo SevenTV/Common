@@ -22,7 +22,7 @@ type EmoteSet struct {
 	// The emotes assigned to this set
 	Emotes []*ActiveEmote `json:"emotes" bson:"emotes"`
 	// The maximum amount of emotes this set is allowed to contain
-	EmoteSlots uint32 `json:"emote_slots" bson:"emote_slots"`
+	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
 	// The ID of the user who owns this emote set
 	OwnerID primitive.ObjectID `json:"owner_id" bson:"owner_id"`
 
@@ -40,7 +40,7 @@ const (
 
 type ActiveEmote struct {
 	ID        primitive.ObjectID `json:"id" bson:"id"`
-	Name      string             `json:"alias,omitempty" bson:"alias,omitempty"`
+	Name      string             `json:"name,omitempty" bson:"name,omitempty"`
 	Flags     ActiveEmoteFlag    `json:"flags" bson:"flags"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 
@@ -52,11 +52,11 @@ type ActiveEmote struct {
 type ActiveEmoteFlag int32
 
 const (
-	ActiveEmoteFlagZeroWidth                ActiveEmoteFlag = 1 << 0 //   1 - Emote is zero-width
-	ActiveEmoteFlagOverrideTwitchGlobal     ActiveEmoteFlag = 1 << 6 //  64 - Overrides Twitch Global emotes with the same name
-	ActiveEmoteFlagOverrideTwitchSubscriber ActiveEmoteFlag = 1 << 7 // 128 - Overrides Twitch Subscriber emotes with the same name
-	ActiveEmoteFlagOverrideBetterTTV        ActiveEmoteFlag = 1 << 8 // 256 - Overrides BetterTTV emotes with the same name
-	ActiveEmoteFlagOverrideFrankerFaceZ     ActiveEmoteFlag = 1 << 9 // 512 - Overrides FrankerFaceZ emotes with the same name
+	ActiveEmoteFlagZeroWidth                ActiveEmoteFlag = 1 << 0  // 1 - Emote is zero-width
+	ActiveEmoteFlagOverrideTwitchGlobal     ActiveEmoteFlag = 1 << 16 // 65536 - Overrides Twitch Global emotes with the same name
+	ActiveEmoteFlagOverrideTwitchSubscriber ActiveEmoteFlag = 1 << 17 // 131072 - Overrides Twitch Subscriber emotes with the same name
+	ActiveEmoteFlagOverrideBetterTTV        ActiveEmoteFlag = 1 << 18 // 262144 - Overrides BetterTTV emotes with the same name
+	ActiveEmoteFlagOverrideFrankerFaceZ     ActiveEmoteFlag = 1 << 19 // 524288 - Overrides FrankerFaceZ emotes with the same name
 )
 
 type EmoteSetBuilder struct {
@@ -108,7 +108,7 @@ func (esb *EmoteSetBuilder) SetActive(b bool) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) SetEmoteSlots(slots uint32) *EmoteSetBuilder {
+func (esb *EmoteSetBuilder) SetEmoteSlots(slots int32) *EmoteSetBuilder {
 	esb.EmoteSet.EmoteSlots = slots
 	esb.Update.Set("emote_slots", slots)
 	return esb

@@ -8,7 +8,6 @@ var DeletedUser = &User{
 	Username:      "*deleted_user",
 	DisplayName:   "*DeletedUser",
 	Discriminator: "0000",
-	EmoteSets:     []*EmoteSet{},
 	RoleIDs:       []primitive.ObjectID{},
 	Editors:       []*UserEditor{},
 	TokenVersion:  0,
