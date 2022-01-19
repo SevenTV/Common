@@ -9,18 +9,19 @@ import (
 var collections = []collectionRef{
 	{
 		Name: "users",
+		Indexes: []IndexModel{
+			{Keys: bson.M{"username": -1}, Options: options.Index().SetUnique(true)},
+		},
 		Validator: jsonSchema{
 			BSONType: BSONTypeObject,
-			Title:    "users",
+			Title:    "Users",
 			Required: []string{"username", "discriminator"},
 			Properties: map[string]*jsonSchema{
 				"type": {BSONType: BSONTypeString, Enum: []string{"", "BOT", "SYSTEM"}},
 				"username": {
-					BSONType:    BSONTypeString,
-					Title:       "Username",
-					Description: "The user's username",
-					MinLength:   utils.Int64Pointer(1),
-					MaxLength:   utils.Int64Pointer(25),
+					BSONType:  BSONTypeString,
+					MinLength: utils.Int64Pointer(1),
+					MaxLength: utils.Int64Pointer(25),
 				},
 				"dislay_name":   {BSONType: BSONTypeString},
 				"discriminator": {BSONType: BSONTypeString, MinLength: utils.Int64Pointer(4), MaxLength: utils.Int64Pointer(4)},
@@ -64,8 +65,61 @@ var collections = []collectionRef{
 				},
 			},
 		},
+	},
+
+	{
+		Name: "emotes",
 		Indexes: []IndexModel{
-			{Keys: bson.M{"username": -1}, Options: options.Index().SetUnique(true)},
+			{Keys: bson.M{"owner_id": -1}},
+			{Keys: bson.D{
+				{Key: "name", Value: "text"},
+				{Key: "tags", Value: "text"},
+			}, Options: options.Index().SetTextVersion(3)},
+		},
+		Validator: jsonSchema{
+			BSONType: BSONTypeObject,
+			Title:    "Emotes",
+			Required: []string{"name", "status"},
+			Properties: map[string]*jsonSchema{
+				"owner_id": {BSONType: BSONTypeObjectId},
+				"name":     {BSONType: BSONTypeString, MinLength: utils.Int64Pointer(1)},
+				"flags":    {BSONType: BSONTypeInt32},
+				"tags":     {BSONType: BSONTypeArray, UniqueItems: utils.BoolPointer(true)},
+				"status": {
+					BSONType: BSONTypeInt32,
+					Minimum:  utils.Int64Pointer(-2),
+					Maximum:  utils.Int64Pointer(3),
+				},
+				"frame_count": {BSONType: BSONTypeInt32},
+				"formats": {
+					BSONType: BSONTypeArray,
+					Items: []*jsonSchema{{
+						BSONType: BSONTypeObject,
+						Properties: map[string]*jsonSchema{
+							"name": {
+								BSONType: BSONTypeString,
+								Enum:     []string{"image/webp", "image/avif", "image/gif", "image/png"},
+							},
+							"sizes": {
+								BSONType: BSONTypeArray,
+								Items: []*jsonSchema{{
+									BSONType: BSONTypeObject,
+									Properties: map[string]*jsonSchema{
+										"scale":    {BSONType: BSONTypeString},
+										"width":    {BSONType: BSONTypeInt32},
+										"height":   {BSONType: BSONTypeInt32},
+										"animated": {BSONType: BSONTypeBoolean},
+										"time":     {BSONType: BSONTypeInt64},
+										"length":   {BSONType: BSONTypeInt64},
+									},
+								}},
+							},
+						},
+					}},
+				},
+				"parent_id":    {BSONType: BSONTypeObjectId},
+				"children_ids": {BSONType: BSONTypeArray, Items: []*jsonSchema{{BSONType: BSONTypeObjectId}}},
+			},
 		},
 	},
 }

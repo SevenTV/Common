@@ -9,7 +9,12 @@ import (
 
 func collSync(ctx context.Context, inst Instance) error {
 	for _, col := range collections {
-		if err := inst.RawDatabase().RunCommand(ctx, bson.D{
+		_, err := inst.Collection(CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
+		if err != nil {
+			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to set up indexes")
+		}
+
+		if err = inst.RawDatabase().RunCommand(ctx, bson.D{
 			{Key: "collMod", Value: col.Name},
 			{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
 			{Key: "validationAction", Value: "error"},
@@ -49,6 +54,8 @@ type jsonSchema struct {
 	MaxItems *int64 `json:"maxItems,omitempty" bson:"maxItems,omitempty"`
 	// Indicates the minimum length of array
 	MinItems *int64 `json:"minItems,omitempty" bson:"minItems,omitempty"`
+	// If true, each item in the array must be unique. Otherwise, no uniqueness constraint is enforced.
+	UniqueItems *bool `json:"uniqueItems,omitempty" bson:"uniqueItems,omitempty"`
 	// Field must be a multiple of this value
 	MultipleOf *int64 `json:"multipleOf,omitempty" bson:"multipleOf,omitempty"`
 
