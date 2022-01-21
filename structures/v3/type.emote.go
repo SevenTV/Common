@@ -93,10 +93,6 @@ type Emote struct {
 	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
 
-	// Non-structural
-
-	Links [][]string `json:"urls" bson:"-"` // CDN URLs
-
 	// Relational
 
 	Owner    *User   `json:"owner" bson:"owner_user,skip,omitempty"`
