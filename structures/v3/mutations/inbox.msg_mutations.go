@@ -23,7 +23,7 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 
 	// Find recipients
 	recipients := []*structures.User{}
-	cur, err := inst.Collection(structures.CollectionNameUsers).Find(ctx, bson.M{
+	cur, err := inst.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 		"$and": func() bson.A {
 			a := bson.A{bson.M{"_id": bson.M{"$in": opt.Recipients}}}
 			if opt.ConsiderBlockedUsers { // omit blocked users from recipients?
@@ -43,7 +43,7 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 	}
 
 	// Write message to DB
-	result, err := inst.Collection(structures.CollectionNameMessages).InsertOne(ctx, mm.MessageBuilder.Message)
+	result, err := inst.Collection(mongo.CollectionNameMessages).InsertOne(ctx, mm.MessageBuilder.Message)
 	if err != nil {
 		logrus.WithError(err).WithField("actor_id", actor.ID).Error("mongo, failed to create message")
 		return nil, err
@@ -61,7 +61,7 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 			},
 		}
 	}
-	if _, err = inst.Collection(structures.CollectionNameMessagesRead).BulkWrite(ctx, w); err != nil {
+	if _, err = inst.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"message_id":      result.InsertedID,
 			"recipient_count": len(recipients),

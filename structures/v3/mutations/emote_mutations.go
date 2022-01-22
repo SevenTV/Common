@@ -47,7 +47,7 @@ func (em *EmoteMutation) Edit(ctx context.Context, inst mongo.Instance, opt Emot
 	}
 
 	// Update the emote
-	if err := inst.Collection(structures.CollectionNameEmotes).FindOneAndUpdate(
+	if err := inst.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": emote.ID},
 		em.EmoteBuilder.Update,

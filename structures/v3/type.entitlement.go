@@ -1,56 +1,15 @@
 package structures
 
 import (
-	"context"
-	"fmt"
-
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type EntitlementBuilder struct {
 	Entitlement Entitlement
 
 	User *User
-}
-
-func (b EntitlementBuilder) Write(ctx context.Context, inst mongo.Instance) (EntitlementBuilder, error) {
-	// Create new Object ID if this is a new entitlement
-	if b.Entitlement.ID.IsZero() {
-		b.Entitlement.ID = primitive.NewObjectID()
-	}
-
-	if _, err := inst.Collection(CollectionNameEntitlements).UpdateByID(ctx, b.Entitlement.ID, bson.M{
-		"$set": b.Entitlement,
-	}, &options.UpdateOptions{
-		Upsert: utils.BoolPointer(true),
-	}); err != nil {
-		logrus.WithError(err).Error("mongo")
-		return b, err
-	}
-
-	return b, nil
-}
-
-// GetUser: Fetch the user data from the user ID assigned to the entitlement
-func (b EntitlementBuilder) GetUser(ctx context.Context, inst mongo.Instance) (*UserBuilder, error) {
-	if b.Entitlement.UserID.IsZero() {
-		return nil, fmt.Errorf("Entitlement does not have a user assigned")
-	}
-
-	user := &User{}
-	if err := inst.Collection(CollectionNameUsers).FindOne(ctx, bson.M{"_id": b.Entitlement.ID}).Decode(user); err != nil {
-		return nil, err
-	}
-	ub := NewUserBuilder(user)
-
-	// role := datastructure.GetRole(ub.User.RoleID)
-	// ub.User.Role = &role
-	return ub, nil
 }
 
 // SetKind: Change the entitlement's kind
@@ -136,75 +95,6 @@ func (b EntitlementBuilder) ReadEmoteSetData() EntitledEmoteSet {
 		return e
 	}
 	return e
-}
-
-// FetchEntitlements: gets entitlement of specified kind
-func FetchEntitlements(ctx context.Context, inst mongo.Instance, opts struct {
-	Kind            *EntitlementKind
-	ObjectReference primitive.ObjectID
-}) ([]EntitlementBuilder, error) {
-	// Make a request to get the user's entitlements
-	var entitlements []*entitlementWithUser
-	query := bson.M{
-		"kind":     opts.Kind,
-		"disabled": bson.M{"$not": bson.M{"$eq": true}},
-	}
-	if !opts.ObjectReference.IsZero() {
-		query["data.ref"] = opts.ObjectReference
-	}
-
-	pipeline := mongo.Pipeline{
-		bson.D{bson.E{
-			Key:   "$match",
-			Value: query,
-		}},
-		bson.D{bson.E{
-			Key:   "$addFields",
-			Value: bson.M{"entitlement": "$$ROOT"},
-		}},
-		bson.D{bson.E{
-			Key: "$lookup",
-			Value: bson.M{
-				"from":         "users",
-				"localField":   "user_id",
-				"foreignField": "_id",
-				"as":           "user",
-			},
-		}},
-		bson.D{bson.E{
-			Key:   "$unwind",
-			Value: "$user",
-		}},
-	}
-
-	cur, err := inst.Collection(CollectionNameEntitlements).Aggregate(ctx, pipeline)
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	} else if err != nil {
-		logrus.WithError(err).Error("actions, UserBuilder, FetchEntitlements")
-		return nil, err
-	}
-
-	// Get all entitlements
-	if err := cur.All(ctx, &entitlements); err != nil {
-		return nil, err
-	}
-
-	// Wrap into Entitlement Builders
-	builders := make([]EntitlementBuilder, len(entitlements))
-	for i, e := range entitlements {
-		builders[i] = EntitlementBuilder{
-			Entitlement: *e.Entitlement,
-			User:        e.User,
-		}
-	}
-
-	return builders, nil
-}
-
-type entitlementWithUser struct {
-	*Entitlement
-	User *User
 }
 
 func (b EntitlementBuilder) Log(str string) {

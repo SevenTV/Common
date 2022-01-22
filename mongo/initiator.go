@@ -28,9 +28,10 @@ func collSync(ctx context.Context, inst Instance) error {
 }
 
 type collectionRef struct {
-	Name      string
-	Validator jsonSchema
-	Indexes   []IndexModel
+	Name           string
+	Validator      jsonSchema
+	Indexes        []IndexModel
+	DefaultObjects []interface{}
 }
 
 type jsonSchema struct {

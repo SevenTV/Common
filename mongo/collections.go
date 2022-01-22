@@ -1,8 +1,12 @@
 package mongo
 
 import (
+	"time"
+
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -63,6 +67,18 @@ var collections = []collectionRef{
 						},
 					}},
 				},
+			},
+		},
+		DefaultObjects: []interface{}{
+			&structures.User{
+				ID:            primitive.NewObjectIDFromTimestamp(time.Date(2021, time.February, 26, 0, 0, 0, 0, time.UTC)),
+				UserType:      structures.UserTypeSystem,
+				Username:      "admin",
+				DisplayName:   "Admin",
+				Discriminator: "0001",
+				Email:         "system@7tv.app",
+				Biography:     "System-generated account",
+				TokenVersion:  0,
 			},
 		},
 	},

@@ -2,7 +2,6 @@ package aggregations
 
 import (
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -16,7 +15,7 @@ var EmoteSetRelationActiveEmotes = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameEmotes,
+			From:         mongo.CollectionNameEmotes,
 			LocalField:   "emotes.id",
 			ForeignField: "_id",
 			As:           "_emotes",

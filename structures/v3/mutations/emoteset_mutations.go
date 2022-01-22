@@ -35,14 +35,14 @@ func (esm *EmoteSetMutation) Create(ctx context.Context, inst mongo.Instance, op
 
 	// Create the emote set
 	esm.EmoteSetBuilder.EmoteSet.ID = primitive.NewObjectID()
-	result, err := inst.Collection(structures.CollectionNameEmoteSets).InsertOne(ctx, esm.EmoteSetBuilder.EmoteSet)
+	result, err := inst.Collection(mongo.CollectionNameEmoteSets).InsertOne(ctx, esm.EmoteSetBuilder.EmoteSet)
 	if err != nil {
 		logrus.WithError(err).Error("mongo")
 		return nil, err
 	}
 
 	// Get the newly created emote set
-	if err = inst.Collection(structures.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(esm.EmoteSetBuilder.EmoteSet); err != nil {
+	if err = inst.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(esm.EmoteSetBuilder.EmoteSet); err != nil {
 		return nil, err
 	}
 	if err != nil {
@@ -117,7 +117,7 @@ func (esm *EmoteSetMutation) Edit(ctx context.Context, inst mongo.Instance, opt 
 	}
 
 	// Update the document
-	if err := inst.Collection(structures.CollectionNameEmoteSets).FindOneAndUpdate(
+	if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOneAndUpdate(
 		ctx, bson.M{
 			"_id": set.ID,
 		},
@@ -160,7 +160,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	{
 		// Find emote set owner
 		if set.Owner == nil {
-			cur, err := inst.Collection(structures.CollectionNameUsers).Aggregate(ctx, append(mongo.Pipeline{
+			cur, err := inst.Collection(mongo.CollectionNameUsers).Aggregate(ctx, append(mongo.Pipeline{
 				{{Key: "$match", Value: bson.M{"_id": set.OwnerID}}},
 			}, aggregations.UserRelationEditors...))
 			cur.Next(ctx)
@@ -175,7 +175,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 
 		// Fetch set emotes
 		if len(set.Emotes) > 0 {
-			cur, err := inst.Collection(structures.CollectionNameEmoteSets).Aggregate(ctx, append(mongo.Pipeline{
+			cur, err := inst.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, append(mongo.Pipeline{
 				// Match only the target set
 				{{Key: "$match", Value: bson.M{"_id": set.ID}}},
 			}, aggregations.EmoteSetRelationActiveEmotes...))
@@ -192,7 +192,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		}
 
 		targetEmotes := []*structures.Emote{}
-		cur, err := inst.Collection(structures.CollectionNameEmotes).Aggregate(ctx, append(mongo.Pipeline{
+		cur, err := inst.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, append(mongo.Pipeline{
 			{{Key: "$match", Value: bson.M{"_id": bson.M{"$in": targetEmoteIDs}}}},
 		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Editors: true})...))
 		err = multierror.Append(err, cur.All(ctx, targetEmotes)).ErrorOrNil()
@@ -303,7 +303,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	}
 
 	// Update the document
-	if err := inst.Collection(structures.CollectionNameEmoteSets).FindOneAndUpdate(
+	if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOneAndUpdate(
 		ctx,
 		bson.M{
 			"_id": set.ID,
