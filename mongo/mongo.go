@@ -2,7 +2,9 @@ package mongo
 
 import (
 	"context"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -52,6 +54,7 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	inst := &mongoInst{
 		client: client,
 		db:     database,
+		cache:  cache.New(time.Second*10, time.Second*20),
 	}
 
 	collSync(ctx, inst)

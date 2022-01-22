@@ -5,15 +5,18 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func collSync(ctx context.Context, inst Instance) error {
 	for _, col := range collections {
+		// Set up indexes
 		_, err := inst.Collection(CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
 		if err != nil {
 			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to set up indexes")
 		}
 
+		// Update schemas
 		if err = inst.RawDatabase().RunCommand(ctx, bson.D{
 			{Key: "collMod", Value: col.Name},
 			{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
@@ -22,16 +25,28 @@ func collSync(ctx context.Context, inst Instance) error {
 		}).Err(); err != nil {
 			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to update collection validator")
 		}
+
+		// Set up system collection
+		{
+			// Fetch system information
+			sys := inst.System(ctx)
+			if sys.ID.IsZero() {
+				sys.ID = primitive.NewObjectID()
+				result, err := inst.Collection(CollectionNameSystem).InsertOne(ctx, sys)
+				if err == nil {
+					sys.ID = result.InsertedID.(primitive.ObjectID)
+				}
+			}
+		}
 	}
 
 	return nil
 }
 
 type collectionRef struct {
-	Name           string
-	Validator      jsonSchema
-	Indexes        []IndexModel
-	DefaultObjects []interface{}
+	Name      string
+	Validator jsonSchema
+	Indexes   []IndexModel
 }
 
 type jsonSchema struct {

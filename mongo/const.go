@@ -3,6 +3,7 @@ package mongo
 type CollectionName string
 
 var (
+	CollectionNameSystem       CollectionName = "system"
 	CollectionNameEmotes       CollectionName = "emotes"
 	CollectionNameEmoteSets    CollectionName = "emotes_sets"
 	CollectionNameUsers        CollectionName = "users"
