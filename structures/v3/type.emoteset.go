@@ -30,7 +30,7 @@ type EmoteSet struct {
 
 	// Relational
 
-	Owner *User `json:"owner" bson:"owner"`
+	Owner *User `json:"owner,omitempty" bson:"owner_user,skip,omitempty"`
 }
 
 const (
@@ -67,9 +67,12 @@ type EmoteSetBuilder struct {
 }
 
 func NewEmoteSetBuilder(emoteSet *EmoteSet) *EmoteSetBuilder {
-	var init EmoteSet
-	if emoteSet != nil {
-		init = *emoteSet
+	init := EmoteSet{
+		Tags:   []string{},
+		Emotes: []*ActiveEmote{},
+	}
+	if emoteSet == nil {
+		emoteSet = &init
 	}
 	return &EmoteSetBuilder{
 		Update:   map[string]interface{}{},

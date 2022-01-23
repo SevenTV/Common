@@ -137,7 +137,7 @@ func (esm *EmoteSetMutation) Edit(ctx context.Context, inst mongo.Instance, opt 
 }
 
 // SetEmote: enable, edit or disable active emotes in the set
-func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, opt SetEmoteSetEmoteOptions) (*EmoteSetMutation, error) {
+func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, opt EmoteSetMutationSetEmoteOptions) (*EmoteSetMutation, error) {
 	esm.l.Lock()
 	defer esm.l.Unlock()
 	if esm.EmoteSetBuilder == nil || esm.EmoteSetBuilder.EmoteSet == nil {
@@ -155,7 +155,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 
 	// Get relevant data
 	targetEmoteIDs := []primitive.ObjectID{}
-	targetEmoteMap := map[primitive.ObjectID]*structures.ActiveEmote{}
+	targetEmoteMap := map[primitive.ObjectID]EmoteSetMutationSetEmoteItem{}
 	set := esm.EmoteSetBuilder.EmoteSet
 	{
 		// Find emote set owner
@@ -201,7 +201,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			return nil, err
 		}
 		for _, e := range targetEmotes {
-			if v, ok := targetEmoteMap[e.ID]; ok && v.Emote != nil {
+			if v, ok := targetEmoteMap[e.ID]; ok && v.emote != nil {
 				targetEmoteMap[e.ID] = v
 			}
 		}
@@ -236,29 +236,29 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
-		tgt.Name = tgt.Emote.Name
+		tgt.Name = tgt.emote.Name
 
-		switch opt.Action {
+		switch tgt.Action {
 		// ADD EMOTE
 		case ListItemActionAdd:
 			// Handle emote privacy
-			if utils.BitField.HasBits(int64(tgt.Emote.Flags), int64(structures.EmoteFlagsPrivate)) {
+			if utils.BitField.HasBits(int64(tgt.emote.Flags), int64(structures.EmoteFlagsPrivate)) {
 				usable := false
-				// Usable if user has Bypass Privacy permission
+				// Usable if actor has Bypass Privacy permission
 				if actor.HasPermission(structures.RolePermissionBypassPrivacy) {
 					usable = true
 				}
 				// Usable if actor is an editor of emote owner
 				// and has the correct permission
-				if tgt.Emote.Owner != nil {
+				if tgt.emote.Owner != nil {
 					var editor *structures.UserEditor
-					for _, ed := range tgt.Emote.Owner.Editors {
+					for _, ed := range tgt.emote.Owner.Editors {
 						if opt.Actor.ID == ed.ID {
 							editor = ed
 							break
 						}
 					}
-					if editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
+					if editor != nil && editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
 						usable = true
 					}
 				}
@@ -294,9 +294,9 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 				}
 			}
 
-			if opt.Action == ListItemActionUpdate {
+			if tgt.Action == ListItemActionUpdate {
 				esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Name)
-			} else if opt.Action == ListItemActionRemove {
+			} else if tgt.Action == ListItemActionRemove {
 				esm.EmoteSetBuilder.RemoveActiveEmote(tgt.ID)
 			}
 		}
@@ -324,9 +324,17 @@ type EmoteSetMutationOptions struct {
 	SkipValidation bool
 }
 
-type SetEmoteSetEmoteOptions struct {
+type EmoteSetMutationSetEmoteOptions struct {
 	Actor    *structures.User
-	Emotes   []*structures.ActiveEmote
+	Emotes   []EmoteSetMutationSetEmoteItem
 	Channels []primitive.ObjectID
-	Action   ListItemAction
+}
+
+type EmoteSetMutationSetEmoteItem struct {
+	Action ListItemAction
+	ID     primitive.ObjectID
+	Name   string
+	Flags  structures.ActiveEmoteFlag
+
+	emote *structures.Emote
 }
