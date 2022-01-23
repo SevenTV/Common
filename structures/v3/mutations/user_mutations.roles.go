@@ -40,7 +40,7 @@ func (um *UserMutation) SetRole(ctx context.Context, inst mongo.Instance, opt Se
 		um.UserBuilder.Update.Pull("role_ids", opt.Role.ID)
 	}
 
-	if err := inst.Collection(structures.CollectionNameUsers).FindOneAndUpdate(
+	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": target.ID},
 		um.UserBuilder.Update,

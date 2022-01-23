@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -17,7 +16,7 @@ var BanRelationVictim = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameUsers,
+			From:         mongo.CollectionNameUsers,
 			LocalField:   "victim_id",
 			ForeignField: "_id",
 			As:           "victims",
@@ -40,7 +39,7 @@ var BanRelationActor = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameUsers,
+			From:         mongo.CollectionNameUsers,
 			LocalField:   "actor_id",
 			ForeignField: "_id",
 			As:           "actors",
@@ -63,7 +62,7 @@ var UserRelationBans = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.LookupWithPipeline{
-			From: structures.CollectionNameBans,
+			From: mongo.CollectionNameBans,
 			Let:  bson.M{"user_id": "$_id"},
 			Pipeline: &mongo.Pipeline{
 				{{

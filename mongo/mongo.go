@@ -2,7 +2,9 @@ package mongo
 
 import (
 	"context"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,19 +41,11 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 
 	database := client.Database(opt.DB)
 
-	for _, ind := range opt.Indexes {
-		col := ind.Collection
-		if name, err := database.Collection(string(col)).Indexes().CreateOne(ctx, ind.Index); err != nil {
-			panic(err)
-		} else {
-			logrus.WithField("collection", col).Infof("Collection index created: %s", name)
-		}
-	}
-
 	logrus.Info("mongo, ok")
 	inst := &mongoInst{
 		client: client,
 		db:     database,
+		cache:  cache.New(time.Second*10, time.Second*20),
 	}
 
 	collSync(ctx, inst)
@@ -59,10 +53,9 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 }
 
 type SetupOptions struct {
-	URI     string
-	DB      string
-	Direct  bool
-	Indexes []IndexRef
+	URI    string
+	DB     string
+	Direct bool
 }
 
 type IndexRef struct {

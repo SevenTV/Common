@@ -10,7 +10,6 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserBuilder struct {
@@ -76,7 +75,7 @@ func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
 
 // User A standard app user object
 type User struct {
-	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
 	UserType UserType `json:"type,omitempty" bson:"type,omitempty"`
 	// the user's username
@@ -87,25 +86,24 @@ type User struct {
 	Discriminator string `json:"discriminator" bson:"discriminator"`
 	// the user's email
 	Email string `json:"email" bson:"email"`
-	// the user's channel-bound emotes
-	ChannelEmotes []*UserEmote `json:"channel_emotes" bson:"channel_emotes"`
 	// list of role IDs directly bound to the user (not via an entitlement)
-	RoleIDs []primitive.ObjectID `json:"role_ids" bson:"role_ids"`
+	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
 	// the user's editors
 	Editors []*UserEditor `json:"editors" bson:"editors"`
 	// the user's avatar URL
 	AvatarID string `json:"avatar_id" bson:"avatar_id"`
 	// the user's biography
 	Biography string `json:"biography" bson:"biography"`
-	// token version
+	// token version. When this value changes all existing auth tokens are invalidated
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
-	// third party connections. it's like third parties for a third party.
+	// third party connections. Who's the third party now?
 	Connections []*UserConnection `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
-	BlockedUserIDs []primitive.ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
+	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 
 	// Relational
 
+	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
 	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
 	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
 	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
@@ -191,13 +189,21 @@ var (
 	UserTypeSystem  UserType = "SYSTEM"
 )
 
-// UserConnection Represents an external connection to a platform for a user
+// UserConnection: Represents an external connection to a platform for a user
 type UserConnection struct {
-	ID       string                 `json:"id,omitempty" bson:"id,omitempty"`
+	ID string `json:"id,omitempty" bson:"id,omitempty"`
+	// the platform of this connection
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
-	LinkedAt time.Time              `json:"linked_at" bson:"linked_at"`
-	Data     bson.Raw               `json:"data" bson:"data"`
-	Grant    *UserConnectionGrant   `json:"-" bson:"grant"`
+	// the time at which this connection was linked
+	LinkedAt time.Time `json:"linked_at" bson:"linked_at"`
+	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
+	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_sllots,omitempty"`
+	// emote sets bound to this connection / channel
+	EmoteSetIDs []ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
+	// third-party connection data
+	Data bson.Raw `json:"data" bson:"data"`
+	// a full oauth2 token grant
+	Grant *UserConnectionGrant `json:"-" bson:"grant"`
 }
 
 type UserConnectionGrant struct {
@@ -207,7 +213,7 @@ type UserConnectionGrant struct {
 	ExpiresAt    time.Time `json:"expires_at" bson:"expires_at"`
 }
 
-// UserConnectionBuilder utility for creating a new UserConnection
+// UserConnectionBuilder: utility for creating a new UserConnection
 type UserConnectionBuilder struct {
 	Update         UpdateMap
 	UserConnection *UserConnection
@@ -325,23 +331,10 @@ type YouTubeConnection struct {
 	Description string `json:"description" bson:"description"`
 }
 
-type UserEmote struct {
-	ID primitive.ObjectID `json:"id" bson:"id"`
-	// When this has 1 or more items, the emote will only be availablle for these connections (i.e specific twitch/youtube channels)
-	Connections []primitive.ObjectID `json:"connections" bson:"connections,omitempty"`
-	// An alias for this emote
-	Alias *string `json:"alias,omitempty" bson:"alias,omitempty"`
-
-	AddedAt time.Time `json:"added_at,omitempty" bson:"added_at,omitempty"`
-
-	// Relational
-	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
-}
-
 type UserEditor struct {
-	ID primitive.ObjectID `json:"id" bson:"id"`
+	ID ObjectID `json:"id" bson:"id"`
 	// When this has 1 or more items, this editor will only have access to these connections (i.e specific twitch/youtube channels)
-	Connections []primitive.ObjectID `json:"connections" bson:"connections"`
+	Connections []ObjectID `json:"connections" bson:"connections"`
 	// The permissions this editor has
 	Permissions UserEditorPermission `json:"permissions" bson:"permissions"`
 	// Whether or not that editor will be visible on the user's profile page
@@ -361,10 +354,10 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionModifyChannelEmotes UserEditorPermission = 1 << iota // 1 - Allows adding emotes
-	UserEditorPermissionUsePrivateEmotes                                     // 2 - Allows using the user's private emotes
-	UserEditorPermissionManageProfile                                        // 4 - Allows managing the user's public profile
-	UserEditorPermissionManageBilling                                        // 8 - Allows managing billing and payments, such as subscriptions
-	UserEditorPermissionManageOwnedEmotes                                    // 16 - Allows managing the user's owned emotes
-	UserEditorPermissionManageEmoteSets                                      // 32 - Allows managing the user's owned emote sets
+	UserEditorPermissionModifyActiveEmotes UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
+	UserEditorPermissionUsePrivateEmotes   UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile      UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageOwnedEmotes  UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets    UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
+	UserEditorPermissionManageBilling      UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
 )

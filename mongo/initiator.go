@@ -5,17 +5,38 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func collSync(ctx context.Context, inst Instance) error {
 	for _, col := range collections {
-		if err := inst.RawDatabase().RunCommand(ctx, bson.D{
+		// Set up indexes
+		_, err := inst.Collection(CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
+		if err != nil {
+			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to set up indexes")
+		}
+
+		// Update schemas
+		if err = inst.RawDatabase().RunCommand(ctx, bson.D{
 			{Key: "collMod", Value: col.Name},
 			{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
 			{Key: "validationAction", Value: "error"},
 			{Key: "validationLevel", Value: "strict"},
 		}).Err(); err != nil {
 			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to update collection validator")
+		}
+
+		// Set up system collection
+		{
+			// Fetch system information
+			sys := inst.System(ctx)
+			if sys.ID.IsZero() {
+				sys.ID = primitive.NewObjectID()
+				result, err := inst.Collection(CollectionNameSystem).InsertOne(ctx, sys)
+				if err == nil {
+					sys.ID = result.InsertedID.(primitive.ObjectID)
+				}
+			}
 		}
 	}
 
@@ -49,6 +70,8 @@ type jsonSchema struct {
 	MaxItems *int64 `json:"maxItems,omitempty" bson:"maxItems,omitempty"`
 	// Indicates the minimum length of array
 	MinItems *int64 `json:"minItems,omitempty" bson:"minItems,omitempty"`
+	// If true, each item in the array must be unique. Otherwise, no uniqueness constraint is enforced.
+	UniqueItems *bool `json:"uniqueItems,omitempty" bson:"uniqueItems,omitempty"`
 	// Field must be a multiple of this value
 	MultipleOf *int64 `json:"multipleOf,omitempty" bson:"multipleOf,omitempty"`
 

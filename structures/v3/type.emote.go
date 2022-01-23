@@ -2,7 +2,6 @@ package structures
 
 import (
 	"regexp"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -91,12 +90,8 @@ type Emote struct {
 
 	// Versioning
 
-	ParentID   *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
-	Versioning *EmoteVersioning    `json:"version,omitempty" bson:"version,omitempty"`
-
-	// Non-structural
-
-	Links [][]string `json:"urls" bson:"-"` // CDN URLs
+	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
 
 	// Relational
 
@@ -136,7 +131,7 @@ type EmoteSize struct {
 	Height         int32  `json:"h" bson:"height"`   // The pixel height of the emote
 	Animated       bool   `json:"a" bson:"animated"` // Whether or not this size is animated
 	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this size to be processed
-	Length         int    `json:"b" bson:"length"`   // The file size in bytes
+	Length         int64  `json:"b" bson:"length"`   // The file size in bytes
 }
 
 type EmoteFormatName string
@@ -151,14 +146,4 @@ const (
 type EmoteModeration struct {
 	// The reason given by a moderator for the emote not being allowed in public listing
 	RejectionReason string `json:"reject_reason,omitempty" bson:"reject_reason,omitempty"`
-}
-
-type EmoteVersioning struct {
-	// The displayed label for the version
-	Tag string `json:"tag" bson:"tag"`
-	// Whether or not this version is diverging (i.e a holiday variant)
-	// If true, this emote will never be prompted as an update
-	Diverged bool `json:"diverged" bson:"diverged"`
-	// The time at which the emote became a version
-	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 }

@@ -2,7 +2,6 @@ package aggregations
 
 import (
 	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -16,7 +15,7 @@ var UserRelationRoles = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.LookupWithPipeline{
-			From: structures.CollectionNameEntitlements,
+			From: mongo.CollectionNameEntitlements,
 			Let:  bson.M{"user_id": "$_id"},
 			Pipeline: &mongo.Pipeline{
 				bson.D{{
@@ -48,7 +47,7 @@ var UserRelationRoles = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameRoles,
+			From:         mongo.CollectionNameRoles,
 			LocalField:   "role_ids",
 			ForeignField: "_id",
 			As:           "roles",
@@ -66,7 +65,7 @@ var UserRelationEditors = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameUsers,
+			From:         mongo.CollectionNameUsers,
 			LocalField:   "editors.id",
 			ForeignField: "_id",
 			As:           "_ed",
@@ -106,7 +105,7 @@ var UserRelationEditorOf = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.LookupWithPipeline{
-			From: structures.CollectionNameUsers,
+			From: mongo.CollectionNameUsers,
 			Let:  bson.M{"user_id": "$_id"},
 			Pipeline: &mongo.Pipeline{
 				{{
@@ -147,48 +146,6 @@ var UserRelationEditorOf = []bson.D{
 	}},
 }
 
-// User Emote Relations
-//
-// Input: User
-// Adds Field: "channel_emotes" as []UserEmote with the "emote" field added to each UserEmote object
-// Output: User
-var UserRelationChannelEmotes = []bson.D{
-	// Step 1: Lookup user editors
-	{{
-		Key: "$lookup",
-		Value: mongo.Lookup{
-			From:         structures.CollectionNameEmotes,
-			LocalField:   "channel_emotes.id",
-			ForeignField: "_id",
-			As:           "_ce",
-		},
-	}},
-	// Step 3: Set "emote" property to each UserEmote object in the original emotes array
-	{{
-		Key: "$set",
-		Value: bson.M{
-			"channel_emotes": bson.M{
-				"$map": bson.M{
-					"input": "$channel_emotes",
-					"in": bson.M{
-						"$mergeObjects": bson.A{
-							"$$this",
-							bson.M{
-								"emote": bson.M{
-									"$arrayElemAt": bson.A{
-										"$_ce",
-										bson.M{"$indexOfArray": bson.A{"$_ce._id", "$$this.id"}},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}},
-}
-
 // User Owned Emote Relations
 //
 // Input: User
@@ -198,7 +155,7 @@ var UserRelationOwnedEmotes = []bson.D{
 	{{
 		Key: "$lookup",
 		Value: mongo.Lookup{
-			From:         structures.CollectionNameEmotes,
+			From:         mongo.CollectionNameEmotes,
 			LocalField:   "_id",
 			ForeignField: "owner_id",
 			As:           "owned_emotes",
@@ -244,7 +201,7 @@ func GetEmoteRelationshipOwner(opt UserRelationshipOptions) []bson.D {
 		{{
 			Key: "$lookup",
 			Value: mongo.LookupWithPipeline{
-				From:     structures.CollectionNameUsers,
+				From:     mongo.CollectionNameUsers,
 				Let:      bson.M{"owner_id": "$owner_id"},
 				Pipeline: &up,
 				As:       "owner_user",

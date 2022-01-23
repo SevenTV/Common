@@ -4,18 +4,27 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 var DeletedUser = &User{
 	ID:            primitive.NilObjectID,
-	UserType:      "",
+	UserType:      UserTypeSystem,
 	Username:      "*deleted_user",
 	DisplayName:   "*DeletedUser",
 	Discriminator: "0000",
-	Email:         "",
-	ChannelEmotes: nil,
-	RoleIDs:       nil,
-	Editors:       nil,
-	AvatarID:      "",
-	Biography:     "",
+	RoleIDs:       []primitive.ObjectID{},
+	Editors:       []*UserEditor{},
 	TokenVersion:  0,
-	Connections:   nil,
+	Connections:   []*UserConnection{},
+}
+
+var DeletedEmote = &Emote{
+	ID:         primitive.NilObjectID,
+	OwnerID:    DeletedUser.ID,
+	Name:       "*UnknownEmote",
+	Flags:      0,
+	Tags:       []string{},
+	Status:     EmoteStatusDeleted,
+	FrameCount: 0,
+	Formats:    []EmoteFormat{},
+	Owner:      DeletedUser,
+	Channels:   []*User{},
 }
 
 var RevocationRole = &Role{
