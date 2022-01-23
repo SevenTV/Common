@@ -10,6 +10,7 @@ type APIError interface {
 	Code() int
 	SetDetail(str string, a ...string) *apiError
 	SetFields(d Fields) *apiError
+	GetFields() Fields
 }
 
 var (
@@ -34,6 +35,7 @@ var (
 	ErrBadObjectID        APIError = DefineError(70410, "bad object id")
 	ErrBadInt             APIError = DefineError(70411, "bad int")
 	ErrValidationRejected APIError = DefineError(70412, "validation rejected")
+	ErrInternalField      APIError = DefineError(70413, "internal field")
 
 	// Other Client Errors
 
@@ -86,6 +88,10 @@ func (e *apiError) SetDetail(str string, a ...string) *apiError {
 func (e *apiError) SetFields(d Fields) *apiError {
 	e.d = d
 	return e
+}
+
+func (e *apiError) GetFields() Fields {
+	return e.d
 }
 
 func DefineError(code int, s string) APIError {

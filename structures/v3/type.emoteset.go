@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -174,6 +175,6 @@ func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
 	copy(esb.EmoteSet.Emotes[ind:], esb.EmoteSet.Emotes[ind+1:])
 	esb.EmoteSet.Emotes[len(esb.EmoteSet.Emotes)-1] = nil
 	esb.EmoteSet.Emotes = esb.EmoteSet.Emotes[:len(esb.EmoteSet.Emotes)-1]
-	esb.Update.Pull("emotes.id", id)
+	esb.Update.Pull("emotes", bson.M{"id": id})
 	return esb
 }

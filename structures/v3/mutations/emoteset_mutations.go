@@ -149,7 +149,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 
 	// Can actor do this?
 	actor := opt.Actor
-	if actor == nil || actor.HasPermission(structures.RolePermissionEditEmoteSet) {
+	if actor == nil || !actor.HasPermission(structures.RolePermissionEditEmoteSet) {
 		return nil, errors.ErrInsufficientPrivilege.SetFields(errors.Fields{"MISSING_PERMISSION": "EDIT_EMOTE_SET"})
 	}
 
@@ -160,6 +160,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	{
 		// Find emote set owner
 		if set.Owner == nil {
+			set.Owner = &structures.User{}
 			cur, err := inst.Collection(mongo.CollectionNameUsers).Aggregate(ctx, append(mongo.Pipeline{
 				{{Key: "$match", Value: bson.M{"_id": set.OwnerID}}},
 			}, aggregations.UserRelationEditors...))
@@ -179,7 +180,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 				// Match only the target set
 				{{Key: "$match", Value: bson.M{"_id": set.ID}}},
 			}, aggregations.EmoteSetRelationActiveEmotes...))
-			if err = multierror.Append(err, cur.All(ctx, set.Emotes)).ErrorOrNil(); err != nil {
+			if err = multierror.Append(err, cur.All(ctx, &set.Emotes)).ErrorOrNil(); err != nil {
 				logrus.WithError(err).Error("failed to fetch emote data of active emote set emotes")
 				return nil, err
 			}
@@ -190,18 +191,18 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			targetEmoteIDs = append(targetEmoteIDs, e.ID)
 			targetEmoteMap[e.ID] = e
 		}
-
 		targetEmotes := []*structures.Emote{}
 		cur, err := inst.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, append(mongo.Pipeline{
 			{{Key: "$match", Value: bson.M{"_id": bson.M{"$in": targetEmoteIDs}}}},
-		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Editors: true})...))
-		err = multierror.Append(err, cur.All(ctx, targetEmotes)).ErrorOrNil()
+		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Roles: true, Editors: true})...))
+		err = multierror.Append(err, cur.All(ctx, &targetEmotes)).ErrorOrNil()
 		if err != nil {
 			logrus.WithError(err).Error("failed to fetch target emotes during emote set mutation")
 			return nil, err
 		}
 		for _, e := range targetEmotes {
-			if v, ok := targetEmoteMap[e.ID]; ok && v.emote != nil {
+			if v, ok := targetEmoteMap[e.ID]; ok {
+				v.emote = e
 				targetEmoteMap[e.ID] = v
 			}
 		}
@@ -236,7 +237,10 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
-		tgt.Name = tgt.emote.Name
+		if tgt.emote == nil {
+			continue
+		}
+		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name).(string)
 
 		switch tgt.Action {
 		// ADD EMOTE
@@ -286,12 +290,16 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Name, time.Now())
 		case ListItemActionUpdate, ListItemActionRemove:
 			// The emote must already be active
+			found := false
 			for _, e := range set.Emotes {
 				if e.ID == tgt.ID {
-					return nil, errors.ErrEmoteNotEnabled.SetFields(errors.Fields{
-						"EMOTE_ID": tgt.ID.Hex(),
-					})
+					found = true
 				}
+			}
+			if !found {
+				return nil, errors.ErrEmoteNotEnabled.SetFields(errors.Fields{
+					"EMOTE_ID": tgt.ID.Hex(),
+				})
 			}
 
 			if tgt.Action == ListItemActionUpdate {
@@ -303,11 +311,12 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 	}
 
 	// Update the document
+	if len(esm.EmoteSetBuilder.Update) == 0 {
+		return nil, errors.ErrUnknownEmote.SetDetail("no target emotes found")
+	}
 	if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOneAndUpdate(
 		ctx,
-		bson.M{
-			"_id": set.ID,
-		},
+		bson.M{"_id": set.ID},
 		esm.EmoteSetBuilder.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(esm.EmoteSetBuilder.EmoteSet); err != nil {
