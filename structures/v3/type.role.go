@@ -36,9 +36,10 @@ type RolePermission int64
 // Emotes
 // Range: 1 << 0 - 1 << 5
 const (
-	RolePermissionCreateEmote  RolePermission = 1 << 0 // 1 - Allows creating emotes
-	RolePermissionEditEmote    RolePermission = 1 << 1 // 2 - Allows editing emotes
-	RolePermissionEditEmoteSet RolePermission = 1 << 2 // 4 - Allows creating and modifying emote sets
+	RolePermissionCreateEmote    RolePermission = 1 << 0 // 1 - Allows creating emotes
+	RolePermissionEditEmote      RolePermission = 1 << 1 // 2 - Allows editing emotes
+	RolePermissionCreateEmoteSet RolePermission = 1 << 2 // 4 - Allows creating emote sets
+	RolePermissionEditEmoteSet   RolePermission = 1 << 3 // 8 - Allows creating and modifying emote sets
 )
 
 // Unused Space
