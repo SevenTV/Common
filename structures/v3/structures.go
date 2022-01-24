@@ -2,9 +2,14 @@ package structures
 
 import (
 	"fmt"
+	"regexp"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	RegExpEmoteName = regexp.MustCompile(`^[-_A-Za-z(!)$:0-9]{2,100}$`)
 )
 
 type UpdateMap bson.M

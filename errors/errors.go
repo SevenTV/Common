@@ -2,6 +2,8 @@ package errors
 
 import (
 	"fmt"
+
+	"github.com/SevenTV/Common/utils"
 )
 
 type APIError interface {
@@ -44,7 +46,8 @@ var (
 	ErrEmoteNotEnabled      apiErrorFn = DefineError(704610, "emote not enabled")     // client wants to disable an emote which was not enabled to begin with
 	ErrEmoteAlreadyEnabled  apiErrorFn = DefineError(704611, "emote already enabled") // client wants to enable an emote which is already added
 	ErrEmoteNameConflict    apiErrorFn = DefineError(704612, "emote name conflict")   // client wants to enable an emote but its name conflict with another
-	ErrMissingRequiredField apiErrorFn = DefineError(704613, "missing field")
+	ErrEmoteNameInvalid     apiErrorFn = DefineError(704613, "bad emote name")        // client sent an emote name that did not pass validation
+	ErrMissingRequiredField apiErrorFn = DefineError(704680, "missing field")
 
 	// Server Errors
 
@@ -83,7 +86,7 @@ func (e *apiError) Code() int {
 }
 
 func (e *apiError) SetDetail(str string, a ...string) *apiError {
-	e.s = e.s + ": " + fmt.Sprintf(str, a)
+	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a), str).(string)
 	return e
 }
 

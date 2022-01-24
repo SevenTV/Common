@@ -241,6 +241,10 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			continue
 		}
 		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name).(string)
+		tgt.emote.Name = tgt.Name
+		if err := tgt.emote.Validator().Name(); err != nil {
+			return nil, err
+		}
 
 		switch tgt.Action {
 		// ADD EMOTE
@@ -292,6 +296,12 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			// The emote must already be active
 			found := false
 			for _, e := range set.Emotes {
+				if tgt.Action == ListItemActionUpdate && e.Name == tgt.Name {
+					return nil, errors.ErrEmoteNameConflict().SetFields(errors.Fields{
+						"EMOTE_ID":          tgt.ID.Hex(),
+						"CONFLICT_EMOTE_ID": tgt.ID.Hex(),
+					})
+				}
 				if e.ID == tgt.ID {
 					found = true
 					break
