@@ -184,3 +184,7 @@ func GetSizeRatio(og []float64, nw []float64) (int32, int32) {
 }
 
 type Key string
+
+func ErrorOf(v interface{}, err error) error {
+	return err
+}

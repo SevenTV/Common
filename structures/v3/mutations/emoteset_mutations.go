@@ -29,7 +29,7 @@ func (esm *EmoteSetMutation) Create(ctx context.Context, inst mongo.Instance, op
 	}
 
 	// Check actor's permissions
-	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditEmoteSet) {
+	if opt.Actor != nil && !opt.Actor.HasPermission(structures.RolePermissionEditEmoteSet) {
 		return nil, errors.ErrInsufficientPrivilege().SetFields(errors.Fields{"MISSING_PERMISSION": "EDIT_EMOTE_SET"})
 	}
 

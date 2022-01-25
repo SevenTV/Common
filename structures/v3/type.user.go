@@ -33,6 +33,12 @@ func (ub *UserBuilder) SetUsername(username string) *UserBuilder {
 	return ub
 }
 
+func (ub *UserBuilder) SetDisplayName(s string) *UserBuilder {
+	ub.User.DisplayName = s
+	ub.Update.Set("display_name", s)
+	return ub
+}
+
 func (ub *UserBuilder) SetDiscriminator(discrim string) *UserBuilder {
 	if discrim == "" {
 		for i := 0; i < 4; i++ {
@@ -199,7 +205,7 @@ type UserConnection struct {
 	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
 	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_sllots,omitempty"`
 	// emote sets bound to this connection / channel
-	EmoteSetIDs []ObjectID `json:"emote_set_ids" bson:"emote_set_ids"`
+	EmoteSetID ObjectID `json:"emote_set_id" bson:"emote_set_id"`
 	// third-party connection data
 	Data bson.Raw `json:"data" bson:"data"`
 	// a full oauth2 token grant

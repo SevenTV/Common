@@ -18,14 +18,15 @@ type EmoteSet struct {
 	Immutable bool `json:"immutable" bson:"immutable"`
 	// If true, the set is "privileged" and can only be modified by its owner or a super administrator, regardless of the "Edit Any Emote Set" permission
 	Privileged bool `json:"privilleged" bson:"privileged"`
-	// Whether or not the set is active. When false, the set isn't returned in various API endpoints
-	Active bool `json:"active" bson:"active"`
 	// The emotes assigned to this set
 	Emotes []*ActiveEmote `json:"emotes" bson:"emotes"`
 	// The maximum amount of emotes this set is allowed to contain
 	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
+	// The ID of the parent set. If defined, this set is treated as a child set
+	// and its emotes are derived from the parent
+	ParentID *ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 	// The ID of the user who owns this emote set
-	OwnerID primitive.ObjectID `json:"owner_id" bson:"owner_id"`
+	OwnerID ObjectID `json:"owner_id" bson:"owner_id"`
 
 	// TODO: filters, i.e allow set to be used only in specific channels
 
@@ -106,9 +107,9 @@ func (esb *EmoteSetBuilder) SetPrivileged(b bool) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) SetActive(b bool) *EmoteSetBuilder {
-	esb.EmoteSet.Active = b
-	esb.Update.Set("active", b)
+func (esb *EmoteSetBuilder) SetParentID(id *ObjectID) *EmoteSetBuilder {
+	esb.EmoteSet.ParentID = id
+	esb.Update.Set("parent_id", id)
 	return esb
 }
 
@@ -118,7 +119,7 @@ func (esb *EmoteSetBuilder) SetEmoteSlots(slots int32) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) SetOwnerID(id primitive.ObjectID) *EmoteSetBuilder {
+func (esb *EmoteSetBuilder) SetOwnerID(id ObjectID) *EmoteSetBuilder {
 	esb.EmoteSet.OwnerID = id
 	esb.Update.Set("owner_id", id)
 	return esb
