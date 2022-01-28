@@ -40,6 +40,7 @@ var (
 	ErrBadInt             apiErrorFn = DefineError(70411, "bad int")
 	ErrValidationRejected apiErrorFn = DefineError(70412, "validation rejected")
 	ErrInternalField      apiErrorFn = DefineError(70413, "internal field")
+	ErrUnknownRoute       apiErrorFn = DefineError(70441, "unknown route") // the requested api endpoint doesn't exist
 
 	// Other Client Errors
 
