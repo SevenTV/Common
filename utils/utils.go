@@ -188,3 +188,11 @@ type Key string
 func ErrorOf(v interface{}, err error) error {
 	return err
 }
+
+func PanicHandler(handle func(err interface{})) {
+	if err := recover(); err != nil {
+		if handle != nil {
+			handle(err)
+		}
+	}
+}
