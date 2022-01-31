@@ -15,6 +15,7 @@ type APIError interface {
 	SetFields(d Fields) *apiError
 	GetFields() Fields
 	ExpectedHTTPStatus() int
+	WithHTTPStatus(s int) *apiError
 }
 
 type apiErrorFn func() APIError
@@ -107,6 +108,11 @@ func (e *apiError) GetFields() Fields {
 
 func (e *apiError) ExpectedHTTPStatus() int {
 	return e.expectedHttpStatus
+}
+
+func (e *apiError) WithHTTPStatus(s int) *apiError {
+	e.expectedHttpStatus = s
+	return e
 }
 
 func DefineError(code int, s string, httpStatus int) func() APIError {
