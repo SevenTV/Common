@@ -56,6 +56,7 @@ var (
 	// Server Errors
 
 	ErrInternalServerError        apiErrorFn = DefineError(70500, "Internal Server Error", 500)
+	ErrMissingInternalDependency  apiErrorFn = DefineError(70510, "Missing Internal Dependency", 503)
 	ErrInternalIncompleteMutation apiErrorFn = DefineError(70560, "Incomplete Mutation (internal)", 500)
 )
 
