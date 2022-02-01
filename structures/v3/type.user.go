@@ -12,6 +12,48 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// User A standard app user object
+type User struct {
+	ID ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
+	UserType UserType `json:"type,omitempty" bson:"type,omitempty"`
+	// the user's username
+	Username string `json:"username" bson:"username"`
+	// the user's display name
+	DisplayName string `json:"display_name" bson:"display_name"`
+	// the user's discriminatory space
+	Discriminator string `json:"discriminator" bson:"discriminator"`
+	// the user's email
+	Email string `json:"email" bson:"email"`
+	// list of role IDs directly bound to the user (not via an entitlement)
+	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
+	// the user's editors
+	Editors []*UserEditor `json:"editors" bson:"editors"`
+	// the user's avatar URL
+	AvatarID string `json:"avatar_id" bson:"avatar_id"`
+	// the user's biography
+	Biography string `json:"biography" bson:"biography"`
+	// token version. When this value changes all existing auth tokens are invalidated
+	TokenVersion float64 `json:"token_version" bson:"token_version"`
+	// third party connections. Who's the third party now?
+	Connections []*UserConnection `json:"connections" bson:"connections"`
+	// the ID of users who have been blocked by the user
+	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
+
+	// Relational
+
+	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
+	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
+	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
+	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
+
+	// API-specific
+
+	Roles     []*Role       `json:"roles" bson:"roles,skip,omitempty"`
+	EditorOf  []*UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
+	AvatarURL string        `json:"avatar_url" bson:"-"`
+}
+
 type UserBuilder struct {
 	Update UpdateMap
 	User   *User
@@ -19,6 +61,9 @@ type UserBuilder struct {
 
 // NewUserBuilder: create a new user builder
 func NewUserBuilder(user *User) *UserBuilder {
+	if user == nil {
+		user = &User{}
+	}
 	return &UserBuilder{
 		Update: UpdateMap{},
 		User:   user,
@@ -66,6 +111,34 @@ func (ub *UserBuilder) SetAvatarID(url string) *UserBuilder {
 	return ub
 }
 
+func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*UserConnectionBuilder, bool) {
+	// Filter by ID?
+	filterID := ""
+	if len(id) > 0 {
+		filterID = id[0]
+	}
+
+	// Find connection
+	var conn *UserConnection
+	for _, c := range ub.User.Connections {
+		if c.Platform != p {
+			continue
+		}
+		if filterID != "" && c.ID != filterID {
+			continue
+		}
+		conn = c
+		break
+	}
+
+	// Return a builder
+	var ucb *UserConnectionBuilder
+	if conn != nil {
+		ucb = NewUserConnectionBuilder(conn)
+	}
+	return ucb, ucb != nil
+}
+
 func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
 	for _, c := range ub.User.Connections {
 		if c.ID == conn.ID {
@@ -77,48 +150,6 @@ func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
 	ub.Update = ub.Update.AddToSet("connections", conn)
 
 	return ub
-}
-
-// User A standard app user object
-type User struct {
-	ID ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-	// the type of this user. empty when a regular user, but could also be "BOT" or "SYSTEM"
-	UserType UserType `json:"type,omitempty" bson:"type,omitempty"`
-	// the user's username
-	Username string `json:"username" bson:"username"`
-	// the user's display name
-	DisplayName string `json:"display_name" bson:"display_name"`
-	// the user's discriminatory space
-	Discriminator string `json:"discriminator" bson:"discriminator"`
-	// the user's email
-	Email string `json:"email" bson:"email"`
-	// list of role IDs directly bound to the user (not via an entitlement)
-	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
-	// the user's editors
-	Editors []*UserEditor `json:"editors" bson:"editors"`
-	// the user's avatar URL
-	AvatarID string `json:"avatar_id" bson:"avatar_id"`
-	// the user's biography
-	Biography string `json:"biography" bson:"biography"`
-	// token version. When this value changes all existing auth tokens are invalidated
-	TokenVersion float64 `json:"token_version" bson:"token_version"`
-	// third party connections. Who's the third party now?
-	Connections []*UserConnection `json:"connections" bson:"connections"`
-	// the ID of users who have been blocked by the user
-	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
-
-	// Relational
-
-	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
-	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
-	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
-	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
-
-	// API-specific
-
-	Roles     []*Role       `json:"roles" bson:"roles,skip,omitempty"`
-	EditorOf  []*UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
-	AvatarURL string        `json:"avatar_url" bson:"-"`
 }
 
 // HasPermission checks relational roles against a permission bit
@@ -205,7 +236,7 @@ type UserConnection struct {
 	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
 	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_sllots,omitempty"`
 	// emote sets bound to this connection / channel
-	EmoteSetID ObjectID `json:"emote_set_id" bson:"emote_set_id"`
+	EmoteSetID ObjectID `json:"emote_set_id,omitempty" bson:"emote_set_id,omitempty"`
 	// third-party connection data
 	Data bson.Raw `json:"data" bson:"data"`
 	// a full oauth2 token grant
@@ -226,32 +257,39 @@ type UserConnectionBuilder struct {
 }
 
 // NewUserConnectionBuilder: create a new user connection builder
-func NewUserConnectionBuilder() *UserConnectionBuilder {
+func NewUserConnectionBuilder(v *UserConnection) *UserConnectionBuilder {
+	if v == nil {
+		v = &UserConnection{}
+	}
 	return &UserConnectionBuilder{
 		Update:         UpdateMap{},
-		UserConnection: &UserConnection{},
+		UserConnection: v,
 	}
 }
 
 func (ucb *UserConnectionBuilder) SetID(id string) *UserConnectionBuilder {
 	ucb.UserConnection.ID = id
-	ucb.Update.Set("id", id)
+	ucb.Update.Set("connections.$.id", id)
 	return ucb
 }
 
 // SetPlatform: defines the platform a connection is for (i.e twitch/youtube)
 func (ucb *UserConnectionBuilder) SetPlatform(platform UserConnectionPlatform) *UserConnectionBuilder {
 	ucb.UserConnection.Platform = platform
-	ucb.Update.Set("platform", platform)
-
+	ucb.Update.Set("connections.$.platform", platform)
 	return ucb
 }
 
 // SetLinkedAt: set the time at which the connection was linked
 func (ucb *UserConnectionBuilder) SetLinkedAt(date time.Time) *UserConnectionBuilder {
 	ucb.UserConnection.LinkedAt = date
-	ucb.Update.Set("linked_at", date)
+	ucb.Update.Set("connections.$.linked_at", date)
+	return ucb
+}
 
+func (ucb *UserConnectionBuilder) SetActiveEmoteSet(id ObjectID) *UserConnectionBuilder {
+	ucb.UserConnection.EmoteSetID = id
+	ucb.Update.Set("connections.$.emote_set_id", id)
 	return ucb
 }
 
@@ -273,7 +311,7 @@ func (ucb *UserConnectionBuilder) setPlatformData(v interface{}) *UserConnection
 	}
 
 	ucb.UserConnection.Data = b
-	ucb.Update.Set("data", v)
+	ucb.Update.Set("connections.$.data", v)
 	return ucb
 }
 
@@ -286,7 +324,7 @@ func (ucb *UserConnectionBuilder) SetGrant(at string, rt string, ex int, sc []st
 	}
 
 	ucb.UserConnection.Grant = g
-	ucb.Update.Set("grant", g)
+	ucb.Update.Set("connections.$.grant", g)
 	return ucb
 }
 
@@ -360,10 +398,10 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionModifyActiveEmotes UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
-	UserEditorPermissionUsePrivateEmotes   UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
-	UserEditorPermissionManageProfile      UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
-	UserEditorPermissionManageOwnedEmotes  UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
-	UserEditorPermissionManageEmoteSets    UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
-	UserEditorPermissionManageBilling      UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionModifyEmotes      UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
+	UserEditorPermissionUsePrivateEmotes  UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
+	UserEditorPermissionManageProfile     UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
+	UserEditorPermissionManageOwnedEmotes UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
+	UserEditorPermissionManageEmoteSets   UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
+	UserEditorPermissionManageBilling     UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
 )

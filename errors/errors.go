@@ -29,13 +29,14 @@ var (
 
 	// Client Not Found
 
-	ErrUnknownEmote    apiErrorFn = DefineError(70440, "Unknown Emote", 404)   // can't find emote object
-	ErrUnknownEmoteSet apiErrorFn = DefineError(70441, "Unknown Emote", 404)   // can't find emote set object
-	ErrUnknownUser     apiErrorFn = DefineError(70442, "Unknown User", 404)    // can't find user object
-	ErrUnknownRole     apiErrorFn = DefineError(70443, "Unknown Role", 404)    // can't find role object
-	ErrUnknownReport   apiErrorFn = DefineError(70444, "Unknown Report", 404)  // can't find report object
-	ErrUnknownMessage  apiErrorFn = DefineError(70445, "Unknown Message", 404) // can't find message object
-	ErrUnknownBan      apiErrorFn = DefineError(70446, "Unknown Ban", 404)     // can't find ban object
+	ErrUnknownEmote          apiErrorFn = DefineError(70440, "Unknown Emote", 404)           // can't find emote object
+	ErrUnknownEmoteSet       apiErrorFn = DefineError(70441, "Unknown Emote", 404)           // can't find emote set object
+	ErrUnknownUser           apiErrorFn = DefineError(70442, "Unknown User", 404)            // can't find user object
+	ErrUnknownUserConnection apiErrorFn = DefineError(70442, "Unknown User Connection", 404) // can't find user connection object
+	ErrUnknownRole           apiErrorFn = DefineError(70443, "Unknown Role", 404)            // can't find role object
+	ErrUnknownReport         apiErrorFn = DefineError(70444, "Unknown Report", 404)          // can't find report object
+	ErrUnknownMessage        apiErrorFn = DefineError(70445, "Unknown Message", 404)         // can't find message object
+	ErrUnknownBan            apiErrorFn = DefineError(70446, "Unknown Ban", 404)             // can't find ban object
 
 	// Client Type Errors
 
