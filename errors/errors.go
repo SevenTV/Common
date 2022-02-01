@@ -30,7 +30,7 @@ var (
 	// Client Not Found
 
 	ErrUnknownEmote          apiErrorFn = DefineError(70440, "Unknown Emote", 404)           // can't find emote object
-	ErrUnknownEmoteSet       apiErrorFn = DefineError(70441, "Unknown Emote", 404)           // can't find emote set object
+	ErrUnknownEmoteSet       apiErrorFn = DefineError(70441, "Unknown Emote Set", 404)       // can't find emote set object
 	ErrUnknownUser           apiErrorFn = DefineError(70442, "Unknown User", 404)            // can't find user object
 	ErrUnknownUserConnection apiErrorFn = DefineError(70442, "Unknown User Connection", 404) // can't find user connection object
 	ErrUnknownRole           apiErrorFn = DefineError(70443, "Unknown Role", 404)            // can't find role object

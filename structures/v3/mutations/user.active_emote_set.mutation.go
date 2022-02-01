@@ -40,6 +40,22 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 		}
 	}
 
+	// Validate that the emote set exists and can be enabled
+	set := &structures.EmoteSet{}
+	if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
+		"_id": opt.EmoteSetID,
+	}).Decode(set); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.ErrUnknownEmoteSet()
+		}
+		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+	if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != actor.ID {
+		return nil, errors.ErrInsufficientPrivilege().
+			SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
+			SetDetail("You do not own this emote set")
+	}
+
 	// Get the connection
 	conn, ok := ub.GetConnection(opt.Platform, opt.ConnectionID)
 	if !ok {
@@ -50,7 +66,10 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 	// Update document
 	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": victim.ID, "connections.id": opt.ConnectionID},
+		bson.M{
+			"_id":            victim.ID,
+			"connections.id": opt.ConnectionID,
+		},
 		conn.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(victim); err != nil {

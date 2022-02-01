@@ -26,6 +26,10 @@ var collections = []collectionRef{
 				"dislay_name":   {BSONType: BSONTypeString},
 				"discriminator": {BSONType: BSONTypeString, MinLength: utils.Int64Pointer(4), MaxLength: utils.Int64Pointer(4)},
 				"email":         {BSONType: BSONTypeString, Pattern: `^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$`},
+				"role_ids": {
+					BSONType: BSONTypeArray,
+					Items:    []*jsonSchema{{BSONType: BSONTypeObjectId}},
+				},
 				"editors": {
 					BSONType: BSONTypeArray,
 					Items: []*jsonSchema{{
