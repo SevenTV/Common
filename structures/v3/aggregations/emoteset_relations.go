@@ -10,7 +10,7 @@ import (
 // Input: EmoteSet
 // Adds Field: "emotes" as []ActiveEmote with the "emote" field added to each ActiveEmote object
 // Output: User
-var EmoteSetRelationActiveEmotes = []bson.D{
+var EmoteSetRelationActiveEmotes = mongo.Pipeline{
 	// Step 1: Lookup user editors
 	{{
 		Key: "$lookup",

@@ -241,6 +241,10 @@ type UserConnection struct {
 	Data bson.Raw `json:"data" bson:"data"`
 	// a full oauth2 token grant
 	Grant *UserConnectionGrant `json:"-" bson:"grant"`
+
+	// Relational
+
+	EmoteSet *EmoteSet `json:"emote_set" bson:"emote_set,skip,omitempty"`
 }
 
 type UserConnectionGrant struct {
@@ -377,8 +381,6 @@ type YouTubeConnection struct {
 
 type UserEditor struct {
 	ID ObjectID `json:"id" bson:"id"`
-	// When this has 1 or more items, this editor will only have access to these connections (i.e specific twitch/youtube channels)
-	Connections []ObjectID `json:"connections" bson:"connections"`
 	// The permissions this editor has
 	Permissions UserEditorPermission `json:"permissions" bson:"permissions"`
 	// Whether or not that editor will be visible on the user's profile page

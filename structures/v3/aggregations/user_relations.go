@@ -175,6 +175,71 @@ var UserRelationConnections = []bson.D{
 	}},
 }
 
+// User Relations
+// Input: User
+// Adds Field: "emote_set" of []connections as EmoteSet
+func UserConnectionEmoteSetRelation() mongo.Pipeline {
+	return mongo.Pipeline{
+		{{
+			Key: "$lookup",
+			Value: mongo.LookupWithPipeline{
+				From: mongo.CollectionNameEmoteSets,
+				Let:  bson.M{"set_id": "connections.emote_set_id"},
+				Pipeline: &mongo.Pipeline{
+					{{
+						Key: "$match",
+						Value: bson.M{
+							"$expr": bson.A{"$_id", "$$set_id"},
+						},
+					}},
+					{{
+						Key: "$lookup",
+						Value: mongo.LookupWithPipeline{
+							From: mongo.CollectionNameEmotes,
+							Let:  bson.M{"emote_ids": "$emotes.id"},
+							Pipeline: CombinePtr(
+								mongo.Pipeline{
+									{{
+										Key: "$match",
+										Value: bson.M{"$expr": bson.M{
+											"$in": bson.A{"$_id", "$$emote_ids"},
+										}},
+									}},
+									{{
+										Key: "$lookup",
+										Value: mongo.LookupWithPipeline{
+											From: mongo.CollectionNameUsers,
+											Let:  bson.M{"owner_id": "$owner_id"},
+											Pipeline: CombinePtr(
+												mongo.Pipeline{{{
+													Key:   "$match",
+													Value: bson.M{"$expr": bson.M{"$eq": bson.A{"$_id", "$$owner_id"}}}},
+												}},
+												UserRelationRoles,
+											),
+											As: "owner_user",
+										},
+									}},
+									{{
+										Key:   "$set",
+										Value: bson.M{"owner_user": bson.M{"$first": "$owner_user"}},
+									}},
+								},
+							),
+							As: "_emotes",
+						},
+					}},
+					MergeArrays("emotes", "$_emotes", "_id", "emote"),
+					{{Key: "$unset", Value: "_emotes"}},
+				},
+				As: "_sets",
+			},
+		}},
+		MergeArrays("connections", "$_sets", "_id", "emote_set"),
+		{{Key: "$unset", Value: "_sets"}},
+	}
+}
+
 // Emote Relations
 //
 // Input: Emote
