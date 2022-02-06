@@ -240,7 +240,7 @@ type UserConnection struct {
 	// third-party connection data
 	Data bson.Raw `json:"data" bson:"data"`
 	// a full oauth2 token grant
-	Grant *UserConnectionGrant `json:"-" bson:"grant"`
+	Grant *UserConnectionGrant `json:"-" bson:"grant,omitempty"`
 
 	// Relational
 
