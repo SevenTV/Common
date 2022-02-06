@@ -15,12 +15,14 @@ var DeletedUser = &User{
 }
 
 var DeletedEmote = &Emote{
-	ID:         primitive.NilObjectID,
-	OwnerID:    DeletedUser.ID,
-	Name:       "*UnknownEmote",
-	Flags:      0,
-	Tags:       []string{},
-	Status:     EmoteStatusDeleted,
+	ID:      primitive.NilObjectID,
+	OwnerID: DeletedUser.ID,
+	Name:    "*UnknownEmote",
+	Flags:   0,
+	Tags:    []string{},
+	State: EmoteState{
+		Lifecycle: EmoteLifecycleDeleted,
+	},
 	FrameCount: 0,
 	Formats:    []EmoteFormat{},
 	Owner:      DeletedUser,

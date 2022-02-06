@@ -64,9 +64,9 @@ func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
 }
 
 // SetStatus: change the emote's status
-func (eb *EmoteBuilder) SetStatus(status EmoteStatus) *EmoteBuilder {
-	eb.Emote.Status = status
-	eb.Update.Set("status", status)
+func (eb *EmoteBuilder) SetLifecycle(l EmoteLifecycle) *EmoteBuilder {
+	eb.Emote.State.Lifecycle = l
+	eb.Update.Set("state.lifecycle", l)
 	return eb
 }
 
@@ -79,14 +79,13 @@ type Emote struct {
 	Flags   EmoteFlag `json:"flags" bson:"flags"`
 	Tags    []string  `json:"tags" bson:"tags"`
 
-	// Meta
+	// Image-related information
 
-	Status     EmoteStatus   `json:"status" bson:"status"`
 	FrameCount int32         `json:"frame_count" bson:"frame_count"`             // The amount of frames this image has
 	Formats    []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // All formats the emote is available is, with width/height/length of each responsive size
 
-	// Moderation Data
-	Moderation *EmoteModeration `json:"moderation,omitempty" bson:"moderation,omitempty"`
+	// State metadata
+	State EmoteState `json:"state" bson:"state"`
 
 	// Versioning
 
@@ -99,15 +98,15 @@ type Emote struct {
 	Channels []*User `json:"channels" bson:"channels,skip,omitempty"`
 }
 
-type EmoteStatus int32
+type EmoteLifecycle int32
 
 const (
-	EmoteStatusDeleted EmoteStatus = iota - 1
-	EmoteStatusProcessing
-	EmoteStatusPending
-	EmoteStatusDisabled
-	EmoteStatusLive
-	EmoteStatusFailed EmoteStatus = -2
+	EmoteLifecycleDeleted EmoteLifecycle = iota - 1
+	EmoteLifecyclePending
+	EmoteLifecycleProcessing
+	EmoteLifecycleDisabled
+	EmoteLifecycleLive
+	EmoteLifecycleFailed EmoteLifecycle = -2
 )
 
 type EmoteFlag int32
@@ -143,7 +142,8 @@ const (
 	EmoteFormatNamePNG  EmoteFormatName = "image/png"
 )
 
-type EmoteModeration struct {
-	// The reason given by a moderator for the emote not being allowed in public listing
-	RejectionReason string `json:"reject_reason,omitempty" bson:"reject_reason,omitempty"`
+type EmoteState struct {
+	// The current life cycle of the emote
+	// indicating whether it's processing, live, deleted, etc.
+	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
 }
