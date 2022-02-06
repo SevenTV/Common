@@ -184,12 +184,14 @@ func UserConnectionEmoteSetRelation() mongo.Pipeline {
 			Key: "$lookup",
 			Value: mongo.LookupWithPipeline{
 				From: mongo.CollectionNameEmoteSets,
-				Let:  bson.M{"set_id": "connections.emote_set_id"},
+				Let:  bson.M{"set_id": "$connections.emote_set_id"},
 				Pipeline: &mongo.Pipeline{
 					{{
 						Key: "$match",
 						Value: bson.M{
-							"$expr": bson.A{"$_id", "$$set_id"},
+							"$expr": bson.M{
+								"$in": bson.A{"$_id", "$$set_id"},
+							},
 						},
 					}},
 					{{
