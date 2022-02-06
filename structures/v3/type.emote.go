@@ -121,15 +121,15 @@ const (
 
 type EmoteFormat struct {
 	Name  EmoteFormatName `json:"name" bson:"name"`
-	Sizes []EmoteSize     `json:"sizes" bson:"sizes"`
+	Files []EmoteFile     `json:"files" bson:"files"`
 }
 
-type EmoteSize struct {
-	Scale          string `json:"s" bson:"scale"`    // The responsive scale
+type EmoteFile struct {
+	Name           string `json:"n" bson:"name"`     // The name of the file
 	Width          int32  `json:"w" bson:"width"`    // The pixel width of the emote
 	Height         int32  `json:"h" bson:"height"`   // The pixel height of the emote
-	Animated       bool   `json:"a" bson:"animated"` // Whether or not this size is animated
-	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this size to be processed
+	Animated       bool   `json:"a" bson:"animated"` // Whether or not this file is animated
+	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this file to be processed
 	Length         int64  `json:"b" bson:"length"`   // The file size in bytes
 }
 
