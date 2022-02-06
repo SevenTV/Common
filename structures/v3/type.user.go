@@ -234,7 +234,7 @@ type UserConnection struct {
 	// the time at which this connection was linked
 	LinkedAt time.Time `json:"linked_at" bson:"linked_at"`
 	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
-	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_sllots,omitempty"`
+	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_slots,omitempty"`
 	// emote sets bound to this connection / channel
 	EmoteSetID ObjectID `json:"emote_set_id,omitempty" bson:"emote_set_id,omitempty"`
 	// third-party connection data
@@ -400,7 +400,7 @@ func (ed *UserEditor) HasPermission(bit UserEditorPermission) bool {
 type UserEditorPermission int32
 
 const (
-	UserEditorPermissionModifyEmotes      UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's owned emote sets
+	UserEditorPermissionModifyEmotes      UserEditorPermission = 1 << 0 // 1 - Allows modifying emotes in the user's active emote sets
 	UserEditorPermissionUsePrivateEmotes  UserEditorPermission = 1 << 1 // 2 - Allows using the user's private emotes
 	UserEditorPermissionManageProfile     UserEditorPermission = 1 << 2 // 4 - Allows managing the user's public profile
 	UserEditorPermissionManageOwnedEmotes UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
