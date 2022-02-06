@@ -31,6 +31,8 @@ func (i *redisInst) ComposeKey(svc, name string) Key {
 
 type Key string
 
+var Nil = redis.Nil
+
 func (k Key) String() string {
 	return string(k)
 }
