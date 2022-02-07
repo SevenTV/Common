@@ -50,7 +50,7 @@ type collectionRef struct {
 }
 
 type jsonSchema struct {
-	BSONType   BSONType               `json:"bsonType" bson:"bsonType"`
+	BSONType   []BSONType             `json:"bsonType" bson:"bsonType"`
 	Properties map[string]*jsonSchema `json:"properties,omitempty" bson:"properties,omitempty"`
 	// A title for the validator
 	Title       string `json:"title" bson:"title"`
@@ -88,6 +88,8 @@ type jsonSchema struct {
 }
 
 type BSONType string
+
+type TList []BSONType
 
 const (
 	BSONTypeDouble     BSONType = "double"
