@@ -7,6 +7,7 @@ import (
 )
 
 var collections = []collectionRef{
+	// Collection: Users
 	{
 		Name: "users",
 		Indexes: []IndexModel{
@@ -62,6 +63,7 @@ var collections = []collectionRef{
 		},
 	},
 
+	// Collection: Emotes
 	{
 		Name: "emotes",
 		Indexes: []IndexModel{
@@ -120,6 +122,15 @@ var collections = []collectionRef{
 				"parent_id":    {BSONType: TList{BSONTypeObjectId}},
 				"children_ids": {BSONType: TList{BSONTypeArray}, Items: []*jsonSchema{{BSONType: TList{BSONTypeObjectId}}}},
 			},
+		},
+	},
+
+	// Collection: Entitlements
+	{
+		Name: "entitlements",
+		Indexes: []IndexModel{
+			{Keys: bson.M{"data.ref": -1}},
+			{Keys: bson.M{"user_id": 1}},
 		},
 	},
 }
