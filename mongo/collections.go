@@ -9,11 +9,13 @@ import (
 var collections = []collectionRef{
 	// Collection: Users
 	{
-		Name: "users",
+		Name: string(CollectionNameUsers),
 		Indexes: []IndexModel{
 			{Keys: bson.M{"username": -1}, Options: options.Index().SetUnique(true)},
+			{Keys: bson.M{"connections.emote_set_id": 1}},
+			{Keys: bson.M{"metadata.role_position": 1}},
 		},
-		Validator: jsonSchema{
+		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
 			Title:    "Users",
 			Required: []string{"username", "discriminator"},
@@ -73,7 +75,7 @@ var collections = []collectionRef{
 				{Key: "tags", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
 		},
-		Validator: jsonSchema{
+		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
 			Title:    "Emotes",
 			Required: []string{"name", "state"},
@@ -127,10 +129,28 @@ var collections = []collectionRef{
 
 	// Collection: Entitlements
 	{
-		Name: "entitlements",
+		Name: string(CollectionNameEntitlements),
 		Indexes: []IndexModel{
 			{Keys: bson.M{"data.ref": -1}},
 			{Keys: bson.M{"user_id": 1}},
+		},
+	},
+
+	// Collection: Emote Sets
+	{
+		Name: string(CollectionNameEmoteSets),
+		Indexes: []IndexModel{
+			{Keys: bson.M{"emotes.id": -1}},
+			{Keys: bson.M{"owner_id": -1}},
+			{Keys: bson.M{"kind": -1}},
+		},
+	},
+
+	// Collection: Roles
+	{
+		Name: string(CollectionNameRoles),
+		Indexes: []IndexModel{
+			{Keys: bson.M{"position": 1}},
 		},
 	},
 }

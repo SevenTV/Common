@@ -17,13 +17,15 @@ func collSync(ctx context.Context, inst Instance) error {
 		}
 
 		// Update schemas
-		if err = inst.RawDatabase().RunCommand(ctx, bson.D{
-			{Key: "collMod", Value: col.Name},
-			{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
-			{Key: "validationAction", Value: "error"},
-			{Key: "validationLevel", Value: "strict"},
-		}).Err(); err != nil {
-			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to update collection validator")
+		if col.Validator != nil {
+			if err = inst.RawDatabase().RunCommand(ctx, bson.D{
+				{Key: "collMod", Value: col.Name},
+				{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
+				{Key: "validationAction", Value: "error"},
+				{Key: "validationLevel", Value: "strict"},
+			}).Err(); err != nil {
+				logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to update collection validator")
+			}
 		}
 
 		// Set up system collection
@@ -45,7 +47,7 @@ func collSync(ctx context.Context, inst Instance) error {
 
 type collectionRef struct {
 	Name      string
-	Validator jsonSchema
+	Validator *jsonSchema
 	Indexes   []IndexModel
 }
 
