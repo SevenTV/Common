@@ -39,6 +39,8 @@ type User struct {
 	Connections []*UserConnection `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
 	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
+	// persisted non-structural data that can be used internally for querying
+	Metadata UserMetadata `json:"-" bson:"metadata"`
 
 	// Relational
 
@@ -52,6 +54,10 @@ type User struct {
 	Roles     []*Role       `json:"roles" bson:"roles,skip,omitempty"`
 	EditorOf  []*UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
 	AvatarURL string        `json:"avatar_url" bson:"-"`
+}
+
+type UserMetadata struct {
+	RolePosition int `json:"-" bson:"role_position"`
 }
 
 type UserBuilder struct {
