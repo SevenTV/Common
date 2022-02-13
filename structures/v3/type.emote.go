@@ -2,73 +2,10 @@ package structures
 
 import (
 	"regexp"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-// EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
-type EmoteBuilder struct {
-	Update UpdateMap
-	Emote  *Emote
-}
-
-// NewEmoteBuilder: create a new emote builder
-func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
-	return &EmoteBuilder{
-		Update: UpdateMap{},
-		Emote:  emote,
-	}
-}
-
-// SetName: change the name of the emote
-func (eb *EmoteBuilder) SetName(name string) *EmoteBuilder {
-	eb.Emote.Name = name
-	eb.Update.Set("name", eb.Emote.Name)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
-	eb.Emote.OwnerID = id
-	eb.Update.Set("owner_id", id)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetFlags(sum EmoteFlag) *EmoteBuilder {
-	eb.Emote.Flags = sum
-	eb.Update.Set("flags", sum)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
-	uniqueTags := map[string]bool{}
-	for _, v := range tags {
-		if v == "" {
-			continue
-		}
-		if !emoteTagRegex.MatchString(v) {
-			continue
-		}
-		uniqueTags[v] = true
-	}
-
-	tags = make([]string, len(uniqueTags))
-	i := 0
-	for k := range uniqueTags {
-		tags[i] = k
-		i++
-	}
-
-	eb.Emote.Tags = tags
-	eb.Update.Set("tags", tags)
-	return eb
-}
-
-// SetStatus: change the emote's status
-func (eb *EmoteBuilder) SetLifecycle(l EmoteLifecycle) *EmoteBuilder {
-	eb.Emote.State.Lifecycle = l
-	eb.Update.Set("state.lifecycle", l)
-	return eb
-}
 
 var emoteTagRegex = regexp.MustCompile(`^[0-9a-z]{3,30}$`)
 
@@ -146,4 +83,76 @@ type EmoteState struct {
 	// The current life cycle of the emote
 	// indicating whether it's processing, live, deleted, etc.
 	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
+	// The ranked position for the amount of channels this emote is added on to.
+	// This value is to be determined with an external cron job
+	ChannelCountRank int32 `json:"-" bson:"channel_count_rank,omitempty"`
+	// The amount of channels this emote is added on to.
+	// This value is to be determined with an external cron job
+	ChannelCount int32 `json:"-" bson:"channel_count,omitempty"`
+	// The time at which the ChannelCount value was last checked
+	ChannelCountCheckAt time.Time `json:"-" bson:"channel_count_check_at,omitempty"`
+}
+
+// EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
+type EmoteBuilder struct {
+	Update UpdateMap
+	Emote  *Emote
+}
+
+// NewEmoteBuilder: create a new emote builder
+func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
+	return &EmoteBuilder{
+		Update: UpdateMap{},
+		Emote:  emote,
+	}
+}
+
+// SetName: change the name of the emote
+func (eb *EmoteBuilder) SetName(name string) *EmoteBuilder {
+	eb.Emote.Name = name
+	eb.Update.Set("name", eb.Emote.Name)
+	return eb
+}
+
+func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
+	eb.Emote.OwnerID = id
+	eb.Update.Set("owner_id", id)
+	return eb
+}
+
+func (eb *EmoteBuilder) SetFlags(sum EmoteFlag) *EmoteBuilder {
+	eb.Emote.Flags = sum
+	eb.Update.Set("flags", sum)
+	return eb
+}
+
+func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
+	uniqueTags := map[string]bool{}
+	for _, v := range tags {
+		if v == "" {
+			continue
+		}
+		if !emoteTagRegex.MatchString(v) {
+			continue
+		}
+		uniqueTags[v] = true
+	}
+
+	tags = make([]string, len(uniqueTags))
+	i := 0
+	for k := range uniqueTags {
+		tags[i] = k
+		i++
+	}
+
+	eb.Emote.Tags = tags
+	eb.Update.Set("tags", tags)
+	return eb
+}
+
+// SetStatus: change the emote's status
+func (eb *EmoteBuilder) SetLifecycle(l EmoteLifecycle) *EmoteBuilder {
+	eb.Emote.State.Lifecycle = l
+	eb.Update.Set("state.lifecycle", l)
+	return eb
 }

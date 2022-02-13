@@ -13,7 +13,7 @@ var collections = []collectionRef{
 		Indexes: []IndexModel{
 			{Keys: bson.M{"username": -1}, Options: options.Index().SetUnique(true)},
 			{Keys: bson.M{"connections.emote_set_id": 1}},
-			{Keys: bson.M{"metadata.role_position": 1}},
+			{Keys: bson.M{"metadata.role_position": -1}},
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
@@ -74,6 +74,7 @@ var collections = []collectionRef{
 				{Key: "name", Value: "text"},
 				{Key: "tags", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
+			{ Keys: bson.M{"state.channel_count":-1} },
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
