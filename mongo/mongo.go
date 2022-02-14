@@ -48,7 +48,7 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		cache:  cache.New(time.Second*10, time.Second*20),
 	}
 
-	collSync(ctx, inst)
+	go collSync(inst)
 	return inst, nil
 }
 

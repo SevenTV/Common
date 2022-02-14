@@ -2,18 +2,27 @@ package mongo
 
 import (
 	"context"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func collSync(ctx context.Context, inst Instance) error {
+func collSync(inst Instance) error {
+	ctx, done := context.WithCancel(context.Background())
+	defer done()
+
 	for _, col := range collections {
 		// Set up indexes
-		_, err := inst.Collection(CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
+		ind, err := inst.Collection(CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
 		if err != nil {
 			logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to set up indexes")
+		} else if len(ind) > 0 {
+			logrus.WithFields(logrus.Fields{
+				"collection": col.Name,
+				"indexes":    strings.Join(ind, ", "),
+			}).Info("Indexes ensured")
 		}
 
 		// Update schemas
@@ -27,17 +36,17 @@ func collSync(ctx context.Context, inst Instance) error {
 				logrus.WithField("collection", col.Name).WithError(err).Error("mongo, failed to update collection validator")
 			}
 		}
+	}
 
-		// Set up system collection
-		{
-			// Fetch system information
-			sys := inst.System(ctx)
-			if sys.ID.IsZero() {
-				sys.ID = primitive.NewObjectID()
-				result, err := inst.Collection(CollectionNameSystem).InsertOne(ctx, sys)
-				if err == nil {
-					sys.ID = result.InsertedID.(primitive.ObjectID)
-				}
+	// Set up system collection
+	{
+		// Fetch system information
+		sys := inst.System(ctx)
+		if sys.ID.IsZero() {
+			sys.ID = primitive.NewObjectID()
+			result, err := inst.Collection(CollectionNameSystem).InsertOne(ctx, sys)
+			if err == nil {
+				sys.ID = result.InsertedID.(primitive.ObjectID)
 			}
 		}
 	}
