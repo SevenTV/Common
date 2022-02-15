@@ -79,7 +79,7 @@ type apiError struct {
 	expectedHttpStatus int
 }
 
-type Fields map[string]string
+type Fields map[string]interface{}
 
 func (e *apiError) Error() string {
 	return fmt.Sprintf("[%d] %s", e.code, strings.ToLower(e.s))
