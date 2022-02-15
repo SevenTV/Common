@@ -37,7 +37,10 @@ var UserRelationRoles = []bson.D{
 		Key: "$set",
 		Value: bson.M{
 			"role_ids": bson.M{
-				"$concatArrays": bson.A{"$role_ids", "$role_entitlements.data.ref"},
+				"$concatArrays": bson.A{
+					bson.M{"$ifNull": bson.A{"$role_ids", bson.A{}}},
+					"$role_entitlements.data.ref",
+				},
 			},
 		},
 	}},
