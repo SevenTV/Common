@@ -3,54 +3,83 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
-	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
+	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-type defaultRoles struct {
-	l sync.Mutex
+type Query struct {
+	mongo mongo.Instance
+	redis redis.Instance
+	c     *cache.Cache
+	mx    map[string]*sync.Mutex
 }
 
-func (x *defaultRoles) Fetch(ctx context.Context, mngo mongo.Instance, rdis redis.Instance) []*structures.Role {
-	x.l.Lock()
-	defer x.l.Unlock()
+func New(mongoInst mongo.Instance, redisInst redis.Instance) *Query {
+	return &Query{
+		mongo: mongoInst,
+		redis: redisInst,
+		c:     cache.New(time.Minute*1, time.Minute*5),
+		mx:    map[string]*sync.Mutex{},
+	}
+}
 
-	// Find from redis
-	result := []*structures.Role{}
-	key := rdis.ComposeKey("v3", "default-roles")
-	s, err := rdis.RawClient().Get(ctx, key.String()).Result()
-	if s != "" {
-		if err := multierror.Append(err, json.Unmarshal(utils.S2B(s), &result)).ErrorOrNil(); err != nil {
-			logrus.WithError(err).Error("redis, could not unmarshal cached default roles")
+func (q *Query) lock(tag string) *sync.Mutex {
+	l, ok := q.mx[tag]
+	if !ok {
+		l = &sync.Mutex{}
+		q.mx[tag] = l
+	}
+	l.Lock()
+	return l
+}
+
+func (q *Query) key(tag string) redis.Key {
+	return q.redis.ComposeKey("common", fmt.Sprintf("cache:%s", tag))
+}
+
+// getFromMemCache retrieve a cached item
+func (q *Query) getFromMemCache(ctx context.Context, key redis.Key, i interface{}) bool {
+	var (
+		s   string
+		err error
+	)
+	v, ok := q.c.Get(key.String())
+
+	if ok {
+		s = v.(string)
+	} else {
+		s, err = q.redis.Get(ctx, key)
+	}
+	if len(s) > 0 {
+		if err := multierror.Append(err, json.Unmarshal(utils.S2B(s), i)).ErrorOrNil(); err != nil {
+			if err != redis.Nil {
+				logrus.WithError(err).WithField("key", key).Error("redis, failed to retrieve a cache query item")
+			}
+			return false
+		} else {
+			return true
 		}
-		return result
 	}
-
-	// Find from mongo
-	cur, err := mngo.Collection(mongo.CollectionNameRoles).Find(ctx, bson.M{"default": true})
-	if err = multierror.Append(err, cur.All(ctx, &result)).ErrorOrNil(); err != nil {
-		logrus.WithError(err).Error("could not fetch default roles")
-	}
-
-	// Cache result to redis
-	b, err := json.Marshal(result)
-	if err != nil {
-		logrus.WithError(err).Error("could not marshal default roles for redis cache")
-	}
-	if _, err = rdis.RawClient().Set(ctx, key.String(), utils.B2S(b), time.Minute*5).Result(); err != nil {
-		logrus.WithError(err).Error("redis, could not cache default roles")
-	}
-
-	logrus.WithField("default_role_count", len(result)).Debug("loaded default roles")
-	return result
+	return false
 }
 
-var DefaultRoles defaultRoles
+// setInMemCache sets an item into the cache
+func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{}, ex time.Duration) error {
+	b, err := json.Marshal(i)
+	if err == nil {
+		s := utils.B2S(b)
+		q.c.Add(key.String(), s, ex)
+		if err = q.redis.SetEX(ctx, key, s, ex); err != nil {
+			return err
+		}
+	}
+	return nil
+}

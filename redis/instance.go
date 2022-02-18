@@ -11,6 +11,7 @@ import (
 )
 
 type Instance interface {
+	Ping(ctx context.Context) error
 	Get(ctx context.Context, key Key) (string, error)
 	Set(ctx context.Context, key Key, value interface{}) error
 	SetEX(ctx context.Context, key Key, value interface{}, expiry time.Duration) error
