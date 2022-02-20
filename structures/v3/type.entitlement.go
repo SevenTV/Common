@@ -128,6 +128,10 @@ type Entitlement struct {
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
 }
 
+func (e *Entitlement) GetData() EntitlementData {
+	return EntitlementData(e.Data)
+}
+
 // EntitlementKind A string representing a kind of entitlement
 type EntitlementKind string
 
@@ -165,4 +169,17 @@ type EntitledRole struct {
 type EntitledEmoteSet struct {
 	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+}
+
+type EntitlementData bson.Raw
+
+func (d EntitlementData) ReadRole() *EntitledRole {
+	return d.unmarshal(&EntitledRole{}).(*EntitledRole)
+}
+
+func (d EntitlementData) unmarshal(i interface{}) interface{} {
+	if err := bson.Unmarshal(d, i); err != nil {
+		logrus.WithError(err).Error("message, decoding message data failed")
+	}
+	return i
 }
