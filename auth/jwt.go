@@ -33,11 +33,10 @@ type JWTClaimOAuth2CSRF struct {
 	jwt.RegisteredClaims
 }
 
-func VerifyJWT(secret string, token []string) (*jwt.Token, jwt.MapClaims, error) {
-	claims := jwt.MapClaims{}
+func VerifyJWT(secret string, token []string, out jwt.Claims) (*jwt.Token, error) {
 	result, err := jwt.ParseWithClaims(
 		strings.Join(token, "."),
-		claims,
+		out,
 		func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("bad jwt signing method, expected HMAC but got %v", t.Header["alg"])
@@ -47,5 +46,5 @@ func VerifyJWT(secret string, token []string) (*jwt.Token, jwt.MapClaims, error)
 		},
 	)
 
-	return result, claims, err
+	return result, err
 }
