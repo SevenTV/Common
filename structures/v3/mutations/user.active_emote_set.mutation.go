@@ -15,9 +15,6 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 	if um.UserBuilder == nil || um.UserBuilder.User == nil {
 		return um, errors.ErrInternalIncompleteMutation()
 	}
-	if opt.EmoteSetID.IsZero() {
-		return um, errors.ErrInternalIncompleteMutation().SetDetail("Missing Emote Set ID")
-	}
 
 	// Check for actor's permission to do this
 	ub := um.UserBuilder
@@ -41,19 +38,22 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 	}
 
 	// Validate that the emote set exists and can be enabled
-	set := &structures.EmoteSet{}
-	if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": opt.EmoteSetID,
-	}).Decode(set); err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.ErrUnknownEmoteSet()
+	if !opt.EmoteSetID.IsZero() {
+		set := &structures.EmoteSet{}
+		if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
+			"_id": opt.EmoteSetID,
+		}).Decode(set); err != nil {
+			if err == mongo.ErrNoDocuments {
+				return nil, errors.ErrUnknownEmoteSet()
+			}
+			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 		}
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
-	}
-	if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != actor.ID {
-		return nil, errors.ErrInsufficientPrivilege().
-			SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
-			SetDetail("You do not own this emote set")
+
+		if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != actor.ID {
+			return nil, errors.ErrInsufficientPrivilege().
+				SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
+				SetDetail("You do not own this emote set")
+		}
 	}
 
 	// Get the connection
