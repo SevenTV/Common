@@ -158,6 +158,15 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 				}
 			}
 
+			// Verify that the set has available slots
+			if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
+				if len(set.Emotes) >= int(set.EmoteSlots) {
+					return nil, errors.ErrNoSpaceAvailable().
+						SetDetail("This set does not have enough slots").
+						SetFields(errors.Fields{"SLOTS": set.EmoteSlots})
+				}
+			}
+
 			// Check for conflicts with existing emotes
 			for _, e := range set.Emotes {
 				// Cannot enable the same emote twice
