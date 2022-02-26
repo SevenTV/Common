@@ -45,6 +45,7 @@ type ActiveEmote struct {
 	Name      string             `json:"name,omitempty" bson:"name,omitempty"`
 	Flags     ActiveEmoteFlag    `json:"flags" bson:"flags"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
+	ActorID   primitive.ObjectID `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
 
 	// Relational
 
