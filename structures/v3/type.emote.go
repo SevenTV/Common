@@ -26,8 +26,8 @@ type Emote struct {
 
 	// Versioning
 
-	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
-	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
+	Versions []*EmoteVersion     `json:"versions,omitempty" bson:"versions,omitempty"`
+	ParentID *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 
 	// Relational
 
@@ -91,6 +91,14 @@ type EmoteState struct {
 	ChannelCount int32 `json:"-" bson:"channel_count,omitempty"`
 	// The time at which the ChannelCount value was last checked
 	ChannelCountCheckAt time.Time `json:"-" bson:"channel_count_check_at,omitempty"`
+}
+
+type EmoteVersion struct {
+	ID          primitive.ObjectID `json:"id" bson:"id"`
+	Name        string             `json:"name" bson:"name"`
+	Description string             `json:"description,omitempty" bson:"description,omitempty"`
+	Diverged    bool               `json:"diverged,omitempty" bson:"diverged,omitempty"`
+	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 }
 
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
