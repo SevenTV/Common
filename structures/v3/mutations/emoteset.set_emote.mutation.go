@@ -73,7 +73,7 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		}
 		targetEmotes := []*structures.Emote{}
 		cur, err := inst.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, append(mongo.Pipeline{
-			{{Key: "$match", Value: bson.M{"_id": bson.M{"$in": targetEmoteIDs}}}},
+			{{Key: "$match", Value: bson.M{"versions.id": bson.M{"$in": targetEmoteIDs}}}},
 		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Roles: true, Editors: true})...))
 		err = multierror.Append(err, cur.All(ctx, &targetEmotes)).ErrorOrNil()
 		if err != nil {

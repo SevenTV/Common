@@ -49,7 +49,7 @@ func (em *EmoteMutation) Edit(ctx context.Context, inst mongo.Instance, opt Emot
 	// Update the emote
 	if err := inst.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": emote.ID},
+		bson.M{"versions.id": emote.ID},
 		em.EmoteBuilder.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(emote); err != nil {

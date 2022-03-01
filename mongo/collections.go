@@ -71,6 +71,10 @@ var collections = []collectionRef{
 		Name: "emotes",
 		Indexes: []IndexModel{
 			{Keys: bson.M{"owner_id": -1}},
+			{
+				Keys:    bson.D{{Key: "versions.id", Value: -1}},
+				Options: options.Index().SetUnique(true),
+			},
 			{Keys: bson.D{
 				{Key: "name", Value: "text"},
 				{Key: "tags", Value: "text"},
@@ -85,7 +89,7 @@ var collections = []collectionRef{
 				"owner_id": {BSONType: TList{BSONTypeObjectId}},
 				"name":     {BSONType: TList{BSONTypeString}, MinLength: utils.Int64Pointer(1)},
 				"flags":    {BSONType: TList{BSONTypeInt32}},
-				"tags":     {BSONType: TList{BSONTypeArray}, UniqueItems: utils.BoolPointer(true)},
+				"tags":     {BSONType: TList{BSONTypeArray}},
 				"state": {
 					BSONType: TList{BSONTypeObject},
 					Properties: map[string]*jsonSchema{
