@@ -1,9 +1,11 @@
 package structures
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -26,8 +28,9 @@ type Emote struct {
 
 	// Versioning
 
-	Versions []*EmoteVersion     `json:"versions,omitempty" bson:"versions,omitempty"`
-	ParentID *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	Versions    []*EmoteVersion      `json:"versions,omitempty" bson:"versions,omitempty"`
+	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
+	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 
 	// Relational
 
@@ -97,8 +100,10 @@ type EmoteVersion struct {
 	ID          primitive.ObjectID `json:"id" bson:"id"`
 	Name        string             `json:"name" bson:"name"`
 	Description string             `json:"description,omitempty" bson:"description,omitempty"`
-	Diverged    bool               `json:"diverged,omitempty" bson:"diverged,omitempty"`
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
+	State       EmoteState         `json:"state" bson:"state"`
+	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
+	Formats     []EmoteFormat      `json:"formats,omitempty" bson:"formats,omitempty"`
 }
 
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
@@ -162,5 +167,63 @@ func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
 func (eb *EmoteBuilder) SetLifecycle(l EmoteLifecycle) *EmoteBuilder {
 	eb.Emote.State.Lifecycle = l
 	eb.Update.Set("state.lifecycle", l)
+	return eb
+}
+
+func (eb *EmoteBuilder) GetVersion(id ObjectID) *EmoteVersion {
+	for _, v := range eb.Emote.Versions {
+		if v.ID == id {
+			return v
+		}
+	}
+	return nil
+}
+
+func (eb *EmoteBuilder) AddVersion(v *EmoteVersion) *EmoteBuilder {
+	for _, vv := range eb.Emote.Versions {
+		if vv.ID == v.ID {
+			return eb
+		}
+	}
+
+	eb.Emote.Versions = append(eb.Emote.Versions, v)
+	eb.Update.AddToSet("versions", v)
+	return eb
+}
+
+func (eb *EmoteBuilder) UpdateVersion(id ObjectID, v *EmoteVersion) *EmoteBuilder {
+	ind := -1
+	for i, vv := range eb.Emote.Versions {
+		if vv.ID == v.ID {
+			ind = i
+			break
+		}
+	}
+
+	eb.Emote.Versions[ind] = v
+	eb.Update.Set(fmt.Sprintf("versions.%d", ind), v)
+	return eb
+}
+
+func (eb *EmoteBuilder) RemoveVersion(id ObjectID) *EmoteBuilder {
+	ind := -1
+	for i := range eb.Emote.Versions {
+		if eb.Emote.Versions[i] == nil {
+			continue
+		}
+		if eb.Emote.Versions[i].ID != id {
+			continue
+		}
+		ind = i
+		break
+	}
+	if ind == -1 {
+		return eb
+	}
+
+	copy(eb.Emote.Versions[ind:], eb.Emote.Versions[ind+1:])
+	eb.Emote.Versions[len(eb.Emote.Versions)-1] = nil
+	eb.Emote.Versions = eb.Emote.Versions[:len(eb.Emote.Versions)-1]
+	eb.Update.Pull("versions", bson.M{"id": id})
 	return eb
 }
