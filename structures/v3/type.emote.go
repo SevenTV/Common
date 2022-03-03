@@ -18,14 +18,6 @@ type Emote struct {
 	Flags   EmoteFlag `json:"flags" bson:"flags"`
 	Tags    []string  `json:"tags" bson:"tags"`
 
-	// Image-related information
-
-	FrameCount int32         `json:"frame_count" bson:"frame_count"`             // The amount of frames this image has
-	Formats    []EmoteFormat `json:"formats,omitempty" bson:"formats,omitempty"` // All formats the emote is available is, with width/height/length of each responsive size
-
-	// State metadata
-	State EmoteState `json:"state" bson:"state"`
-
 	// Versioning
 
 	Versions    []*EmoteVersion      `json:"versions,omitempty" bson:"versions,omitempty"`
@@ -98,7 +90,7 @@ type EmoteState struct {
 
 type EmoteVersion struct {
 	ID          primitive.ObjectID `json:"id" bson:"id"`
-	Name        string             `json:"name" bson:"name"`
+	Name        string             `json:"name,omitempty" bson:"name,omitempty"`
 	Description string             `json:"description,omitempty" bson:"description,omitempty"`
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 	State       EmoteState         `json:"state" bson:"state"`
@@ -160,13 +152,6 @@ func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
 
 	eb.Emote.Tags = tags
 	eb.Update.Set("tags", tags)
-	return eb
-}
-
-// SetStatus: change the emote's status
-func (eb *EmoteBuilder) SetLifecycle(l EmoteLifecycle) *EmoteBuilder {
-	eb.Emote.State.Lifecycle = l
-	eb.Update.Set("state.lifecycle", l)
 	return eb
 }
 
