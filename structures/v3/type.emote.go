@@ -155,13 +155,13 @@ func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
 	return eb
 }
 
-func (eb *EmoteBuilder) GetVersion(id ObjectID) *EmoteVersion {
-	for _, v := range eb.Emote.Versions {
+func (eb *EmoteBuilder) GetVersion(id ObjectID) (*EmoteVersion, int) {
+	for i, v := range eb.Emote.Versions {
 		if v.ID == id {
-			return v
+			return v, i
 		}
 	}
-	return nil
+	return nil, -1
 }
 
 func (eb *EmoteBuilder) AddVersion(v *EmoteVersion) *EmoteBuilder {
