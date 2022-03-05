@@ -81,9 +81,11 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			return nil, err
 		}
 		for _, e := range targetEmotes {
-			if v, ok := targetEmoteMap[e.ID]; ok {
-				v.emote = e
-				targetEmoteMap[e.ID] = v
+			for _, ver := range e.Versions {
+				if v, ok := targetEmoteMap[ver.ID]; ok {
+					v.emote = e
+					targetEmoteMap[e.ID] = v
+				}
 			}
 		}
 	}
