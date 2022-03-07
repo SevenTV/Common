@@ -79,7 +79,7 @@ var collections = []collectionRef{
 				{Key: "name", Value: "text"},
 				{Key: "tags", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
-			{Keys: bson.M{"state.channel_count": -1}},
+			{Keys: bson.M{"versions.state.channel_count": -1}},
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
