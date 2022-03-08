@@ -17,7 +17,7 @@ var EmoteSetRelationActiveEmotes = mongo.Pipeline{
 		Value: mongo.Lookup{
 			From:         mongo.CollectionNameEmotes,
 			LocalField:   "emotes.id",
-			ForeignField: "_id",
+			ForeignField: "versions.id",
 			As:           "_emotes",
 		},
 	}},

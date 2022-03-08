@@ -71,31 +71,25 @@ var collections = []collectionRef{
 		Name: "emotes",
 		Indexes: []IndexModel{
 			{Keys: bson.M{"owner_id": -1}},
+			{
+				Keys:    bson.D{{Key: "versions.id", Value: -1}},
+				Options: options.Index().SetUnique(true),
+			},
 			{Keys: bson.D{
 				{Key: "name", Value: "text"},
 				{Key: "tags", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
-			{Keys: bson.M{"state.channel_count": -1}},
+			{Keys: bson.M{"versions.state.channel_count": -1}},
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
 			Title:    "Emotes",
-			Required: []string{"name", "state"},
+			Required: []string{"name", "versions"},
 			Properties: map[string]*jsonSchema{
-				"owner_id": {BSONType: TList{BSONTypeObjectId}},
-				"name":     {BSONType: TList{BSONTypeString}, MinLength: utils.Int64Pointer(1)},
-				"flags":    {BSONType: TList{BSONTypeInt32}},
-				"tags":     {BSONType: TList{BSONTypeArray}, UniqueItems: utils.BoolPointer(true)},
-				"state": {
-					BSONType: TList{BSONTypeObject},
-					Properties: map[string]*jsonSchema{
-						"lifecycle": {
-							BSONType: TList{BSONTypeInt32},
-							Minimum:  utils.Int64Pointer(-2),
-							Maximum:  utils.Int64Pointer(3),
-						},
-					},
-				},
+				"owner_id":    {BSONType: TList{BSONTypeObjectId}},
+				"name":        {BSONType: TList{BSONTypeString}, MinLength: utils.Int64Pointer(1)},
+				"flags":       {BSONType: TList{BSONTypeInt32}},
+				"tags":        {BSONType: TList{BSONTypeArray}},
 				"frame_count": {BSONType: TList{BSONTypeInt32}},
 				"formats": {
 					BSONType: TList{BSONTypeArray},
@@ -119,6 +113,26 @@ var collections = []collectionRef{
 										"length":   {BSONType: TList{BSONTypeInt64}},
 									},
 								}},
+							},
+						},
+					}},
+				},
+				"versions": {
+					BSONType: TList{BSONTypeArray},
+					Items: []*jsonSchema{{
+						BSONType: TList{BSONTypeObject},
+						Required: []string{"id", "state"},
+						Properties: map[string]*jsonSchema{
+							"name": {BSONType: TList{BSONTypeString}},
+							"state": {
+								BSONType: TList{BSONTypeObject},
+								Properties: map[string]*jsonSchema{
+									"lifecycle": {
+										BSONType: TList{BSONTypeInt32},
+										Minimum:  utils.Int64Pointer(-2),
+										Maximum:  utils.Int64Pointer(3),
+									},
+								},
 							},
 						},
 					}},
