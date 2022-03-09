@@ -27,8 +27,9 @@ type JWTClaimUser struct {
 }
 
 type JWTClaimOAuth2CSRF struct {
-	State     string    `json:"s"`
-	CreatedAt time.Time `json:"at"`
+	State       string    `json:"s"`
+	CreatedAt   time.Time `json:"at"`
+	OldRedirect bool      `json:"old,omitempty"`
 
 	jwt.RegisteredClaims
 }
