@@ -160,6 +160,10 @@ func StringPointer(s string) *string {
 	return &s
 }
 
+func IntPointer(i int) *int {
+	return &i
+}
+
 func Int32Pointer(i int32) *int32 {
 	return &i
 }
