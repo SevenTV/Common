@@ -11,6 +11,7 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (q *Query) Roles(ctx context.Context, filter bson.M) ([]*structures.Role, error) {
@@ -29,7 +30,7 @@ func (q *Query) Roles(ctx context.Context, filter bson.M) ([]*structures.Role, e
 	}
 
 	// Query
-	cur, err := q.mongo.Collection(mongo.CollectionNameRoles).Find(ctx, filter)
+	cur, err := q.mongo.Collection(mongo.CollectionNameRoles).Find(ctx, filter, options.Find().SetSort(bson.M{"position": -1}))
 	if err == nil {
 		if err = cur.All(ctx, &result); err != nil {
 			return nil, err
