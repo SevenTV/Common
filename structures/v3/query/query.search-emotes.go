@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -45,6 +46,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 			CaseSensitive: utils.BoolPointer(false),
 			ExactMatch:    utils.BoolPointer(false),
 			IgnoreTags:    utils.BoolPointer(false),
+			Document:      bson.M{},
 		}
 	}
 
@@ -54,11 +56,21 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	// Apply name/tag query
 	h := sha256.New()
 	h.Write(utils.S2B(query))
+	if len(filter.Document) > 0 {
+		optBytes, _ := json.Marshal(filter.Document)
+		h.Write(optBytes)
+	}
+
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
 	cpargs := bson.A{}
 
 	// Set up db query
 	match := bson.D{{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive}}
+	if len(filter.Document) > 0 {
+		for k, v := range filter.Document {
+			match = append(match, bson.E{Key: k, Value: v})
+		}
+	}
 
 	// Define the pipeline
 	pipeline := mongo.Pipeline{}
@@ -178,7 +190,8 @@ type SearchEmotesOptions struct {
 }
 
 type SearchEmotesFilter struct {
-	CaseSensitive *bool
-	ExactMatch    *bool
-	IgnoreTags    *bool
+	CaseSensitive *bool  `json:"cs"`
+	ExactMatch    *bool  `json:"exm"`
+	IgnoreTags    *bool  `json:"ignt"`
+	Document      bson.M `json:"doc"`
 }
