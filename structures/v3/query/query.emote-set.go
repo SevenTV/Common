@@ -52,7 +52,9 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 		roleMap[role.ID] = role
 	}
 
-	cur.Next(ctx)
+	if ok := cur.Next(ctx); !ok {
+		return items, nil // nothing found!
+	}
 	v := &aggregatedEmoteSets{}
 	if err = cur.Decode(v); err != nil {
 		logrus.WithError(err).Error("mongo, failed to decode aggregated emote sets")

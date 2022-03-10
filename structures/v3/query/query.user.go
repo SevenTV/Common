@@ -31,7 +31,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) ([]*structures.User, e
 			Key: "$lookup",
 			Value: mongo.Lookup{
 				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "_id",
+				LocalField:   "users._id",
 				ForeignField: "user_id",
 				As:           "role_entitlements",
 			},
@@ -64,7 +64,9 @@ func (q *Query) Users(ctx context.Context, filter bson.M) ([]*structures.User, e
 	}
 
 	// Map all objects
-	cur.Next(ctx)
+	if ok := cur.Next(ctx); !ok {
+		return items, nil // nothing found!
+	}
 	v := &aggregatedUsersResult{}
 	if err = cur.Decode(v); err != nil {
 		return items, err
