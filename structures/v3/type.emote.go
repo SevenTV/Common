@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -96,6 +97,10 @@ type EmoteVersion struct {
 	State       EmoteState         `json:"state" bson:"state"`
 	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
 	Formats     []EmoteFormat      `json:"formats,omitempty" bson:"formats,omitempty"`
+}
+
+func (e *Emote) HasFlag(flag EmoteFlag) bool {
+	return utils.BitField.HasBits(int64(e.Flags), int64(flag))
 }
 
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data

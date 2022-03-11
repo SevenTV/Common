@@ -62,6 +62,16 @@ const (
 	ActiveEmoteFlagOverrideFrankerFaceZ     ActiveEmoteFlag = 1 << 19 // 524288 - Overrides FrankerFaceZ emotes with the same name
 )
 
+// HasEmote: returns whether or not the set has an emote active, as well as its index
+func (es *EmoteSet) HasEmote(id primitive.ObjectID) (bool, int) {
+	for i, ae := range es.Emotes {
+		if ae.ID == id {
+			return true, i
+		}
+	}
+	return false, -1
+}
+
 type EmoteSetBuilder struct {
 	Update   UpdateMap
 	EmoteSet *EmoteSet

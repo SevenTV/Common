@@ -98,6 +98,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	if err = cur.All(ctx, &users); err != nil {
 		return nil, count, err
 	}
+	wg.Wait()
 
 	return users, count, nil
 }
