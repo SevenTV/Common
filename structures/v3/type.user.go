@@ -2,14 +2,13 @@ package structures
 
 import (
 	"fmt"
-	"math/rand"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // User A standard app user object
@@ -58,104 +57,6 @@ type User struct {
 
 type UserMetadata struct {
 	RolePosition int `json:"-" bson:"role_position"`
-}
-
-type UserBuilder struct {
-	Update UpdateMap
-	User   *User
-}
-
-// NewUserBuilder: create a new user builder
-func NewUserBuilder(user *User) *UserBuilder {
-	if user == nil {
-		user = &User{}
-	}
-	return &UserBuilder{
-		Update: UpdateMap{},
-		User:   user,
-	}
-}
-
-// SetUsername: set the username for the user
-func (ub *UserBuilder) SetUsername(username string) *UserBuilder {
-	ub.User.Username = username
-	ub.Update.Set("username", username)
-
-	return ub
-}
-
-func (ub *UserBuilder) SetDisplayName(s string) *UserBuilder {
-	ub.User.DisplayName = s
-	ub.Update.Set("display_name", s)
-	return ub
-}
-
-func (ub *UserBuilder) SetDiscriminator(discrim string) *UserBuilder {
-	if discrim == "" {
-		for i := 0; i < 4; i++ {
-			discrim += strconv.Itoa(rand.Intn(9))
-		}
-	}
-
-	ub.User.Discriminator = discrim
-	ub.Update.Set("discriminator", discrim)
-	return ub
-}
-
-// SetEmail: set the email for the user
-func (ub *UserBuilder) SetEmail(email string) *UserBuilder {
-	ub.User.Email = email
-	ub.Update.Set("email", email)
-
-	return ub
-}
-
-func (ub *UserBuilder) SetAvatarID(url string) *UserBuilder {
-	ub.User.AvatarID = url
-	ub.Update.Set("avatar_url", url)
-
-	return ub
-}
-
-func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*UserConnectionBuilder, bool) {
-	// Filter by ID?
-	filterID := ""
-	if len(id) > 0 {
-		filterID = id[0]
-	}
-
-	// Find connection
-	var conn *UserConnection
-	for _, c := range ub.User.Connections {
-		if c.Platform != p {
-			continue
-		}
-		if filterID != "" && c.ID != filterID {
-			continue
-		}
-		conn = c
-		break
-	}
-
-	// Return a builder
-	var ucb *UserConnectionBuilder
-	if conn != nil {
-		ucb = NewUserConnectionBuilder(conn)
-	}
-	return ucb, ucb != nil
-}
-
-func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
-	for _, c := range ub.User.Connections {
-		if c.ID == conn.ID {
-			return ub // connection already exists.
-		}
-	}
-
-	ub.User.Connections = append(ub.User.Connections, conn)
-	ub.Update = ub.Update.AddToSet("connections", conn)
-
-	return ub
 }
 
 // HasPermission checks relational roles against a permission bit
@@ -212,6 +113,16 @@ func (u *User) GetHighestRole() *Role {
 	}
 
 	return u.Roles[0]
+}
+
+// GetEditor returns the specified user editor
+func (u *User) GetEditor(id primitive.ObjectID) (*UserEditor, bool, int) {
+	for i, ue := range u.Editors {
+		if ue.ID == id {
+			return ue, true, i
+		}
+	}
+	return nil, false, -1
 }
 
 type UserDiscriminator uint8
@@ -412,4 +323,5 @@ const (
 	UserEditorPermissionManageOwnedEmotes UserEditorPermission = 1 << 3 // 8 - Allows managing the user's owned emotes
 	UserEditorPermissionManageEmoteSets   UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
 	UserEditorPermissionManageBilling     UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
+	UserEditorPermissionManageEditors     UserEditorPermission = 1 << 6 // 64 - Allows adding or removing editors for the user
 )
