@@ -53,17 +53,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	// Define the query string
 	query := strings.Trim(opt.Query, " ")
 
-	// Apply name/tag query
-	h := sha256.New()
-	h.Write(utils.S2B(query))
-	if len(filter.Document) > 0 {
-		optBytes, _ := json.Marshal(filter.Document)
-		h.Write(optBytes)
-	}
-
-	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
-	cpargs := bson.A{}
-
 	// Set up db query
 	match := bson.D{{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive}}
 	if len(filter.Document) > 0 {
@@ -72,8 +61,34 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 		}
 	}
 
+	// Apply permission checks
+	// omit unlisted/private emotes
+	privileged := int(1)
+	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+		privileged = 0
+		match = append(match, bson.E{
+			Key: "flags",
+			Value: bson.M{
+				"$bitsAllClear": structures.EmoteFlagsPrivate,
+				"$bitsAllSet":   structures.EmoteFlagsListed,
+			},
+		})
+	}
+
 	// Define the pipeline
 	pipeline := mongo.Pipeline{}
+
+	// Apply name/tag query
+	h := sha256.New()
+	h.Write(utils.S2B(query))
+	h.Write([]byte{byte(privileged)})
+	if len(filter.Document) > 0 {
+		optBytes, _ := json.Marshal(filter.Document)
+		h.Write(optBytes)
+	}
+
+	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
+	cpargs := bson.A{}
 
 	// Handle exact match
 	if filter.ExactMatch != nil && *filter.ExactMatch {
@@ -187,6 +202,7 @@ type SearchEmotesOptions struct {
 	Limit  int
 	Filter *SearchEmotesFilter
 	Sort   bson.M
+	Actor  *structures.User
 }
 
 type SearchEmotesFilter struct {
