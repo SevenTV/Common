@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
@@ -25,9 +26,9 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 
 	// Ping redis for a cached value
 	rKey := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:active_sets", emoteID.Hex()))
-	v, err := q.redis.Get(ctx, rKey)
-	if err == nil && v != "" {
-		if err = json.Unmarshal(utils.S2B(v), &setIDs); err != nil {
+	asv, err := q.redis.Get(ctx, rKey)
+	if err == nil && asv != "" {
+		if err = json.Unmarshal(utils.S2B(asv), &setIDs); err != nil {
 			logrus.WithError(err).Error("couldn't decode emote's active set ids")
 		}
 	} else {
@@ -69,36 +70,83 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			_ = q.redis.SetEX(ctx, k, count, time.Hour*6)
 		}
 	}()
-	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
-		mongo.Pipeline{
-			{{
-				Key:   "$match",
-				Value: match,
-			}},
-			{{
-				Key:   "$sort",
-				Value: bson.D{{Key: "metadata.role_position", Value: -1}},
-			}},
-			{{Key: "$skip", Value: (page - 1) * limit}},
-			{{
-				Key:   "$limit",
-				Value: limit,
-			}},
-			{{
-				Key:   "$sort",
-				Value: bson.D{{Key: "metadata.role_position", Value: -1}, {Key: "username", Value: 1}},
-			}},
-		},
-		aggregations.UserRelationRoles,
-	))
+	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
+		{{
+			Key:   "$match",
+			Value: match,
+		}},
+		{{
+			Key:   "$sort",
+			Value: bson.D{{Key: "metadata.role_position", Value: -1}},
+		}},
+		{{Key: "$skip", Value: (page - 1) * limit}},
+		{{
+			Key:   "$limit",
+			Value: limit,
+		}},
+		{{
+			Key: "$group",
+			Value: bson.M{
+				"_id": nil,
+				"users": bson.M{
+					"$push": "$$ROOT",
+				},
+			},
+		}},
+		{{
+			Key: "$lookup",
+			Value: mongo.Lookup{
+				From:         mongo.CollectionNameEntitlements,
+				LocalField:   "users._id",
+				ForeignField: "user_id",
+				As:           "role_entitlements",
+			},
+		}},
+		{{
+			Key: "$set",
+			Value: bson.M{
+				"role_entitlements": bson.M{
+					"$filter": bson.M{
+						"input": "$role_entitlements",
+						"as":    "ent",
+						"cond": bson.M{
+							"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
+						},
+					},
+				},
+			},
+		}},
+		{{
+			Key:   "$sort",
+			Value: bson.D{{Key: "users.metadata.role_position", Value: -1}, {Key: "users.username", Value: 1}},
+		}},
+	})
 	if err != nil {
+		logrus.WithError(err).Error("mongo, couldn't spawn aggregation")
 		return nil, count, err
 	}
-	users := []*structures.User{}
-	if err = cur.All(ctx, &users); err != nil {
+	v := &aggregatedEmoteChannelsResult{}
+	cur.Next(ctx)
+	if err := cur.Decode(v); err != nil {
+		if err == io.EOF {
+			return nil, count, errors.ErrNoItems()
+		}
+		logrus.WithError(err).Error("mongo, couldn't decode result for emote channels")
 		return nil, count, err
+	}
+
+	qb := &QueryBinder{ctx, q}
+	userMap := qb.mapUsers(v.Users, v.RoleEntitlements...)
+	users := make([]*structures.User, len(userMap))
+	for i, u := range v.Users {
+		users[i] = userMap[u.ID]
 	}
 	wg.Wait()
 
 	return users, count, nil
+}
+
+type aggregatedEmoteChannelsResult struct {
+	Users            []*structures.User        `bson:"users"`
+	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
 }

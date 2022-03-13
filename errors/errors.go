@@ -37,6 +37,7 @@ var (
 	ErrUnknownReport         apiErrorFn = DefineError(70444, "Unknown Report", 404)          // can't find report object
 	ErrUnknownMessage        apiErrorFn = DefineError(70445, "Unknown Message", 404)         // can't find message object
 	ErrUnknownBan            apiErrorFn = DefineError(70446, "Unknown Ban", 404)             // can't find ban object
+	ErrNoItems               apiErrorFn = DefineError(70449, "No Items Found", 404)          // search returned nothing
 
 	// Client Type Errors
 
