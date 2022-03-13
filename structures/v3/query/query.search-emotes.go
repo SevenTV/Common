@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const EMOTES_QUERY_LIMIT = 300
@@ -160,7 +160,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 			if err == nil {
 				cur.Next(ctx)
 				if err = multierror.Append(cur.Decode(&result), cur.Close(ctx)).ErrorOrNil(); err != nil {
-					logrus.WithError(err).Error("mongo, couldn't count")
+					if err != io.EOF {
+						logrus.WithError(err).Error("mongo, couldn't count")
+					}
 				}
 			}
 
@@ -235,51 +237,21 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	v := &aggregatedEmotesResult{}
 	cur.Next(ctx)
 	if err = cur.Decode(v); err != nil {
+		if err == io.EOF {
+			return nil, 0, errors.ErrNoItems()
+		}
 		logrus.WithError(err).Error("mongo, failed to fetch emotes")
 	}
 
-	// Get roles
-	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
-	for _, role := range roles {
-		roleMap[role.ID] = role
-	}
-
 	// Map all objects
-	emoteMap := make(map[primitive.ObjectID]*structures.Emote)
-	ownerMap := make(map[primitive.ObjectID]*structures.User)
-	entRoleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
-	for _, emote := range v.Emotes {
-		emoteMap[emote.ID] = emote
-	}
-	for _, ent := range v.RoleEntitlements {
-		ref := ent.GetData().ReadRole()
-		if ref == nil {
-			continue
-		}
-		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ref.ObjectReference)
-	}
-	for _, user := range v.EmoteOwners {
-		user.RoleIDs = append(user.RoleIDs, entRoleMap[user.ID]...)
-		ownerMap[user.ID] = user
-	}
+	qb := &QueryBinder{ctx, q}
+	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
 
-	var ok bool
 	for _, e := range v.Emotes { // iterate over emotes
 		if e == nil || e.ID.IsZero() {
 			continue
 		}
-		// add owner
-		if e.Owner, ok = ownerMap[e.OwnerID]; ok && !e.Owner.ID.IsZero() {
-			// add owner's roles
-			for _, roleID := range e.Owner.RoleIDs {
-				role, roleOK := roleMap[roleID]
-				if !roleOK {
-					continue
-				}
-				e.Owner.Roles = append(e.Owner.Roles, role)
-			}
-		}
+		e.Owner = ownerMap[e.OwnerID]
 
 		result = append(result, e)
 	}

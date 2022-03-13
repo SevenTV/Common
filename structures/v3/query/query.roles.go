@@ -18,10 +18,14 @@ func (q *Query) Roles(ctx context.Context, filter bson.M) ([]*structures.Role, e
 	mx := q.lock("ManyRoles")
 	defer mx.Unlock()
 
-	f, _ := json.Marshal(filter)
-	h := sha256.New()
-	h.Write(f)
-	k := q.key(fmt.Sprintf("roles:%s", hex.EncodeToString(h.Sum(nil))))
+	hs := "all"
+	if len(filter) > 0 {
+		f, _ := json.Marshal(filter)
+		h := sha256.New()
+		h.Write(f)
+		hs = hex.EncodeToString(h.Sum((nil)))
+	}
+	k := q.key(fmt.Sprintf("roles:%s", hs))
 	result := []*structures.Role{}
 
 	// Get cached

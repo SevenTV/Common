@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote, error) {
@@ -65,13 +64,6 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote,
 		return nil, err
 	}
 
-	// Get roles
-	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
-	for _, role := range roles {
-		roleMap[role.ID] = role
-	}
-
 	cur.Next(ctx)
 	v := &aggregatedEmotesResult{}
 	if err = cur.Decode(v); err != nil {
@@ -79,38 +71,12 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote,
 	}
 
 	// Map all objects
-	emoteMap := make(map[primitive.ObjectID]*structures.Emote)
-	ownerMap := make(map[primitive.ObjectID]*structures.User)
-	entRoleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
-	for _, emote := range v.Emotes {
-		emoteMap[emote.ID] = emote
-	}
-	for _, ent := range v.RoleEntitlements {
-		ref := ent.GetData().ReadRole()
-		if ref == nil {
-			continue
-		}
-		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ref.ObjectReference)
-	}
-	for _, user := range v.EmoteOwners {
-		user.RoleIDs = append(user.RoleIDs, entRoleMap[user.ID]...)
-		ownerMap[user.ID] = user
-	}
+	qb := &QueryBinder{ctx, q}
+	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
 
-	var ok bool
 	for _, e := range v.Emotes { // iterate over emotes
 		// add owner
-		if e.Owner, ok = ownerMap[e.OwnerID]; ok && !e.Owner.ID.IsZero() {
-			// add owner's roles
-			for _, roleID := range e.Owner.RoleIDs {
-				role, roleOK := roleMap[roleID]
-				if !roleOK {
-					continue
-				}
-				e.Owner.Roles = append(e.Owner.Roles, role)
-			}
-		}
-
+		e.Owner = ownerMap[e.OwnerID]
 		items = append(items, e)
 	}
 	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
