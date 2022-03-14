@@ -3,7 +3,6 @@ package structures
 import (
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -28,13 +27,29 @@ type Message struct {
 	Read   bool  `json:"read,omitempty" bson:"read,omitempty"`
 }
 
-type MessageKind string
+type MessageKind int8
 
 const (
-	MessageKindEmoteComment MessageKind = "EMOTE_COMMENT" // a comment
-	MessageKindInbox        MessageKind = "INBOX"         // an inbox message
-	MessageKindNews         MessageKind = "NEWS"          // a news post
+	MessageKindEmoteComment MessageKind = 1 // a comment
+	MessageKindModRequest   MessageKind = 2 // a moderator action request
+	MessageKindInbox        MessageKind = 3 // an inbox message
+	MessageKindNews         MessageKind = 4 // a news post
 )
+
+func (k MessageKind) String() string {
+	switch k {
+	case MessageKindEmoteComment:
+		return "EMOTE_COMMENT"
+	case MessageKindModRequest:
+		return "MOD_REQUEST"
+	case MessageKindInbox:
+		return "INBOX"
+	case MessageKindNews:
+		return "NEWS"
+	default:
+		return ""
+	}
+}
 
 type MessageData bson.Raw
 
@@ -64,81 +79,18 @@ type MessageDataPlaceholder struct {
 	Value string
 }
 
-type MessageBuilder struct {
-	Message *Message
-	Update  UpdateMap
-}
-
-func NewMessageBuilder(msg *Message) *MessageBuilder {
-	return &MessageBuilder{
-		Update:  UpdateMap{},
-		Message: msg,
-	}
-}
-
-func (mb *MessageBuilder) SetKind(kind MessageKind) *MessageBuilder {
-	mb.Message.Kind = kind
-	mb.Update.Set("kind", kind)
-	return mb
-}
-
-func (mb *MessageBuilder) SetAuthorID(id primitive.ObjectID) *MessageBuilder {
-	mb.Message.AuthorID = id
-	mb.Update.Set("author_id", id)
-	return mb
-}
-
-func (mb *MessageBuilder) SetAnonymous(b bool) *MessageBuilder {
-	mb.Message.Anonymous = b
-	mb.Update.Set("anonymous", b)
-	return mb
-}
-
-func (mb *MessageBuilder) SetTimestamp(t time.Time) *MessageBuilder {
-	mb.Message.CreatedAt = t
-	mb.Update.Set("created_at", t)
-	return mb
-}
-
-func (mb *MessageBuilder) AsEmoteComment(d MessageDataEmoteComment) *MessageBuilder {
-	mb.encodeData(d)
-	return mb
-}
-
-func (mb *MessageBuilder) AsInbox(d MessageDataInbox) *MessageBuilder {
-	mb.encodeData(d)
-	return mb
-}
-
-func (mb *MessageBuilder) encodeData(i interface{}) {
-	b, err := bson.Marshal(i)
-	if err != nil {
-		logrus.WithError(err).Error("message, encoding message data failed")
-		return
-	}
-	mb.Message.Data = b
-}
-
-func (mb *MessageBuilder) DecodeEmoteComment() *MessageDataEmoteComment {
-	return mb.unmarshal(&MessageDataEmoteComment{}).(*MessageDataEmoteComment)
-}
-
-func (mb *MessageBuilder) DecodeInbox() *MessageDataInbox {
-	return mb.unmarshal(&MessageDataInbox{}).(*MessageDataInbox)
-}
-
-func (mb *MessageBuilder) unmarshal(i interface{}) interface{} {
-	if err := bson.Unmarshal(mb.Message.Data, i); err != nil {
-		logrus.WithError(err).Error("message, decoding message data failed")
-	}
-	return i
+type MessageDataModRequest struct {
+	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
+	TargetID   primitive.ObjectID `json:"target_id" bson:"target_id"`
 }
 
 // MessageRead read/unread state for a message
 type MessageRead struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Kind        MessageKind        `json:"kind" bson:"kind"`
+	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 	MessageID   primitive.ObjectID `json:"message_id" bson:"message_id"`
-	RecipientID primitive.ObjectID `json:"recipient_id" bson:"recipient_id"`
+	RecipientID primitive.ObjectID `json:"recipient_id,omitempty" bson:"recipient_id,omitempty"`
 	Read        bool               `json:"read" bson:"read"`
 	ReadAt      time.Time          `json:"read_at,omitempty" bson:"read_at,omitempty"`
 }

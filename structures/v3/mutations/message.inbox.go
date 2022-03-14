@@ -2,6 +2,7 @@ package mutations
 
 import (
 	"context"
+	"time"
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
@@ -56,6 +57,8 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 		w[i] = &mongo.InsertOneModel{
 			Document: &structures.MessageRead{
 				MessageID:   msgID,
+				Kind:        structures.MessageKindInbox,
+				Timestamp:   time.Now(),
 				RecipientID: u.ID,
 				Read:        false,
 			},

@@ -9,7 +9,7 @@ import (
 type Report struct {
 	ID primitive.ObjectID `json:"id" bson:"_id"`
 	// The type of the target
-	TargetKind ReportTargetKind `json:"target_kind" bson:"target_kind"`
+	TargetKind ObjectKind `json:"target_kind" bson:"target_kind"`
 	// The ID of the target
 	TargetID primitive.ObjectID `json:"target_id" bson:"target_id"`
 	// The ID of the user who created the report
@@ -35,14 +35,6 @@ type Report struct {
 	Reporter  *User   `json:"reporter" bson:"reporter,skip,omitempty"`
 	Assignees []*User `json:"assignees" bson:"assignees,skip,omitempty"`
 }
-
-// ReportTargetKind The type of object being reported
-type ReportTargetKind string
-
-const (
-	ReportTargetKindEmote ReportTargetKind = "EMOTE"
-	ReportTargetKindUser  ReportTargetKind = "USER"
-)
 
 type ReportStatus string
 
@@ -81,7 +73,7 @@ func NewReportBuilder(report *Report) *ReportBuilder {
 	}
 }
 
-func (rb *ReportBuilder) SetTargetKind(kind ReportTargetKind) *ReportBuilder {
+func (rb *ReportBuilder) SetTargetKind(kind ObjectKind) *ReportBuilder {
 	rb.Report.TargetKind = kind
 	rb.Update.Set("target_kind", kind)
 	return rb

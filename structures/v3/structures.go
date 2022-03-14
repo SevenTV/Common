@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -70,3 +71,38 @@ var (
 )
 
 type ObjectID = primitive.ObjectID
+
+type ObjectKind int8
+
+const (
+	ObjectKindUser        ObjectKind = 1
+	ObjectKindEmote       ObjectKind = 2
+	ObjectKindEmoteSet    ObjectKind = 3
+	ObjectKindRole        ObjectKind = 4
+	ObjectKindEntitlement ObjectKind = 5
+	ObjectKindBan         ObjectKind = 6
+	ObjectKindMessage     ObjectKind = 7
+	ObjectKindReport      ObjectKind = 8
+)
+
+func (k ObjectKind) CollectionName() string {
+	switch k {
+	case ObjectKindUser:
+		return "users"
+	case ObjectKindEmote:
+		return "emotes"
+	case ObjectKindEmoteSet:
+		return "emote_sets"
+	case ObjectKindRole:
+		return "roles"
+	case ObjectKindEntitlement:
+		return "entitlements"
+	case ObjectKindBan:
+		return "bans"
+	case ObjectKindMessage:
+		return "messages"
+	default:
+		logrus.Fatalf("object kind %d doesn't have associated collection", k)
+		return ""
+	}
+}
