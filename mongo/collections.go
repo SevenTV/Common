@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -158,7 +159,6 @@ var collections = []collectionRef{
 		Indexes: []IndexModel{
 			{Keys: bson.M{"emotes.id": -1}},
 			{Keys: bson.M{"owner_id": -1}},
-			{Keys: bson.M{"kind": -1}},
 		},
 	},
 
@@ -167,6 +167,26 @@ var collections = []collectionRef{
 		Name: string(CollectionNameRoles),
 		Indexes: []IndexModel{
 			{Keys: bson.M{"position": 1}},
+		},
+	},
+
+	// Collection: Message Read States
+	{
+		Name: string(CollectionNameMessagesRead),
+		Indexes: []IndexModel{
+			{Keys: bson.M{"message_id": -1}},
+		},
+	},
+	// Collection: Messages
+	{
+		Name: string(CollectionNameMessages),
+		Indexes: []IndexModel{
+			{ // Partial Index: Mod Requests Only
+				Keys: bson.M{"data.target_id": -1},
+				Options: options.Index().SetPartialFilterExpression(bson.M{
+					"kind": structures.MessageKindModRequest,
+				}),
+			},
 		},
 	},
 }

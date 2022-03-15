@@ -28,7 +28,7 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
 			targets[structures.ObjectKindEmoteSet] = false
 		}
-		if !actor.HasPermission(structures.RolePermissionReportCreate) {
+		if !actor.HasPermission(structures.RolePermissionManageReports) {
 			targets[structures.ObjectKindReport] = false
 		}
 	}
