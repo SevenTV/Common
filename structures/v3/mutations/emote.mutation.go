@@ -47,22 +47,40 @@ func (em *EmoteMutation) Edit(ctx context.Context, inst mongo.Instance, opt Emot
 		}
 	}
 
-	u := em.EmoteBuilder.Update
 	if !opt.SkipValidation {
+		init := em.EmoteBuilder.Initial()
 		validator := em.EmoteBuilder.Emote.Validator()
 		// Change: Name
-		if _, ok := u["name"]; ok {
+		if init.Name != emote.Name {
 			if err := validator.Name(); err != nil {
 				return nil, err
 			}
 		}
-		if _, ok := u["owner_id"]; ok {
+		if init.OwnerID != emote.OwnerID {
 			// Verify that the new emote exists
 			if err := inst.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 				"_id": emote.OwnerID,
 			}).Err(); err != nil {
 				if err == mongo.ErrNoDocuments {
 					return nil, errors.ErrUnknownUser()
+				}
+			}
+		}
+		if init.Flags != emote.Flags {
+			f := emote.Flags
+
+			// Validate privileged flags
+			if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+				privilegedBits := []structures.EmoteFlag{
+					structures.EmoteFlagsContentSexual,
+					structures.EmoteFlagsContentEpilepsy,
+					structures.EmoteFlagsContentEdgy,
+					structures.EmoteFlagsContentTwitchDisallowed,
+				}
+				for _, flag := range privilegedBits {
+					if f&flag != init.Flags&flag {
+						return nil, errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify flag %s", flag.String())
+					}
 				}
 			}
 		}

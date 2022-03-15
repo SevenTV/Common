@@ -69,11 +69,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 		privileged = 0
 		match = append(match, bson.E{
-			Key: "flags",
-			Value: bson.M{
-				"$bitsAllClear": structures.EmoteFlagsPrivate,
-				"$bitsAllSet":   structures.EmoteFlagsListed,
-			},
+			Key:   "flags",
+			Value: bson.M{"$bitsAllClear": structures.EmoteFlagsPrivate},
+		}, bson.E{
+			Key:   "versions.state.listed",
+			Value: true,
 		})
 	}
 

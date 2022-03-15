@@ -1,12 +1,10 @@
 package structures
 
 import (
-	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/SevenTV/Common/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -46,11 +44,35 @@ type EmoteFlag int32
 
 const (
 	EmoteFlagsPrivate   EmoteFlag = 1 << 0
-	EmoteFlagsListed    EmoteFlag = 1 << 1
 	EmoteFlagsZeroWidth EmoteFlag = 1 << 8
+
+	// Content Flags
+
+	EmoteFlagsContentSexual           EmoteFlag = 1 << 16 // Sexually Suggesive
+	EmoteFlagsContentEpilepsy         EmoteFlag = 1 << 17 // Rapid flashing
+	EmoteFlagsContentEdgy             EmoteFlag = 1 << 18 // Edgy or distasteful, may be offensive to some users
+	EmoteFlagsContentTwitchDisallowed EmoteFlag = 1 << 24 // Not allowed specifically on the Twitch platform
 
 	EmoteFlagsAll EmoteFlag = (1 << iota) - 1
 )
+
+func (e EmoteFlag) String() string {
+	switch e {
+	case EmoteFlagsPrivate:
+		return "PRIVATE"
+	case EmoteFlagsZeroWidth:
+		return "ZERO_WIDTH"
+	case EmoteFlagsContentSexual:
+		return "SEXUALLY_SUGGESTIVE"
+	case EmoteFlagsContentEpilepsy:
+		return "EPILEPSY"
+	case EmoteFlagsContentEdgy:
+		return "EDGY_OR_DISASTEFUL"
+	case EmoteFlagsContentTwitchDisallowed:
+		return "TWITCH_DISALLOWED"
+	}
+	return ""
+}
 
 type EmoteFormat struct {
 	Name  EmoteFormatName `json:"name" bson:"name"`
@@ -79,6 +101,8 @@ type EmoteState struct {
 	// The current life cycle of the emote
 	// indicating whether it's processing, live, deleted, etc.
 	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
+	// Whether or not the emote is listed
+	Listed bool `json:"listed" bson:"listed"`
 	// The ranked position for the amount of channels this emote is added on to.
 	// This value is to be determined with an external cron job
 	ChannelCountRank int32 `json:"-" bson:"channel_count_rank,omitempty"`
@@ -103,65 +127,8 @@ func (e *Emote) HasFlag(flag EmoteFlag) bool {
 	return utils.BitField.HasBits(int64(e.Flags), int64(flag))
 }
 
-// EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
-type EmoteBuilder struct {
-	Update UpdateMap
-	Emote  *Emote
-}
-
-// NewEmoteBuilder: create a new emote builder
-func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
-	return &EmoteBuilder{
-		Update: UpdateMap{},
-		Emote:  emote,
-	}
-}
-
-// SetName: change the name of the emote
-func (eb *EmoteBuilder) SetName(name string) *EmoteBuilder {
-	eb.Emote.Name = name
-	eb.Update.Set("name", eb.Emote.Name)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
-	eb.Emote.OwnerID = id
-	eb.Update.Set("owner_id", id)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetFlags(sum EmoteFlag) *EmoteBuilder {
-	eb.Emote.Flags = sum
-	eb.Update.Set("flags", sum)
-	return eb
-}
-
-func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
-	uniqueTags := map[string]bool{}
-	for _, v := range tags {
-		if v == "" {
-			continue
-		}
-		if !emoteTagRegex.MatchString(v) {
-			continue
-		}
-		uniqueTags[v] = true
-	}
-
-	tags = make([]string, len(uniqueTags))
-	i := 0
-	for k := range uniqueTags {
-		tags[i] = k
-		i++
-	}
-
-	eb.Emote.Tags = tags
-	eb.Update.Set("tags", tags)
-	return eb
-}
-
-func (eb *EmoteBuilder) GetVersion(id ObjectID) (*EmoteVersion, int) {
-	for i, v := range eb.Emote.Versions {
+func (e *Emote) GetVersion(id ObjectID) (*EmoteVersion, int) {
+	for i, v := range e.Versions {
 		if v.ID == id {
 			return v, i
 		}
@@ -169,51 +136,15 @@ func (eb *EmoteBuilder) GetVersion(id ObjectID) (*EmoteVersion, int) {
 	return nil, -1
 }
 
-func (eb *EmoteBuilder) AddVersion(v *EmoteVersion) *EmoteBuilder {
-	for _, vv := range eb.Emote.Versions {
-		if vv.ID == v.ID {
-			return eb
-		}
-	}
-
-	eb.Emote.Versions = append(eb.Emote.Versions, v)
-	eb.Update.AddToSet("versions", v)
-	return eb
-}
-
-func (eb *EmoteBuilder) UpdateVersion(id ObjectID, v *EmoteVersion) *EmoteBuilder {
-	ind := -1
-	for i, vv := range eb.Emote.Versions {
-		if vv.ID == v.ID {
-			ind = i
-			break
-		}
-	}
-
-	eb.Emote.Versions[ind] = v
-	eb.Update.Set(fmt.Sprintf("versions.%d", ind), v)
-	return eb
-}
-
-func (eb *EmoteBuilder) RemoveVersion(id ObjectID) *EmoteBuilder {
-	ind := -1
-	for i := range eb.Emote.Versions {
-		if eb.Emote.Versions[i] == nil {
+func (e *Emote) GetLatestVersion(onlyListed bool) *EmoteVersion {
+	ver := e.Versions[0]
+	for _, v := range e.Versions {
+		if onlyListed && !v.State.Listed {
 			continue
 		}
-		if eb.Emote.Versions[i].ID != id {
-			continue
+		if ver == nil || ver.Timestamp.Before(v.Timestamp) {
+			ver = v
 		}
-		ind = i
-		break
 	}
-	if ind == -1 {
-		return eb
-	}
-
-	copy(eb.Emote.Versions[ind:], eb.Emote.Versions[ind+1:])
-	eb.Emote.Versions[len(eb.Emote.Versions)-1] = nil
-	eb.Emote.Versions = eb.Emote.Versions[:len(eb.Emote.Versions)-1]
-	eb.Update.Pull("versions", bson.M{"id": id})
-	return eb
+	return ver
 }
