@@ -22,9 +22,13 @@ func (mm *MessageMutation) SendModRequestMessage(ctx context.Context, inst mongo
 
 	// Verify that the target item exists
 	var target interface{}
-	if err := inst.Collection(mongo.CollectionName(req.TargetKind.CollectionName())).FindOne(ctx, bson.M{
-		"_id": req.TargetID,
-	}).Decode(&target); err != nil {
+	filter := bson.M{"_id": req.TargetID}
+	switch req.TargetKind {
+	case structures.ObjectKindEmote:
+		filter = bson.M{"versions.id": req.TargetID}
+	}
+	coll := mongo.CollectionName(req.TargetKind.CollectionName())
+	if err := inst.Collection(coll).FindOne(ctx, filter).Decode(&target); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrInvalidRequest().SetDetail("Target item doesn't exist")
 		}
