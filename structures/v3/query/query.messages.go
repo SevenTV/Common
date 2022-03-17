@@ -38,10 +38,12 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 			targetsAry = append(targetsAry, k)
 		}
 	}
-	return q.messages(ctx, bson.M{
-		"kind": structures.MessageKindModRequest,
-		"read": false,
-	}, messageQueryOptions{
+
+	f := bson.M{"kind": structures.MessageKindModRequest, "read": false}
+	for k, v := range opt.Filter {
+		f[k] = v
+	}
+	return q.messages(ctx, f, messageQueryOptions{
 		Actor: actor,
 		Limit: 100,
 		SubFilter: bson.M{
@@ -161,6 +163,7 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 type ModRequestMessagesQueryOptions struct {
 	Actor               *structures.User
 	Targets             map[structures.ObjectKind]bool
+	Filter              bson.M
 	SkipPermissionCheck bool
 }
 

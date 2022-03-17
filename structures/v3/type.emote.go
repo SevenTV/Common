@@ -142,9 +142,20 @@ func (e *Emote) GetLatestVersion(onlyListed bool) *EmoteVersion {
 		if onlyListed && !v.State.Listed {
 			continue
 		}
+		if v.IsUnavailable() {
+			continue
+		}
 		if ver == nil || ver.Timestamp.Before(v.Timestamp) {
 			ver = v
 		}
 	}
 	return ver
+}
+
+func (ev *EmoteVersion) IsUnavailable() bool {
+	return ev.State.Lifecycle == EmoteLifecycleDeleted || ev.State.Lifecycle == EmoteLifecycleDisabled || ev.State.Lifecycle == EmoteLifecycleFailed
+}
+
+func (ev *EmoteVersion) IsProcessing() bool {
+	return ev.State.Lifecycle == EmoteLifecyclePending || ev.State.Lifecycle == EmoteLifecycleProcessing
 }
