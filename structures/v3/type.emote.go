@@ -137,7 +137,7 @@ func (e *Emote) GetVersion(id ObjectID) (*EmoteVersion, int) {
 }
 
 func (e *Emote) GetLatestVersion(onlyListed bool) *EmoteVersion {
-	ver := e.Versions[0]
+	var ver *EmoteVersion
 	for _, v := range e.Versions {
 		if onlyListed && !v.State.Listed {
 			continue

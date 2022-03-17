@@ -2,6 +2,7 @@ package mutations
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
@@ -81,6 +82,29 @@ func (em *EmoteMutation) Edit(ctx context.Context, inst mongo.Instance, opt Emot
 					if f&flag != init.Flags&flag {
 						return nil, errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify flag %s", flag.String())
 					}
+				}
+			}
+		}
+		// Change versions
+		for i, ver := range emote.Versions {
+			oldVer := em.EmoteBuilder.InitialVersions()[i]
+			if oldVer == nil {
+				continue // cannot update version that didn't exist
+			}
+			// Update: listed
+			if ver.State.Listed != oldVer.State.Listed {
+				if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+					return nil, errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify listed state of version %s", strconv.Itoa(i))
+				}
+			}
+			if ver.Name != "" && ver.Name != oldVer.Name {
+				if err := ver.Validator().Name(); err != nil {
+					return nil, err
+				}
+			}
+			if ver.Description != "" && ver.Description != oldVer.Description {
+				if err := ver.Validator().Description(); err != nil {
+					return nil, err
 				}
 			}
 		}

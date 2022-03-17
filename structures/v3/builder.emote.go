@@ -9,9 +9,10 @@ import (
 
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
-	Update  UpdateMap
-	initial Emote
-	Emote   *Emote
+	Update          UpdateMap
+	initial         Emote
+	initialVersions []EmoteVersion
+	Emote           *Emote
 }
 
 // NewEmoteBuilder: create a new emote builder
@@ -20,17 +21,30 @@ func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
 	if emote == nil {
 		emote = &init
 	}
+	vers := make([]EmoteVersion, len(emote.Versions))
+	for i, v := range emote.Versions {
+		vers[i] = *v
+	}
 
 	return &EmoteBuilder{
-		Update:  UpdateMap{},
-		initial: *emote,
-		Emote:   emote,
+		Update:          UpdateMap{},
+		initial:         *emote,
+		initialVersions: vers,
+		Emote:           emote,
 	}
 }
 
 // Initial returns a pointer to the value first passed to this Builder
 func (eb *EmoteBuilder) Initial() *Emote {
 	return &eb.initial
+}
+
+func (eb *EmoteBuilder) InitialVersions() []*EmoteVersion {
+	a := make([]*EmoteVersion, len(eb.initialVersions))
+	for i, v := range eb.initialVersions {
+		a[i] = &v
+	}
+	return a
 }
 
 // SetName: change the name of the emote

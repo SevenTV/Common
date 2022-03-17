@@ -10,7 +10,9 @@ import (
 )
 
 var (
-	RegExpEmoteName = regexp.MustCompile(`^[-_A-Za-z(!)$:0-9]{2,100}$`)
+	RegExpEmoteName               = regexp.MustCompile(`^[-_A-Za-z(!?&)$:0-9]{2,100}$`)
+	RegExpEmoteVersionName        = regexp.MustCompile(`^[A-Za-z0-9\s]{2,40}$`)
+	RegExpEmoteVersionDescription = regexp.MustCompile(`^[-_*=/\\"'\]\[}{@&~!?;:A-Za-z0-9\s]{3,240}$`)
 )
 
 type UpdateMap bson.M
