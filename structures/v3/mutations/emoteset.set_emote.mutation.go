@@ -116,6 +116,18 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		activeEmotes[e.ID] = e.Emote
 	}
 
+	// Set up audit log entry
+	c := &structures.AuditLogChange{
+		Format: structures.AuditLogChangeFormatArrayChange,
+		Key:    "emotes",
+	}
+	log := structures.NewAuditLogBuilder(nil).
+		SetKind(structures.AuditLogKindUpdateEmoteSet).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmoteSet).
+		SetTargetID(set.ID).
+		AddChanges(c)
+
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
@@ -182,7 +194,14 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			}
 
 			// Add active emote
-			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Name, time.Now())
+			at := time.Now()
+			esm.EmoteSetBuilder.AddActiveEmote(tgt.ID, tgt.Name, at)
+			c.WriteArrayAdded("emotes", structures.ActiveEmote{
+				ID:        tgt.ID,
+				Name:      tgt.Name,
+				Flags:     tgt.Flags,
+				Timestamp: at,
+			})
 		case ListItemActionUpdate, ListItemActionRemove:
 			// The emote must already be active
 			found := false
@@ -205,9 +224,25 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 			}
 
 			if tgt.Action == ListItemActionUpdate {
-				esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Name)
+				ae, ind := esm.EmoteSetBuilder.EmoteSet.GetEmote(tgt.ID)
+				if ae != nil {
+					c.WriteArrayUpdated("emotes", structures.AuditLogChangeSingleValue{
+						New: structures.ActiveEmote{
+							ID:        tgt.ID,
+							Name:      tgt.Name,
+							Flags:     tgt.Flags,
+							Timestamp: ae.Timestamp,
+						},
+						Old:      ae,
+						Position: int32(ind),
+					})
+					esm.EmoteSetBuilder.UpdateActiveEmote(tgt.ID, tgt.Name)
+				}
 			} else if tgt.Action == ListItemActionRemove {
 				esm.EmoteSetBuilder.RemoveActiveEmote(tgt.ID)
+				c.WriteArrayRemoved("emotes", structures.ActiveEmote{
+					ID: tgt.ID,
+				})
 			}
 		}
 	}
@@ -225,6 +260,13 @@ func (esm *EmoteSetMutation) SetEmote(ctx context.Context, inst mongo.Instance, 
 		logrus.WithError(err).WithField("emote_set_id", set.ID).Error("mongo, failed to update emote set")
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
+	// Write audit log entry
+	go func() {
+		if _, err := inst.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+			logrus.WithError(err).Error("failed to write audit log")
+		}
+	}()
 
 	esm.EmoteSetBuilder.Update.Clear()
 	return esm, nil
