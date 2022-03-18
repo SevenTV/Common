@@ -10,6 +10,7 @@ import (
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) ([]*structures.Message, error) {
@@ -39,19 +40,19 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		}
 	}
 
-	f := bson.M{"kind": structures.MessageKindModRequest, "read": false}
-	for k, v := range opt.Filter {
-		f[k] = v
+	f := bson.M{
+		"kind": structures.MessageKindModRequest,
+		"data.target_kind": bson.M{
+			"$in": targetsAry,
+		},
 	}
+	if len(opt.TargetIDs) > 0 {
+		f["data.target_id"] = bson.M{"$in": opt.TargetIDs}
+	}
+
 	return q.messages(ctx, f, messageQueryOptions{
 		Actor: actor,
 		Limit: 100,
-		SubFilter: bson.M{
-			"kind": structures.MessageKindModRequest,
-			"data.target_kind": bson.M{
-				"$in": targetsAry,
-			},
-		},
 	})
 }
 
@@ -67,7 +68,7 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 	// this is an additional match operation onto message objects, rather than readstates
 	// allowing filter on message data and top-level message properties
 	subFilter := bson.M{"$expr": bson.M{
-		"$eq": bson.A{"$$msg_id", "$_id"},
+		"$eq": bson.A{"$_id", "$$msg_id"},
 	}}
 	if len(opt.SubFilter) > 0 {
 		for k, v := range opt.SubFilter {
@@ -76,7 +77,7 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 	}
 
 	// Create the pipeline
-	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
+	cur, err := q.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, aggregations.Combine(
 		// Search message read states
 		mongo.Pipeline{
 			{{Key: "$sort", Value: bson.M{"_id": -1}}},
@@ -86,18 +87,51 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 		mongo.Pipeline{
 			{{
 				Key: "$lookup",
-				Value: mongo.LookupWithPipeline{
-					From: mongo.CollectionNameMessages,
-					Let:  bson.M{"msg_id": "$message_id", "read": "$read"},
-					Pipeline: aggregations.CombinePtr(
-						mongo.Pipeline{{{
-							Key:   "$match",
-							Value: subFilter,
-						}}},
-						opt.SubPipeline,
-					),
-
-					As: "messages",
+				Value: mongo.Lookup{
+					From:         mongo.CollectionNameMessagesRead,
+					LocalField:   "_id",
+					ForeignField: "message_id",
+					As:           "read_states",
+				},
+			}},
+			{{
+				Key: "$set",
+				Value: bson.M{
+					"readers": bson.M{"$size": "$read_states"},
+					"read": bson.M{"$getField": bson.M{
+						"input": bson.M{"$first": bson.M{
+							"$filter": bson.M{
+								"input": "$read_states",
+								"as":    "rs",
+								"cond": bson.M{
+									"$and": bson.A{
+										bson.M{"$eq": bson.A{"$$rs.read", true}},
+									},
+								},
+							},
+						}},
+						"field": "read",
+					}},
+				},
+			}},
+			{{
+				Key: "$match",
+				Value: bson.M{
+					"readers": bson.M{"$gt": 0},
+					"read":    bson.M{"$not": bson.M{"$eq": true}},
+				},
+			}},
+			{{
+				Key:   "$unset",
+				Value: bson.A{"read_states"},
+			}},
+			{{
+				Key: "$group",
+				Value: bson.M{
+					"_id": nil,
+					"messages": bson.M{
+						"$push": "$$ROOT",
+					},
 				},
 			}},
 			{{ // Collect message author users
@@ -163,6 +197,7 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 type ModRequestMessagesQueryOptions struct {
 	Actor               *structures.User
 	Targets             map[structures.ObjectKind]bool
+	TargetIDs           []primitive.ObjectID
 	Filter              bson.M
 	SkipPermissionCheck bool
 }
