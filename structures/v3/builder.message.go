@@ -11,6 +11,8 @@ import (
 type MessageBuilder struct {
 	Message *Message
 	Update  UpdateMap
+
+	tainted bool
 }
 
 func NewMessageBuilder(msg *Message) *MessageBuilder {
@@ -25,6 +27,16 @@ func NewMessageBuilder(msg *Message) *MessageBuilder {
 		Update:  UpdateMap{},
 		Message: msg,
 	}
+}
+
+// IsTainted returns whether or not this Builder has been mutated before
+func (eb *MessageBuilder) IsTainted() bool {
+	return eb.tainted
+}
+
+// MarkAsTainted taints the builder, preventing it from being mutated again
+func (eb *MessageBuilder) MarkAsTainted() {
+	eb.tainted = true
 }
 
 func (mb *MessageBuilder) SetKind(kind MessageKind) *MessageBuilder {

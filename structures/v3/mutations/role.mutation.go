@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/sirupsen/logrus"
@@ -13,107 +14,107 @@ import (
 )
 
 // Create: create the new role
-func (rm *RoleMutation) Create(ctx context.Context, inst mongo.Instance, opt RoleMutationOptions) (*RoleMutation, error) {
-	if rm.RoleBuilder == nil || rm.RoleBuilder.Role == nil {
-		return nil, structures.ErrIncompleteMutation
+func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleMutationOptions) error {
+	if rb == nil || rb.Role == nil {
+		return errors.ErrInternalIncompleteMutation()
 	}
-	if rm.RoleBuilder.Role.Name == "" {
-		return nil, fmt.Errorf("missing name for role")
+	if rb.Role.Name == "" {
+		return fmt.Errorf("missing name for role")
 	}
 
 	// Check actor's permissions
 	if opt.Actor != nil && !opt.Actor.HasPermission(structures.RolePermissionManageRoles) {
-		return nil, structures.ErrInsufficientPrivilege
+		return structures.ErrInsufficientPrivilege
 	}
 
 	// Create the role
-	rm.RoleBuilder.Role.ID = primitive.NewObjectID()
-	result, err := inst.Collection(mongo.CollectionNameRoles).InsertOne(ctx, rm.RoleBuilder.Role)
+	rb.Role.ID = primitive.NewObjectID()
+	result, err := m.mongo.Collection(mongo.CollectionNameRoles).InsertOne(ctx, rb.Role)
 	if err != nil {
 		logrus.WithError(err).Error("mongo")
-		return nil, err
+		return err
 	}
 
 	// Get the newly created role
-	if inst.Collection(mongo.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rm.RoleBuilder.Role); err != nil {
-		return nil, err
+	if m.mongo.Collection(mongo.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rb.Role); err != nil {
+		return err
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"role_id": rm.RoleBuilder.Role.ID,
+		"role_id": rb.Role.ID,
 	}).Info("Role Created")
-	return rm, nil
+	return nil
 }
 
 // Edit: edit the role. Modify the RoleBuilder beforehand!
-func (rm *RoleMutation) Edit(ctx context.Context, inst mongo.Instance, opt RoleEditOptions) (*RoleMutation, error) {
-	if rm.RoleBuilder == nil || rm.RoleBuilder.Role == nil {
-		return nil, structures.ErrIncompleteMutation
+func (m *Mutate) EditRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleEditOptions) error {
+	if rb == nil || rb.Role == nil {
+		return errors.ErrInternalIncompleteMutation()
 	}
 
 	// Check actor's permissions
 	actor := opt.Actor
 	if actor != nil {
 		if !actor.HasPermission(structures.RolePermissionManageRoles) {
-			return nil, structures.ErrInsufficientPrivilege
+			return structures.ErrInsufficientPrivilege
 		}
 		if len(opt.Actor.Roles) > 0 {
 			// ensure that the actor's role is higher than the role being deleted
 			actor.SortRoles()
 			highestRole := actor.Roles[0]
 			if opt.OriginalPosition >= highestRole.Position {
-				return nil, structures.ErrInsufficientPrivilege
+				return structures.ErrInsufficientPrivilege
 			}
 		}
 	}
 
 	// Update the role
-	if err := inst.Collection(mongo.CollectionNameRoles).FindOneAndUpdate(
+	if err := m.mongo.Collection(mongo.CollectionNameRoles).FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": rm.RoleBuilder.Role.ID},
-		rm.RoleBuilder.Update,
+		bson.M{"_id": rb.Role.ID},
+		rb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
-	).Decode(rm.RoleBuilder.Role); err != nil {
-		return nil, err
+	).Decode(rb.Role); err != nil {
+		return err
 	}
 
-	return rm, nil
+	return nil
 }
 
 // Delete: delete the role
-func (rm *RoleMutation) Delete(ctx context.Context, inst mongo.Instance, opt RoleMutationOptions) (*RoleMutation, error) {
-	if rm.RoleBuilder == nil || rm.RoleBuilder.Role == nil {
-		return nil, structures.ErrIncompleteMutation
+func (m *Mutate) DeleteRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleMutationOptions) error {
+	if rb == nil || rb.Role == nil {
+		return structures.ErrIncompleteMutation
 	}
 
 	// Check actor's permissions
 	actor := opt.Actor
 	if actor != nil {
 		if !actor.HasPermission(structures.RolePermissionManageRoles) {
-			return nil, structures.ErrInsufficientPrivilege
+			return structures.ErrInsufficientPrivilege
 		}
 		if len(opt.Actor.Roles) > 0 {
 			// ensure that the actor's role is higher than the role being deleted
 			actor.SortRoles()
 			highestRole := actor.Roles[0]
-			if rm.RoleBuilder.Role.Position >= highestRole.Position {
-				return nil, structures.ErrInsufficientPrivilege
+			if rb.Role.Position >= highestRole.Position {
+				return structures.ErrInsufficientPrivilege
 			}
 		}
 	}
 
 	// Delete the role
-	if _, err := inst.Collection(mongo.CollectionNameRoles).DeleteOne(ctx, bson.M{"_id": rm.RoleBuilder.Role.ID}); err != nil {
+	if _, err := m.mongo.Collection(mongo.CollectionNameRoles).DeleteOne(ctx, bson.M{"_id": rb.Role.ID}); err != nil {
 		logrus.WithError(err).Error("mongo")
-		return nil, err
+		return err
 	}
 
 	// Remove the role from any user who had it
-	ur, err := inst.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
-		"role_ids": rm.RoleBuilder.Role.ID,
+	ur, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
+		"role_ids": rb.Role.ID,
 	}, bson.M{
 		"$pull": bson.M{
-			"role_ids": rm.RoleBuilder.Role.ID,
+			"role_ids": rb.Role.ID,
 		},
 	})
 	if err != nil {
@@ -121,10 +122,10 @@ func (rm *RoleMutation) Delete(ctx context.Context, inst mongo.Instance, opt Rol
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"role_id":       rm.RoleBuilder.Role.ID,
+		"role_id":       rb.Role.ID,
 		"users_updated": ur.ModifiedCount,
 	}).Info("Role Deleted")
-	return rm, nil
+	return nil
 }
 
 type RoleMutationOptions struct {

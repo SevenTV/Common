@@ -12,6 +12,9 @@ import (
 type UserBuilder struct {
 	Update UpdateMap
 	User   *User
+
+	initial User
+	tainted bool
 }
 
 // NewUserBuilder: create a new user builder
@@ -20,9 +23,25 @@ func NewUserBuilder(user *User) *UserBuilder {
 		user = &User{}
 	}
 	return &UserBuilder{
-		Update: UpdateMap{},
-		User:   user,
+		Update:  UpdateMap{},
+		User:    user,
+		initial: *user,
 	}
+}
+
+// Initial returns a pointer to the value first passed to this Builder
+func (ub *UserBuilder) Initial() *User {
+	return &ub.initial
+}
+
+// IsTainted returns whether or not this Builder has been mutated before
+func (ub *UserBuilder) IsTainted() bool {
+	return ub.tainted
+}
+
+// MarkAsTainted taints the builder, preventing it from being mutated again
+func (ub *UserBuilder) MarkAsTainted() {
+	ub.tainted = true
 }
 
 // SetUsername: set the username for the user
