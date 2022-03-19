@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const EMOTES_QUERY_LIMIT = 300
@@ -56,7 +57,15 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	query := strings.Trim(opt.Query, " ")
 
 	// Set up db query
-	match := bson.D{{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive}}
+	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
+	})
+	match := bson.D{
+		{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive},
+		{Key: "owner_id", Value: bson.M{"$not": bson.M{
+			"$in": bans.NoOwnership.KeySlice(),
+		}}},
+	}
 	if len(filter.Document) > 0 {
 		for k, v := range filter.Document {
 			match = append(match, bson.E{Key: k, Value: v})
@@ -251,7 +260,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 		if e == nil || e.ID.IsZero() {
 			continue
 		}
-		e.Owner = ownerMap[e.OwnerID]
+		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
+			e.OwnerID = primitive.NilObjectID
+		} else {
+			e.Owner = ownerMap[e.OwnerID]
+		}
 
 		result = append(result, e)
 	}
