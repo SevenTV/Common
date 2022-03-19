@@ -27,11 +27,18 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 
 	// Check permissions
 	// can the actor ban the victim?
+	actorID := primitive.NilObjectID
 	actor := opt.Actor
 	victim := opt.Victim
 	if actor != nil {
+		actorID = actor.ID
 		if victim.ID == actor.ID {
 			return errors.ErrDontBeSilly()
+		}
+		if !actor.HasPermission(structures.RolePermissionManageBans) {
+			return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+				"MISSING_PERMISSION": "MANAGE_BANS",
+			})
 		}
 		if victim.GetHighestRole().Position >= actor.GetHighestRole().Position {
 			return errors.ErrInsufficientPrivilege().
@@ -56,7 +63,7 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 	// Send a message to the victim
 	mb := structures.NewMessageBuilder(nil).
 		SetKind(structures.MessageKindInbox).
-		SetAuthorID(actor.ID).
+		SetAuthorID(actorID).
 		SetTimestamp(time.Now()).
 		SetAnonymous(opt.AnonymousActor).
 		AsInbox(structures.MessageDataInbox{
@@ -98,4 +105,32 @@ type CreateBanOptions struct {
 	Actor          *structures.User
 	AnonymousActor bool
 	Victim         *structures.User
+}
+
+func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt EditBanOptions) error {
+	if bb == nil || bb.Ban == nil || bb.Ban.ID.IsZero() {
+		return structures.ErrIncompleteMutation
+	} else if bb.IsTainted() {
+		return errors.ErrMutateTaintedObject()
+	}
+
+	actor := opt.Actor
+	if actor != nil {
+		if !actor.HasPermission(structures.RolePermissionManageBans) {
+			return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+				"MISSING_PERMISSION": "MANAGE_BANS",
+			})
+		}
+	}
+
+	// Write the change
+	if _, err := m.mongo.Collection(mongo.CollectionNameBans).UpdateOne(ctx, bson.M{"_id": bb.Ban.ID}, bb.Update); err != nil {
+		return errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	return nil
+}
+
+type EditBanOptions struct {
+	Actor *structures.User
 }
