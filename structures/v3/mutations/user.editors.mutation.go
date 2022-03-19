@@ -9,16 +9,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (um *UserMutation) Editors(ctx context.Context, inst mongo.Instance, opt UserEditorsOptions) (*UserMutation, error) {
-	if um.UserBuilder == nil || um.UserBuilder.User == nil {
-		return nil, errors.ErrInternalIncompleteMutation()
+func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuilder, opt UserEditorsOptions) error {
+	if ub == nil || ub.User == nil {
+		return errors.ErrInternalIncompleteMutation()
+	} else if ub.IsTainted() {
+		return errors.ErrMutateTaintedObject()
 	}
 
 	// Fetch relevant data
-	target := um.UserBuilder.User
+	target := ub.User
 	editor := opt.Editor
 	if editor == nil {
-		return nil, errors.ErrUnknownUser()
+		return errors.ErrUnknownUser()
 	}
 
 	// Check permissions
@@ -27,13 +29,13 @@ func (um *UserMutation) Editors(ctx context.Context, inst mongo.Instance, opt Us
 	if actor.ID != target.ID && !actor.HasPermission(structures.RolePermissionManageUsers) {
 		ed, ok, _ := target.GetEditor(actor.ID)
 		if !ok {
-			return nil, errors.ErrInsufficientPrivilege()
+			return errors.ErrInsufficientPrivilege()
 		}
 		// actor is an editor of target but they must also have "Manage Editors" permission to do this
 		if !ed.HasPermission(structures.UserEditorPermissionManageEditors) {
 			// the actor is allowed to *remove* themselve as an editor
 			if !(actor.ID == editor.ID && opt.Action == ListItemActionRemove) {
-				return nil, errors.ErrInsufficientPrivilege().SetDetail("You don't have permission to manage this user's editors")
+				return errors.ErrInsufficientPrivilege().SetDetail("You don't have permission to manage this user's editors")
 			}
 		}
 	}
@@ -41,22 +43,22 @@ func (um *UserMutation) Editors(ctx context.Context, inst mongo.Instance, opt Us
 	switch opt.Action {
 	// add editor
 	case ListItemActionAdd:
-		um.UserBuilder.AddEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+		ub.AddEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
 	case ListItemActionUpdate:
-		um.UserBuilder.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+		ub.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
 	case ListItemActionRemove:
-		um.UserBuilder.RemoveEditor(editor.ID)
+		ub.RemoveEditor(editor.ID)
 	}
 
 	// Write mutation
-	if _, err := inst.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
+	if _, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 		"_id": target.ID,
-	}, um.UserBuilder.Update); err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	}, ub.Update); err != nil {
+		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	um.UserBuilder.Update.Clear()
-	return um, nil
+	ub.MarkAsTainted()
+	return nil
 }
 
 type UserEditorsOptions struct {

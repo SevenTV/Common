@@ -9,10 +9,12 @@ import (
 
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
-	Update          UpdateMap
+	Update UpdateMap
+	Emote  *Emote
+
 	initial         Emote
 	initialVersions []EmoteVersion
-	Emote           *Emote
+	tainted         bool
 }
 
 // NewEmoteBuilder: create a new emote builder
@@ -37,6 +39,16 @@ func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
 // Initial returns a pointer to the value first passed to this Builder
 func (eb *EmoteBuilder) Initial() *Emote {
 	return &eb.initial
+}
+
+// IsTainted returns whether or not this Builder has been mutated before
+func (eb *EmoteBuilder) IsTainted() bool {
+	return eb.tainted
+}
+
+// MarkAsTainted taints the builder, preventing it from being mutated again
+func (eb *EmoteBuilder) MarkAsTainted() {
+	eb.tainted = true
 }
 
 func (eb *EmoteBuilder) InitialVersions() []*EmoteVersion {

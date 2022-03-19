@@ -11,13 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instance, opt SetUserActiveEmoteSet) (*UserMutation, error) {
-	if um.UserBuilder == nil || um.UserBuilder.User == nil {
-		return um, errors.ErrInternalIncompleteMutation()
+func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *structures.UserBuilder, opt SetUserActiveEmoteSet) error {
+	if ub == nil || ub.User == nil {
+		return errors.ErrInternalIncompleteMutation()
+	} else if ub.IsTainted() {
+		return errors.ErrMutateTaintedObject()
 	}
 
 	// Check for actor's permission to do this
-	ub := um.UserBuilder
 	actor := opt.Actor
 	victim := ub.User
 	if actor != nil && actor.ID != victim.ID {
@@ -33,24 +34,24 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 			}
 		}
 		if !ok {
-			return um, errors.ErrInsufficientPrivilege().SetDetail("You are not an editor of this user")
+			return errors.ErrInsufficientPrivilege().SetDetail("You are not an editor of this user")
 		}
 	}
 
 	// Validate that the emote set exists and can be enabled
 	if !opt.EmoteSetID.IsZero() {
 		set := &structures.EmoteSet{}
-		if err := inst.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
+		if err := m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
 			"_id": opt.EmoteSetID,
 		}).Decode(set); err != nil {
 			if err == mongo.ErrNoDocuments {
-				return nil, errors.ErrUnknownEmoteSet()
+				return errors.ErrUnknownEmoteSet()
 			}
-			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+			return errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != actor.ID {
-			return nil, errors.ErrInsufficientPrivilege().
+			return errors.ErrInsufficientPrivilege().
 				SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
 				SetDetail("You do not own this emote set")
 		}
@@ -59,12 +60,12 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 	// Get the connection
 	conn, ok := ub.GetConnection(opt.Platform, opt.ConnectionID)
 	if !ok {
-		return um, errors.ErrUnknownUserConnection()
+		return errors.ErrUnknownUserConnection()
 	}
 	conn.SetActiveEmoteSet(opt.EmoteSetID)
 
 	// Update document
-	if err := inst.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
+	if err := m.mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
 		bson.M{
 			"_id":            victim.ID,
@@ -74,12 +75,13 @@ func (um *UserMutation) SetActiveEmoteSet(ctx context.Context, inst mongo.Instan
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(victim); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.ErrUnknownUser().SetDetail("Victim was not found and could not be updated")
+			return errors.ErrUnknownUser().SetDetail("Victim was not found and could not be updated")
 		}
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	return um, nil
+	ub.MarkAsTainted()
+	return nil
 }
 
 type SetUserActiveEmoteSet struct {

@@ -3,7 +3,8 @@ package mutations
 import (
 	"sync"
 
-	"github.com/SevenTV/Common/structures/v3"
+	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/redis"
 )
 
 type ListItemAction string
@@ -14,23 +15,16 @@ const (
 	ListItemActionRemove ListItemAction = "REMOVE"
 )
 
-type UserMutation struct {
-	UserBuilder *structures.UserBuilder
+type Mutate struct {
+	mongo mongo.Instance
+	redis redis.Instance
+	mx    map[string]*sync.Mutex
 }
 
-type RoleMutation struct {
-	RoleBuilder *structures.RoleBuilder
-}
-
-type EmoteMutation struct {
-	EmoteBuilder *structures.EmoteBuilder
-}
-
-type EmoteSetMutation struct {
-	EmoteSetBuilder *structures.EmoteSetBuilder
-	l               sync.Mutex
-}
-
-type MessageMutation struct {
-	MessageBuilder *structures.MessageBuilder
+func New(mongoInst mongo.Instance, redisInst redis.Instance) *Mutate {
+	return &Mutate{
+		mongo: mongoInst,
+		redis: redisInst,
+		mx:    map[string]*sync.Mutex{},
+	}
 }

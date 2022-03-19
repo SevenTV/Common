@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/sirupsen/logrus"
@@ -11,20 +12,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Instance, opt SendInboxMessageOptions) (*MessageMutation, error) {
-	if mm.MessageBuilder == nil || mm.MessageBuilder.Message == nil {
-		return nil, structures.ErrIncompleteMutation
+func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBuilder, opt SendInboxMessageOptions) error {
+	if mb == nil || mb.Message == nil {
+		return errors.ErrInternalIncompleteMutation()
+	} else if mb.IsTainted() {
+		return errors.ErrMutateTaintedObject()
 	}
 
 	// Check actor permissions
 	actor := opt.Actor
 	if actor == nil || actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionSendMessages) {
-		return nil, structures.ErrInsufficientPrivilege
+		return structures.ErrInsufficientPrivilege
 	}
 
 	// Find recipients
 	recipients := []*structures.User{}
-	cur, err := inst.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
+	cur, err := m.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 		"$and": func() bson.A {
 			a := bson.A{bson.M{"_id": bson.M{"$in": opt.Recipients}}}
 			if opt.ConsiderBlockedUsers { // omit blocked users from recipients?
@@ -36,18 +39,18 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 	})
 	if err != nil {
 		logrus.WithError(err).Error("mongo")
-		return nil, err
+		return err
 	}
 	if err = cur.All(ctx, &recipients); err != nil {
 		logrus.WithError(err).Error("mongo")
-		return nil, err
+		return err
 	}
 
 	// Write message to DB
-	result, err := inst.Collection(mongo.CollectionNameMessages).InsertOne(ctx, mm.MessageBuilder.Message)
+	result, err := m.mongo.Collection(mongo.CollectionNameMessages).InsertOne(ctx, mb.Message)
 	if err != nil {
 		logrus.WithError(err).WithField("actor_id", actor.ID).Error("mongo, failed to create message")
-		return nil, err
+		return err
 	}
 	msgID := result.InsertedID.(primitive.ObjectID)
 
@@ -64,7 +67,7 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 			},
 		}
 	}
-	if _, err = inst.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w); err != nil {
+	if _, err = m.mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"message_id":      result.InsertedID,
 			"recipient_count": len(recipients),
@@ -72,8 +75,9 @@ func (mm *MessageMutation) SendInboxMessage(ctx context.Context, inst mongo.Inst
 		}).Error("mongo, couldn't create a read state for message")
 	}
 
-	mm.MessageBuilder.Message.ID = msgID
-	return mm, nil
+	mb.Message.ID = msgID
+	mb.MarkAsTainted()
+	return nil
 }
 
 type SendInboxMessageOptions struct {

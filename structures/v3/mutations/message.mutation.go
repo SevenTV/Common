@@ -10,9 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (mm *MessageMutation) SetReadStates(ctx context.Context, inst mongo.Instance, read bool, opt MessageReadStateOptions) (*MessageReadStateResponse, error) {
-	if mm.MessageBuilder == nil || mm.MessageBuilder.Message == nil {
+func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.MessageBuilder, read bool, opt MessageReadStateOptions) (*MessageReadStateResponse, error) {
+	if mb == nil || mb.Message == nil {
 		return nil, errors.ErrInternalIncompleteMutation()
+	} else if mb.IsTainted() {
+		return nil, errors.ErrMutateTaintedObject()
 	}
 
 	// Check permissions
@@ -26,8 +28,8 @@ func (mm *MessageMutation) SetReadStates(ctx context.Context, inst mongo.Instanc
 	if len(opt.Filter) > 0 {
 		filter = opt.Filter
 	}
-	filter["message_id"] = mm.MessageBuilder.Message.ID
-	cur, err := inst.Collection(mongo.CollectionNameMessagesRead).Find(ctx, filter)
+	filter["message_id"] = mb.Message.ID
+	cur, err := m.mongo.Collection(mongo.CollectionNameMessagesRead).Find(ctx, filter)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrUnknownMessage().SetDetail("Couldn't find any read states related to the message")
@@ -48,7 +50,7 @@ func (mm *MessageMutation) SetReadStates(ctx context.Context, inst mongo.Instanc
 			switch rs.Kind {
 			// Check for a mod request
 			case structures.MessageKindModRequest:
-				d := mm.MessageBuilder.DecodeModRequest()
+				d := mb.DecodeModRequest()
 				errf := errors.Fields{
 					"message_state_id": rs.ID,
 					"msg_kind":         rs.Kind,
@@ -81,16 +83,17 @@ func (mm *MessageMutation) SetReadStates(ctx context.Context, inst mongo.Instanc
 
 	updated := int64(0)
 	if len(w) > 0 {
-		result, err := inst.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w)
+		result, err := m.mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w)
 		if err != nil {
 			logrus.WithError(err).WithField(
-				"message_id", mm.MessageBuilder.Message.ID,
+				"message_id", mb.Message.ID,
 			).Error("mongo, failed to update message read states")
 			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 		updated += result.ModifiedCount
 	}
 
+	mb.MarkAsTainted()
 	return &MessageReadStateResponse{
 		Updated: updated,
 		Errors:  errorList,
