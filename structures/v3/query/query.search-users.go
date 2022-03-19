@@ -25,7 +25,8 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 	items := []*structures.User{}
 
 	paginate := mongo.Pipeline{}
-	if len(opts) > 0 && opts[0].Page != 0 {
+	search := len(opts) > 0 && opts[0].Page != 0
+	if search {
 		opt := opts[0]
 		sort := bson.M{"_id": -1}
 		if len(opt.Sort) > 0 {
@@ -104,39 +105,43 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 
 	// Count the documents
 	totalCount, countErr := q.redis.RawClient().Get(ctx, queryKey.String()).Int()
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	if countErr == redis.Nil {
-		go func() {
-			defer wg.Done()
-			cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
-				mongo.Pipeline{
-					{{Key: "$match", Value: filter}},
-				},
-				mongo.Pipeline{
-					{{Key: "$count", Value: "count"}},
-					{{Key: "$project", Value: bson.M{"count": "$count"}}},
-				},
-			))
-			result := make(map[string]int, 1)
-			if err == nil {
-				cur.Next(ctx)
-				if err = multierror.Append(cur.Decode(&result), cur.Close(ctx)).ErrorOrNil(); err != nil {
-					logrus.WithError(err).Error("mongo, couldn't count")
+	if search {
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		if countErr == redis.Nil {
+			go func() {
+				defer wg.Done()
+				cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
+					mongo.Pipeline{
+						{{Key: "$match", Value: filter}},
+					},
+					mongo.Pipeline{
+						{{Key: "$count", Value: "count"}},
+						{{Key: "$project", Value: bson.M{"count": "$count"}}},
+					},
+				))
+				result := make(map[string]int, 1)
+				if err == nil {
+					if ok := cur.Next(ctx); ok {
+						if err = cur.Decode(&result); err != nil {
+							logrus.WithError(err).Error("mongo, couldn't count users")
+						}
+					}
+					_ = cur.Close(ctx)
 				}
-			}
-			totalCount = result["count"]
-			if err = q.redis.SetEX(ctx, queryKey, totalCount, time.Minute*1); err != nil {
-				logrus.WithError(err).WithFields(logrus.Fields{
-					"key":   queryKey,
-					"count": totalCount,
-				}).Error("redis, failed to save total list count of \"Search Users\" query")
-			}
-		}()
-	} else {
-		wg.Done()
+				totalCount = result["count"]
+				if err = q.redis.SetEX(ctx, queryKey, totalCount, time.Minute*1); err != nil {
+					logrus.WithError(err).WithFields(logrus.Fields{
+						"key":   queryKey,
+						"count": totalCount,
+					}).Error("redis, failed to save total list count of \"Search Users\" query")
+				}
+			}()
+		} else {
+			wg.Done()
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 
 	// Get roles
 	roles, _ := q.Roles(ctx, bson.M{})

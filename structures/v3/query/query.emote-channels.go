@@ -53,10 +53,16 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 
 	// Fetch users with this set active
 	match := bson.M{
+		"_id": bson.M{"$not": bson.M{ // Filter out users banned with memory hole effect
+			"$in": q.Bans(ctx, BanQueryOptions{
+				Filter: bson.M{"effects": bson.M{"$bitsAllSet": structures.BanEffectMemoryHole}},
+			}).MemoryHole.KeySlice(),
+		}},
 		"connections.emote_set_id": bson.M{
 			"$in": setIDs,
 		},
 	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	count := int64(0)

@@ -7,7 +7,7 @@ import (
 )
 
 type Ban struct {
-	ID primitive.ObjectID `json:"id" bson:"_id"`
+	ID primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 
 	// The user who is affected by this ban
 	VictimID primitive.ObjectID `json:"victim_id" bson:"victim_id"`
@@ -41,6 +41,18 @@ const (
 	BanEffectBlockedIP BanEffect = 1 << 4
 )
 
+func (bef BanEffect) Has(eff BanEffect) bool {
+	return (bef & eff) == eff
+}
+
+func (bef BanEffect) Add(eff BanEffect) {
+	bef |= eff
+}
+
+func (bef BanEffect) Remove(eff BanEffect) {
+	bef &= ^eff
+}
+
 var BanEffectMap = map[string]BanEffect{
 	"NO_PERMISSIONS": BanEffectNoPermissions,
 	"NO_AUTH":        BanEffectNoAuth,
@@ -49,21 +61,39 @@ var BanEffectMap = map[string]BanEffect{
 	"IP_BLOCKED":     BanEffectBlockedIP,
 }
 
-func (b *Ban) HasEffect(eff BanEffect) bool {
-	return (b.Effects & eff) == eff
-}
-
 type BanBuilder struct {
 	Ban    *Ban
 	Update UpdateMap
+
+	tainted bool
+	initial Ban
 }
 
 // NewRoleBuilder: create a new role builder
 func NewBanBuilder(ban *Ban) *BanBuilder {
-	return &BanBuilder{
-		Update: UpdateMap{},
-		Ban:    ban,
+	if ban == nil {
+		ban = &Ban{}
 	}
+	return &BanBuilder{
+		Update:  UpdateMap{},
+		Ban:     ban,
+		initial: *ban,
+	}
+}
+
+// Initial returns a pointer to the value first passed to this Builder
+func (bb *BanBuilder) Initial() *Ban {
+	return &bb.initial
+}
+
+// IsTainted returns whether or not this Builder has been mutated before
+func (bb *BanBuilder) IsTainted() bool {
+	return bb.tainted
+}
+
+// MarkAsTainted taints the builder, preventing it from being mutated again
+func (ub *BanBuilder) MarkAsTainted() {
+	ub.tainted = true
 }
 
 func (bb *BanBuilder) SetVictimID(id primitive.ObjectID) *BanBuilder {

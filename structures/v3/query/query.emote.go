@@ -8,11 +8,20 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote, error) {
 	items := []*structures.Emote{}
+
+	bans := q.Bans(ctx, BanQueryOptions{
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
+	})
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, mongo.Pipeline{
+		{{
+			Key:   "$match",
+			Value: bson.M{"owner_id": bson.M{"$not": bson.M{"$in": bans.NoOwnership.KeySlice()}}},
+		}},
 		{{
 			Key:   "$match",
 			Value: filter,
@@ -76,7 +85,11 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote,
 
 	for _, e := range v.Emotes { // iterate over emotes
 		// add owner
-		e.Owner = ownerMap[e.OwnerID]
+		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
+			e.OwnerID = primitive.NilObjectID
+		} else {
+			e.Owner = ownerMap[e.OwnerID]
+		}
 		items = append(items, e)
 	}
 	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
