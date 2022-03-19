@@ -45,6 +45,19 @@ func (u UpdateMap) AddToSet(key string, value UpdateValue) UpdateMap {
 	return u
 }
 
+func (u UpdateMap) Push(key string, value UpdateValue) UpdateMap {
+	if _, ok := u["$push"]; !ok {
+		u["$push"] = bson.M{
+			key: value,
+		}
+	} else {
+		m := u["$push"].(bson.M)
+		m[key] = value
+	}
+
+	return u
+}
+
 func (u UpdateMap) Pull(key string, value UpdateValue) UpdateMap {
 	if _, ok := u["$pull"]; !ok {
 		u["$pull"] = bson.M{

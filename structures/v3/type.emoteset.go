@@ -61,11 +61,11 @@ const (
 )
 
 // HasEmote: returns whether or not the set has an emote active, as well as its index
-func (es *EmoteSet) HasEmote(id primitive.ObjectID) (bool, int) {
+func (es *EmoteSet) GetEmote(id primitive.ObjectID) (*ActiveEmote, int) {
 	for i, ae := range es.Emotes {
 		if ae.ID == id {
-			return true, i
+			return ae, i
 		}
 	}
-	return false, -1
+	return nil, -1
 }
