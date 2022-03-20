@@ -36,6 +36,7 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
 	filter["expire_at"] = bson.M{"$gt": time.Now()}
 
 	r := &BanQueryResult{
+		All:           []*structures.Ban{},
 		NoPermissions: BanMap{},
 		NoAuth:        BanMap{},
 		NoOwnership:   BanMap{},
@@ -46,6 +47,8 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
 		for _, g := range bans {
 			victimID := g.UserID
 			for _, ban := range g.Bans {
+				r.All = append(r.All, ban)
+
 				if ban.Effects.Has(structures.BanEffectNoPermissions) {
 					r.NoPermissions[victimID] = ban
 				}
@@ -107,6 +110,7 @@ type aggregatedBansResult struct {
 }
 
 type BanQueryResult struct {
+	All []*structures.Ban
 	// A list of user IDs which will not have any permissions at all
 	NoPermissions BanMap
 	// A list of user IDs not allowed to authenticate
