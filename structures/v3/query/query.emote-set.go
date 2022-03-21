@@ -41,6 +41,29 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 				As:           "emote_owners",
 			},
 		}},
+		{{
+			Key: "$lookup",
+			Value: mongo.Lookup{
+				From:         mongo.CollectionNameEntitlements,
+				LocalField:   "emote_owners._id",
+				ForeignField: "user_id",
+				As:           "role_entitlements",
+			},
+		}},
+		{{
+			Key: "$set",
+			Value: bson.M{
+				"role_entitlements": bson.M{
+					"$filter": bson.M{
+						"input": "$role_entitlements",
+						"as":    "ent",
+						"cond": bson.M{
+							"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
+						},
+					},
+				},
+			},
+		}},
 	})
 	if err != nil {
 		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
@@ -61,33 +84,22 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 		return items, err
 	}
 
+	qb := &QueryBinder{ctx, q}
+	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
 	emoteMap := make(map[primitive.ObjectID]*structures.Emote)
-	ownerMap := make(map[primitive.ObjectID]*structures.User)
+	var ok bool
 	for _, emote := range v.Emotes {
+		emote.Owner = ownerMap[emote.OwnerID]
 		for _, ver := range emote.Versions {
 			emote := *emote
 			emote.ID = ver.ID
 			emoteMap[ver.ID] = &emote
 		}
 	}
-	for _, user := range v.EmoteOwners {
-		ownerMap[user.ID] = user
-	}
 
-	var ok bool
 	for _, set := range v.Sets {
 		for indEmotes, ae := range set.Emotes {
-			if ae.Emote, ok = emoteMap[ae.ID]; ok {
-				if ae.Emote.Owner, ok = ownerMap[ae.Emote.OwnerID]; ok {
-					for _, roleID := range ae.Emote.Owner.RoleIDs {
-						role, roleOK := roleMap[roleID]
-						if !roleOK {
-							continue
-						}
-						ae.Emote.Owner.Roles = append(ae.Emote.Owner.Roles, role)
-					}
-				}
-			} else {
+			if ae.Emote, ok = emoteMap[ae.ID]; !ok {
 				set.Emotes[indEmotes].Emote = structures.DeletedEmote
 			}
 		}
@@ -98,9 +110,10 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 }
 
 type aggregatedEmoteSets struct {
-	Sets        []*structures.EmoteSet `bson:"sets"`
-	Emotes      []*structures.Emote    `bson:"emotes"`
-	EmoteOwners []*structures.User     `bson:"emote_owners"`
+	Sets             []*structures.EmoteSet    `bson:"sets"`
+	Emotes           []*structures.Emote       `bson:"emotes"`
+	EmoteOwners      []*structures.User        `bson:"emote_owners"`
+	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
 }
 
 func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive.ObjectID][]*structures.EmoteSet, error) {
@@ -138,20 +151,39 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 					As:           "emote_owners",
 				},
 			}},
+			{{
+				Key: "$lookup",
+				Value: mongo.Lookup{
+					From:         mongo.CollectionNameEntitlements,
+					LocalField:   "emote_owners._id",
+					ForeignField: "user_id",
+					As:           "role_entitlements",
+				},
+			}},
+			{{
+				Key: "$set",
+				Value: bson.M{
+					"role_entitlements": bson.M{
+						"$filter": bson.M{
+							"input": "$role_entitlements",
+							"as":    "ent",
+							"cond": bson.M{
+								"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
+							},
+						},
+					},
+				},
+			}},
 		},
 	))
 	if err != nil {
 		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
 	}
 
-	// Get roles
-	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
-	for _, role := range roles {
-		roleMap[role.ID] = role
-	}
-
 	// Iterate over cursor
+	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
+	})
 	for i := 0; cur.Next(ctx); i++ {
 		v := &aggregatedUserEmoteSets{}
 		if err = cur.Decode(v); err != nil {
@@ -160,17 +192,23 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 		}
 
 		// Map emotes bound to the set
+		qb := &QueryBinder{ctx, q}
+		ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
 		emoteMap := make(map[primitive.ObjectID]*structures.Emote)
-		ownerMap := make(map[primitive.ObjectID]*structures.User)
 		for _, emote := range v.Emotes {
+			if _, ok := bans.NoOwnership[emote.OwnerID]; ok {
+				continue
+			}
+			if _, ok := bans.MemoryHole[emote.OwnerID]; ok {
+				emote.OwnerID = primitive.NilObjectID
+			}
 			for _, ver := range emote.Versions {
 				emote := *emote
 				emote.ID = ver.ID
+				emote.Owner = ownerMap[emote.OwnerID]
+
 				emoteMap[ver.ID] = &emote
 			}
-		}
-		for _, user := range v.EmoteOwners {
-			ownerMap[user.ID] = user
 		}
 
 		var ok bool
@@ -178,15 +216,6 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 			for _, ae := range set.Emotes {
 				if ae.Emote, ok = emoteMap[ae.ID]; ok {
 					ae.Emote.ID = ae.ID
-					if ae.Emote.Owner, ok = ownerMap[ae.Emote.OwnerID]; ok {
-						for _, roleID := range ae.Emote.Owner.RoleIDs {
-							role, roleOK := roleMap[roleID]
-							if !roleOK {
-								continue
-							}
-							ae.Emote.Owner.Roles = append(ae.Emote.Owner.Roles, role)
-						}
-					}
 				}
 			}
 		}
@@ -199,8 +228,9 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 }
 
 type aggregatedUserEmoteSets struct {
-	UserID      primitive.ObjectID     `bson:"_id"`
-	Sets        []*structures.EmoteSet `bson:"sets"`
-	Emotes      []*structures.Emote    `bson:"emotes"`
-	EmoteOwners []*structures.User     `bson:"emote_owners"`
+	UserID           primitive.ObjectID        `bson:"_id"`
+	Sets             []*structures.EmoteSet    `bson:"sets"`
+	Emotes           []*structures.Emote       `bson:"emotes"`
+	EmoteOwners      []*structures.User        `bson:"emote_owners"`
+	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
 }

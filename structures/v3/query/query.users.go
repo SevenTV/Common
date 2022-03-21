@@ -15,10 +15,24 @@ import (
 func (q *Query) Users(ctx context.Context, filter bson.M) *UsersResult {
 	items := []*structures.User{}
 	r := &UsersResult{items, nil}
+
+	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
+	})
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
 			Value: filter,
+		}},
+		{{
+			Key: "$set",
+			Value: bson.M{ // Remove memory holed editors
+				"editors": bson.M{"$filter": bson.M{
+					"input": "$editors",
+					"as":    "e",
+					"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$e.id", bans.MemoryHole.KeySlice()}}},
+				}},
+			},
 		}},
 		{{
 			Key: "$group",
