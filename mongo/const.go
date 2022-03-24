@@ -10,6 +10,7 @@ var (
 	CollectionNameUsers        CollectionName = "users"
 	CollectionNameRoles        CollectionName = "roles"
 	CollectionNameEntitlements CollectionName = "entitlements"
+	CollectionNameCosmetics    CollectionName = "cosmetics"
 	CollectionNameReports      CollectionName = "reports"
 	CollectionNameBans         CollectionName = "bans"
 	CollectionNameMessages     CollectionName = "messages"

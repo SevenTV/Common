@@ -58,43 +58,43 @@ func (b EntitlementBuilder) marshalData(data interface{}) EntitlementBuilder {
 }
 
 // ReadSubscriptionData: Read the data as an Entitled Subscription
-func (b EntitlementBuilder) ReadSubscriptionData() EntitledSubscription {
-	var e EntitledSubscription
-	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
+func (e *Entitlement) ReadSubscriptionData() EntitledSubscription {
+	var d EntitledSubscription
+	if err := bson.Unmarshal(e.Data, &e); err != nil {
 		logrus.WithError(err).Error("bson")
-		return e
+		return d
 	}
-	return e
+	return d
 }
 
 // ReadBadgeData: Read the data as an Entitled Badge
-func (b EntitlementBuilder) ReadBadgeData() EntitledBadge {
-	var e EntitledBadge
-	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
+func (e *Entitlement) ReadBadgeData() EntitledBadge {
+	var d EntitledBadge
+	if err := bson.Unmarshal(e.Data, &e); err != nil {
 		logrus.WithError(err).Error("bson")
-		return e
+		return d
 	}
-	return e
+	return d
 }
 
 // ReadRoleData: Read the data as an Entitled Role
-func (b EntitlementBuilder) ReadRoleData() EntitledRole {
-	var e EntitledRole
-	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
+func (e *Entitlement) ReadRoleData() EntitledRole {
+	var d EntitledRole
+	if err := bson.Unmarshal(e.Data, &e); err != nil {
 		logrus.WithError(err).Error("bson")
-		return e
+		return d
 	}
-	return e
+	return d
 }
 
 // ReadEmoteSetData: Read the data as an Entitled Emote Set
-func (b EntitlementBuilder) ReadEmoteSetData() EntitledEmoteSet {
-	var e EntitledEmoteSet
-	if err := bson.Unmarshal(b.Entitlement.Data, &e); err != nil {
+func (e *Entitlement) ReadEmoteSetData() EntitledEmoteSet {
+	var d EntitledEmoteSet
+	if err := bson.Unmarshal(e.Data, &e); err != nil {
 		logrus.WithError(err).Error("bson")
-		return e
+		return d
 	}
-	return e
+	return d
 }
 
 func (b EntitlementBuilder) Log(str string) {
@@ -138,9 +138,16 @@ type EntitlementKind string
 var (
 	EntitlementKindSubscription = EntitlementKind("SUBSCRIPTION") // Subscription Entitlement
 	EntitlementKindBadge        = EntitlementKind("BADGE")        // Badge Entitlement
+	EntitlementKindPaint        = EntitlementKind("PAINT")        // Badge Entitlement
 	EntitlementKindRole         = EntitlementKind("ROLE")         // Role Entitlement
 	EntitlementKindEmoteSet     = EntitlementKind("EMOTE_SET")    // Emote Set Entitlement
 )
+
+type EntitledItem struct {
+	ObjectReference primitive.ObjectID  `json:"-" bson:"ref"`
+	RoleBinding     *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
+	Selected        bool                `json:"selected,omitempty" bson:"selected,omitempty"`
+}
 
 // EntitledSubscription Subscription binding in an Entitlement
 type EntitledSubscription struct {
@@ -151,12 +158,11 @@ type EntitledSubscription struct {
 
 // EntitledBadge Badge binding in an Entitlement
 type EntitledBadge struct {
-	ID              string             `json:"id" bson:"-"`
+	ID string `json:"id" bson:"-"`
+	*EntitledItem
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
-	Selected        bool               `json:"selected" bson:"selected"`
 	// The role required for the badge to show up
-	RoleBinding   *primitive.ObjectID `json:"role_binding" bson:"role_binding"`
-	RoleBindingID *string             `json:"role_binding_id" bson:"-"`
+	RoleBindingID *string `json:"role_binding_id" bson:"-"`
 }
 
 // EntitledRole Role binding in an Entitlement
@@ -172,6 +178,10 @@ type EntitledEmoteSet struct {
 }
 
 type EntitlementData bson.Raw
+
+func (d EntitlementData) ReadItem() *EntitledItem {
+	return d.unmarshal(&EntitledItem{}).(*EntitledItem)
+}
 
 func (d EntitlementData) ReadRole() *EntitledRole {
 	return d.unmarshal(&EntitledRole{}).(*EntitledRole)

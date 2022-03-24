@@ -13,6 +13,10 @@ type QueryBinder struct {
 	q   *Query
 }
 
+func (q *Query) NewBinder(ctx context.Context) *QueryBinder {
+	return &QueryBinder{ctx, q}
+}
+
 func (qb *QueryBinder) mapUsers(users []*structures.User, roleEnts ...*structures.Entitlement) map[primitive.ObjectID]*structures.User {
 	m := make(map[primitive.ObjectID]*structures.User)
 	for _, v := range users {
