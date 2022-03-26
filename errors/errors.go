@@ -108,7 +108,7 @@ func (e *apiError) Code() int {
 }
 
 func (e *apiError) SetDetail(str string, a ...string) *apiError {
-	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a), str).(string)
+	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a), str)
 	return e
 }
 

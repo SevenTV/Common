@@ -31,7 +31,7 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 //
 // It takes a condition, and returns a result depending on the outcome
 //
-func Ternary(condition bool, whenTrue interface{}, whenFalse interface{}) interface{} {
+func Ternary[T any](condition bool, whenTrue T, whenFalse T) T {
 	if condition {
 		return whenTrue
 	}
@@ -81,15 +81,15 @@ func S2B(s string) (b []byte) {
 	return b
 }
 
-func DifferentArray(a []string, b []string) bool {
+func DifferentArray[T ComparableType](a []T, b []T) bool {
 	if len(a) != len(b) {
 		return true
 	}
 	if len(a) == 0 {
 		return false
 	}
-	aM := make(map[string]int)
-	bM := make(map[string]int)
+	aM := make(map[T]int)
+	bM := make(map[T]int)
 	for _, v := range a {
 		aM[v] = 1
 	}
@@ -132,28 +132,21 @@ func SliceIndexOf(s []string, val string) int {
 	return -1
 }
 
-func Contains(s []string, compare string) bool {
-	for _, v := range s {
+func Contains[T ComparableType](ary []T, compare T) bool {
+	for _, v := range ary {
 		if v == compare {
 			return true
 		}
 	}
-
-	return false
-}
-
-func ContainsObjectID(oid []primitive.ObjectID, compare primitive.ObjectID) bool {
-	for _, v := range oid {
-		if v == compare {
-			return true
-		}
-	}
-
 	return false
 }
 
 func IsPointer(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
+}
+
+func PointerOf[T any](v T) *T {
+	return &v
 }
 
 func StringPointer(s string) *string {
@@ -199,4 +192,8 @@ func PanicHandler(handle func(err interface{})) {
 			handle(err)
 		}
 	}
+}
+
+type ComparableType interface {
+	*any | int | int8 | int16 | int32 | float32 | float64 | string | bool | chan any | primitive.ObjectID
 }

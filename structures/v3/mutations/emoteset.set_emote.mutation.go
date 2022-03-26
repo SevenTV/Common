@@ -134,7 +134,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		if tgt.emote == nil {
 			continue
 		}
-		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name).(string)
+		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name)
 		tgt.emote.Name = tgt.Name
 		if err := tgt.emote.Validator().Name(); err != nil {
 			return err

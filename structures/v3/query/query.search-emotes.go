@@ -177,7 +177,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 
 			// Return total count & cache
 			totalCount = result["count"]
-			dur := utils.Ternary(query == "", time.Minute*10, time.Hour*1).(time.Duration)
+			dur := utils.Ternary(query == "", time.Minute*10, time.Hour*1)
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
 				logrus.WithError(err).WithFields(logrus.Fields{
 					"key":   queryKey,

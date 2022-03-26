@@ -73,7 +73,7 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 			Placeholders: func() map[string]string {
 				m := map[string]string{
 					"BAN_REASON":    bb.Ban.Reason,
-					"BAN_EXPIRE_AT": utils.Ternary(bb.Ban.ExpireAt.IsZero(), "never", bb.Ban.ExpireAt.Format(time.RFC822)).(string),
+					"BAN_EXPIRE_AT": utils.Ternary(bb.Ban.ExpireAt.IsZero(), "never", bb.Ban.ExpireAt.Format(time.RFC822)),
 				}
 				for k, e := range structures.BanEffectMap {
 					if bb.Ban.Effects.Has(e) {
