@@ -46,6 +46,7 @@ var (
 	ErrBadInt             apiErrorFn = DefineError(70412, "Bad Int", 400)
 	ErrValidationRejected apiErrorFn = DefineError(70413, "Validation Rejected", 400)
 	ErrInternalField      apiErrorFn = DefineError(70414, "Internal Field", 400)
+	ErrEmptyField         apiErrorFn = DefineError(70415, "Empty Field", 400)
 	ErrUnknownRoute       apiErrorFn = DefineError(70441, "Unknown Route", 400) // the requested api endpoint doesn't exist
 
 	// Other Client Errors
@@ -85,6 +86,14 @@ type apiError struct {
 }
 
 type Fields map[string]interface{}
+
+func From(e error) APIError {
+	switch t := e.(type) {
+	case APIError:
+		return t
+	}
+	return DefineError(70000, "Unexpected Error", 500)().SetDetail(e.Error())
+}
 
 func (e *apiError) Error() string {
 	return fmt.Sprintf("[%d] %s", e.code, strings.ToLower(e.s))

@@ -35,7 +35,7 @@ type User struct {
 	// token version. When this value changes all existing auth tokens are invalidated
 	TokenVersion float64 `json:"token_version" bson:"token_version"`
 	// third party connections. Who's the third party now?
-	Connections []*UserConnection `json:"connections" bson:"connections"`
+	Connections UserConnectionList `json:"connections" bson:"connections"`
 	// the ID of users who have been blocked by the user
 	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 	// persisted non-structural data that can be used internally for querying
@@ -126,6 +126,40 @@ func (u *User) GetEditor(id primitive.ObjectID) (*UserEditor, bool, int) {
 }
 
 type UserDiscriminator uint8
+
+type UserConnectionList []*UserConnection
+
+// Twitch returns the first Twitch user connection
+func (ucl UserConnectionList) Twitch(skipArg ...int) (*UserConnection, int) {
+	var skip int = 0
+	if len(skipArg) != 0 {
+		skip = skipArg[0]
+	}
+	return ucl.getOfPlatform(UserConnectionPlatformTwitch, skip)
+}
+
+// YouTube returns the first YouTube user connection
+func (ucl UserConnectionList) YouTube(skipArg ...int) (*UserConnection, int) {
+	var skip int = 0
+	if len(skipArg) != 0 {
+		skip = skipArg[0]
+	}
+	return ucl.getOfPlatform(UserConnectionPlatformYouTube, skip)
+}
+
+func (ucl UserConnectionList) getOfPlatform(platform UserConnectionPlatform, skip int) (*UserConnection, int) {
+	for i, con := range ucl {
+		if con.Platform != platform {
+			continue
+		}
+
+		if skip == 0 {
+			return con, i
+		}
+		skip--
+	}
+	return nil, -1
+}
 
 // UserConnectionPlatform Represents a platform that the app supports
 type UserConnectionPlatform string
