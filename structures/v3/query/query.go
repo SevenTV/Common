@@ -9,6 +9,7 @@ import (
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
 	"github.com/patrickmn/go-cache"
@@ -82,4 +83,42 @@ func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{},
 		}
 	}
 	return nil
+}
+
+type QueryResult[T QueriableType] struct {
+	items []*T
+	err   error
+}
+
+type QueriableType interface {
+	structures.User | structures.Emote | structures.Message | structures.Role
+}
+
+func (qr *QueryResult[T]) setItems(items []*T) *QueryResult[T] {
+	qr.items = items
+	return qr
+}
+
+func (qr *QueryResult[T]) setError(err error) *QueryResult[T] {
+	qr.err = err
+	return qr
+}
+
+func (qr *QueryResult[T]) Error() error {
+	return qr.err
+}
+
+func (qr *QueryResult[T]) First() *T {
+	if len(qr.items) == 0 {
+		return nil
+	}
+	return qr.items[0]
+}
+
+func (qr *QueryResult[T]) Items() []*T {
+	return qr.items
+}
+
+func (qr *QueryResult[T]) Empty() bool {
+	return len(qr.items) == 0
 }

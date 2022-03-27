@@ -11,7 +11,7 @@ type APIError interface {
 	Error() string
 	Message() string
 	Code() int
-	SetDetail(str string, a ...string) *apiError
+	SetDetail(str string, a ...any) *apiError
 	SetFields(d Fields) *apiError
 	GetFields() Fields
 	ExpectedHTTPStatus() int
@@ -107,7 +107,7 @@ func (e *apiError) Code() int {
 	return e.code
 }
 
-func (e *apiError) SetDetail(str string, a ...string) *apiError {
+func (e *apiError) SetDetail(str string, a ...any) *apiError {
 	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a), str)
 	return e
 }
