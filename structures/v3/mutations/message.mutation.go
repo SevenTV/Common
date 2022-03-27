@@ -52,7 +52,8 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 			case structures.MessageKindModRequest:
 				d := mb.DecodeModRequest()
 				errf := errors.Fields{
-					"message_state_id": rs.ID,
+					"message_id":       rs.MessageID.Hex(),
+					"message_state_id": rs.ID.Hex(),
 					"msg_kind":         rs.Kind,
 					"target_kind":      d.TargetKind,
 				}
@@ -66,6 +67,18 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 				} else if d.TargetKind == structures.ObjectKindReport && !actor.HasPermission(structures.RolePermissionManageReports) {
 					errorList = append(errorList, errors.ErrInsufficientPrivilege().SetFields(errf))
 					continue // target is report but actor lacks "manage reports" permission
+				}
+			case structures.MessageKindInbox:
+				errf := errors.Fields{
+					"message_id":       rs.MessageID.Hex(),
+					"message_state_id": rs.ID.Hex(),
+					"msg_kind":         rs.Kind,
+				}
+
+				// Actor is not the recipient and is not privileged
+				if !actor.HasPermission(structures.RolePermissionManageUsers) && actor.ID != rs.RecipientID {
+					errorList = append(errorList, errors.ErrInsufficientPrivilege().SetFields(errf))
+					continue
 				}
 			default:
 				continue

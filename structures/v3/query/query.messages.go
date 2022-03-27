@@ -11,15 +11,75 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) ([]*structures.Message, error) {
+func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message] {
+	qr := &QueryResult[structures.Message]{}
 	actor := opt.Actor
-	// sign-in is required
-	targets := opt.Targets
+	user := opt.User
+	if user == nil {
+		return qr.setError(errors.ErrInternalServerError().SetDetail("no user passed to Inbox query"))
+	}
+
 	if !opt.SkipPermissionCheck {
 		if actor == nil {
-			return nil, errors.ErrUnauthorized()
+			return qr.setError(errors.ErrUnauthorized())
+		}
+
+		// Actor is not the target user
+		if actor.ID != user.ID {
+			ed, ok, _ := user.GetEditor(actor.ID)
+			// Actor is not editor of target user
+			if !ok {
+				return qr.setError(errors.ErrInsufficientPrivilege().SetDetail("You are not an editor of this user"))
+			}
+			// Actor is an editor, but does not have the permission to do this
+			if !ed.HasPermission(structures.UserEditorPermissionViewMessages) {
+				return qr.setError(errors.ErrInsufficientPrivilege().SetDetail("You are not allowed to view the messages of this user"))
+			}
+		}
+	}
+
+	// Fetch message read states where target user is recipient
+	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Find(ctx, bson.M{
+		"recipient_id": user.ID,
+		"kind":         structures.MessageKindInbox,
+	}, options.Find().SetProjection(bson.M{"message_id": 1}))
+	if err != nil {
+		logrus.WithError(err).WithField("user_id", user.ID.Hex()).Error("failed to find read states of inbox messages")
+		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
+	}
+	messageIDs := []primitive.ObjectID{}
+	for cur.Next(ctx) {
+		msg := &structures.MessageRead{}
+		if err = cur.Decode(msg); err != nil {
+			continue
+		}
+		messageIDs = append(messageIDs, msg.MessageID)
+	}
+
+	and := bson.A{bson.M{"_id": bson.M{"$in": messageIDs}}}
+	if !opt.AfterID.IsZero() {
+		and = append(and, bson.M{"_id": bson.M{"$gt": opt.AfterID}})
+	}
+
+	return q.Messages(ctx, bson.M{"$and": and}, MessageQueryOptions{
+		Actor:            actor,
+		Limit:            opt.Limit,
+		ReturnUnread:     true,
+		FilterRecipients: []primitive.ObjectID{user.ID},
+	})
+}
+
+func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) *QueryResult[structures.Message] {
+	qr := &QueryResult[structures.Message]{}
+	actor := opt.Actor
+	targets := opt.Targets
+
+	if !opt.SkipPermissionCheck {
+		if actor == nil {
+			return qr.setError(errors.ErrUnauthorized())
 		}
 
 		// check permissions for targets
@@ -50,30 +110,20 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		f["data.target_id"] = bson.M{"$in": opt.TargetIDs}
 	}
 
-	return q.messages(ctx, f, messageQueryOptions{
+	return q.Messages(ctx, f, MessageQueryOptions{
 		Actor: actor,
 		Limit: 100,
 	})
 }
 
-func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOptions) ([]*structures.Message, error) {
+func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message] {
+	qr := &QueryResult[structures.Message]{}
 	items := []*structures.Message{}
 
 	// Set limit?
 	limit := mongo.Pipeline{}
 	if opt.Limit != 0 {
 		limit = append(limit, bson.D{{Key: "$limit", Value: opt.Limit}})
-	}
-	// Set sub-filter
-	// this is an additional match operation onto message objects, rather than readstates
-	// allowing filter on message data and top-level message properties
-	subFilter := bson.M{"$expr": bson.M{
-		"$eq": bson.A{"$_id", "$$msg_id"},
-	}}
-	if len(opt.SubFilter) > 0 {
-		for k, v := range opt.SubFilter {
-			subFilter[k] = v
-		}
 	}
 
 	// Create the pipeline
@@ -104,9 +154,14 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 								"input": "$read_states",
 								"as":    "rs",
 								"cond": bson.M{
-									"$and": bson.A{
-										bson.M{"$eq": bson.A{"$$rs.read", true}},
-									},
+									"$and": func() bson.A {
+										a := bson.A{bson.M{"$eq": bson.A{"$$rs.read", true}}}
+										if len(opt.FilterRecipients) > 0 {
+											a = append(a, bson.M{"$in": bson.A{"$$rs.recipient_id", opt.FilterRecipients}})
+										}
+
+										return a
+									}(),
 								},
 							},
 						}},
@@ -116,10 +171,14 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 			}},
 			{{
 				Key: "$match",
-				Value: bson.M{
-					"readers": bson.M{"$gt": 0},
-					"read":    bson.M{"$not": bson.M{"$eq": true}},
-				},
+				Value: func() bson.M {
+					m := bson.M{"readers": bson.M{"$gt": 0}}
+					if !opt.ReturnUnread {
+						m["read"] = bson.M{"$not": bson.M{"$eq": true}}
+					}
+
+					return m
+				}(),
 			}},
 			{{
 				Key:   "$unset",
@@ -170,17 +229,17 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 	))
 	if err != nil {
 		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
 	v := &aggregatedMessagesResult{}
 	cur.Next(ctx)
 	if err := cur.Decode(v); err != nil {
 		if err == io.EOF {
-			return nil, errors.ErrNoItems().SetDetail("No messages")
+			return qr.setError(errors.ErrNoItems().SetDetail("No messages"))
 		}
 		logrus.WithError(err).Error("mongo, failed to decode aggregated result of mod requests query")
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
 	qb := &QueryBinder{ctx, q}
@@ -191,7 +250,15 @@ func (q *Query) messages(ctx context.Context, filter bson.M, opt messageQueryOpt
 		items = append(items, msg)
 	}
 
-	return items, nil
+	return qr.setItems(items)
+}
+
+type InboxMessagesQueryOptions struct {
+	Actor               *structures.User
+	User                *structures.User // The user to fetch inbox messagesq from
+	Limit               int
+	AfterID             primitive.ObjectID
+	SkipPermissionCheck bool
 }
 
 type ModRequestMessagesQueryOptions struct {
@@ -202,11 +269,11 @@ type ModRequestMessagesQueryOptions struct {
 	SkipPermissionCheck bool
 }
 
-type messageQueryOptions struct {
-	Actor       *structures.User
-	Limit       int
-	SubFilter   bson.M
-	SubPipeline mongo.Pipeline
+type MessageQueryOptions struct {
+	Actor            *structures.User
+	Limit            int
+	ReturnUnread     bool
+	FilterRecipients []primitive.ObjectID
 }
 
 type aggregatedMessagesResult struct {

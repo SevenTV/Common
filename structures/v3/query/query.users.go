@@ -12,9 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (q *Query) Users(ctx context.Context, filter bson.M) *UsersResult {
+func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structures.User] {
 	items := []*structures.User{}
-	r := &UsersResult{items, nil}
+	r := &QueryResult[structures.User]{}
 
 	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
@@ -94,31 +94,5 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *UsersResult {
 	for _, u := range userMap {
 		items = append(items, u)
 	}
-	r.items = items
-	return r
-}
-
-type UsersResult struct {
-	items []*structures.User
-	err   error
-}
-
-func (ur *UsersResult) setError(err error) *UsersResult {
-	ur.err = err
-	return ur
-}
-
-func (ur *UsersResult) Error() error {
-	return ur.err
-}
-
-func (ur *UsersResult) First() *structures.User {
-	if len(ur.items) == 0 {
-		return nil
-	}
-	return ur.items[0]
-}
-
-func (ur *UsersResult) Items() []*structures.User {
-	return ur.items
+	return r.setItems(items)
 }

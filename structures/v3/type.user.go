@@ -358,4 +358,5 @@ const (
 	UserEditorPermissionManageEmoteSets   UserEditorPermission = 1 << 4 // 16 - Allows managing the user's owned emote sets
 	UserEditorPermissionManageBilling     UserEditorPermission = 1 << 5 // 32 - Allows managing billing and payments, such as subscriptions
 	UserEditorPermissionManageEditors     UserEditorPermission = 1 << 6 // 64 - Allows adding or removing editors for the user
+	UserEditorPermissionViewMessages      UserEditorPermission = 1 << 7 // 128 - Allows viewing the user's private messages, such as inbox
 )
