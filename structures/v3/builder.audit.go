@@ -59,6 +59,16 @@ func (alb *AuditLogBuilder) AddChanges(changes ...*AuditLogChange) *AuditLogBuil
 	return alb
 }
 
+func (alb *AuditLogBuilder) MakeChange(key string, format AuditLogChangeFormat) *AuditLogChange {
+	c := &AuditLogChange{
+		Format: format,
+		Key:    key,
+	}
+	alb.AuditLog.Changes = append(alb.AuditLog.Changes, c)
+	alb.Update.Push("changes", c)
+	return c
+}
+
 // SetExtra defines arbitrary extraneous data that may be helpful in some cases
 // where changes cannot be explained with just old and new values
 func (alb *AuditLogBuilder) SetExtra(key string, value interface{}) *AuditLogBuilder {

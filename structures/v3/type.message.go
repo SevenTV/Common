@@ -66,12 +66,15 @@ type MessageDataEmoteComment struct {
 }
 
 type MessageDataInbox struct {
-	Subject      string            `json:"subject" bson:"subject"`
-	Content      string            `json:"content" bson:"content"`
-	Important    bool              `json:"important,omitempty" bson:"important,omitempty"`
-	Starred      bool              `json:"starred,omitempty" bson:"starred,omitempty"`
-	Pinned       bool              `json:"pinned,omitempty" bson:"pinned,omitempty"`
-	Placeholders map[string]string `json:"placeholders,omitempty" bson:"placeholders,omitempty"`
+	Subject      string            `json:"subject" bson:"subject"`                               // the message's subject
+	Content      string            `json:"content" bson:"content"`                               // the content of the message
+	Important    bool              `json:"important,omitempty" bson:"important,omitempty"`       // whether or not the message is important
+	Starred      bool              `json:"starred,omitempty" bson:"starred,omitempty"`           // whether or not the message is started
+	Pinned       bool              `json:"pinned,omitempty" bson:"pinned,omitempty"`             // whether or not the message is pinned
+	Locked       bool              `json:"locked,omitempty" bson:"locked,omitempty"`             // whether or not replies can be added to this message
+	Locale       bool              `json:"locale,omitempty" bson:"locale,omitempty"`             // whether or not this message can use locale strings
+	System       bool              `json:"system,omitempty" bson:"system,omitempty"`             // whether or not the message is a system message
+	Placeholders map[string]string `json:"placeholders,omitempty" bson:"placeholders,omitempty"` // placeholders for localization
 }
 
 type MessageDataPlaceholder struct {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type EmoteSetBuilder struct {
@@ -87,7 +88,7 @@ func (esb *EmoteSetBuilder) SetOwnerID(id ObjectID) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Time) *EmoteSetBuilder {
+func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Time, actorID *primitive.ObjectID) *EmoteSetBuilder {
 	for _, e := range esb.EmoteSet.Emotes {
 		if e.ID == id {
 			return esb // emote already added.
@@ -98,6 +99,9 @@ func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Ti
 		ID:        id,
 		Name:      alias,
 		Timestamp: at,
+	}
+	if actorID != nil && !actorID.IsZero() {
+		v.ActorID = *actorID
 	}
 	esb.EmoteSet.Emotes = append(esb.EmoteSet.Emotes, v)
 	esb.Update.AddToSet("emotes", v)

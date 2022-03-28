@@ -3,14 +3,19 @@ package mutations
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
+	"github.com/SevenTV/Common/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+const EMOTE_CLAIMANTS_MOST = 10
 
 // Edit: edit the emote. Modify the EmoteBuilder beforehand!
 //
@@ -22,6 +27,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 		return errors.ErrMutateTaintedObject()
 	}
 	actor := opt.Actor
+	actorID := primitive.NilObjectID
+	if actor != nil {
+		actorID = actor.ID
+	}
 	emote := eb.Emote
 
 	// Check actor's permission
@@ -49,7 +58,17 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				return structures.ErrInsufficientPrivilege
 			}
 		}
+	} else if !opt.SkipValidation {
+		// if validation is not skipped then an Actor is mandatory
+		return errors.ErrUnauthorized()
 	}
+
+	// Set up audit logs
+	log := structures.NewAuditLogBuilder(nil).
+		SetKind(structures.AuditLogKindUpdateEmote).
+		SetActor(actorID).
+		SetTargetKind(structures.ObjectKindEmote).
+		SetTargetID(emote.ID)
 
 	if !opt.SkipValidation {
 		init := eb.Initial()
@@ -59,6 +78,9 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if err := validator.Name(); err != nil {
 				return err
 			}
+			c := log.MakeChange("name", structures.AuditLogChangeFormatSingleValue)
+			c.WriteSingleValues(init.Name, emote.Name)
+			log.AddChanges(c)
 		}
 		if init.OwnerID != emote.OwnerID {
 			// Verify that the new emote exists
@@ -69,6 +91,66 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					return errors.ErrUnknownUser()
 				}
 			}
+
+			// If the user is not privileged:
+			// we will add the specified owner_id to list of claimants and send an inbox message
+			switch init.OwnerID == actorID { // original owner is actor?
+			case true: // yes: means emote owner is transferring away
+				if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+					if utils.Contains(emote.State.Claimants, emote.OwnerID) { // error if target new owner is already a claimant
+						return errors.ErrInsufficientPrivilege().SetDetail("Target user was already requested to claim ownership of this emote")
+					}
+					if len(emote.State.Claimants) > EMOTE_CLAIMANTS_MOST {
+						return errors.ErrInvalidRequest().SetDetail("Too Many Claimants (%d)", EMOTE_CLAIMANTS_MOST)
+					}
+
+					// Add to claimants
+					eb.Update.AddToSet("state.claimants", emote.OwnerID)
+
+					// Send a message to the claimant's inbox
+					mb := structures.NewMessageBuilder(nil).
+						SetKind(structures.MessageKindInbox).
+						SetAuthorID(actorID).
+						SetTimestamp(time.Now()).
+						AsInbox(structures.MessageDataInbox{
+							Subject: "inbox.generic.emote_ownership_claim_request.subject",
+							Content: "inbox.generic.emote_ownership_claim_request.content",
+							Locale:  true,
+							Placeholders: map[string]string{
+								"OWNER_DISPLAY_NAME":  utils.Ternary(emote.Owner.DisplayName != "", emote.Owner.DisplayName, emote.Owner.Username),
+								"EMOTE_VERSION_COUNT": strconv.Itoa(len(emote.Versions)),
+								"EMOTE_NAME":          emote.Name,
+							},
+						})
+					if err := m.SendInboxMessage(ctx, mb, SendInboxMessageOptions{
+						Actor:                actor,
+						Recipients:           []primitive.ObjectID{emote.OwnerID},
+						ConsiderBlockedUsers: true,
+					}); err != nil {
+						return err
+					}
+					// Undo owner update
+					eb.Update.UndoSet("owner_id")
+					emote.OwnerID = init.OwnerID
+				}
+			case false: // no: a user wants to claim ownership
+				// Check if actor is allowed to do that
+				if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+					if emote.OwnerID != actorID { //
+						return errors.ErrInsufficientPrivilege().SetDetail("You are not permitted to change this emote's owner")
+					}
+					if !utils.Contains(emote.State.Claimants, emote.OwnerID) {
+						return errors.ErrInsufficientPrivilege().SetDetail("You are not allowed to claim ownership of this emote")
+					}
+				}
+				// At this point the actor has successfully claimed ownership of the emote and we clear the list of claimants
+				eb.Update.Set("state.claimants", []primitive.ObjectID{})
+			}
+
+			// Write as audit change
+			c := log.MakeChange("owner_id", structures.AuditLogChangeFormatSingleValue)
+			c.WriteSingleValues(init.OwnerID, emote.OwnerID)
+			log.AddChanges(c)
 		}
 		if init.Flags != emote.Flags {
 			f := emote.Flags
@@ -87,6 +169,9 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					}
 				}
 			}
+			c := log.MakeChange("flags", structures.AuditLogChangeFormatSingleValue)
+			c.WriteSingleValues(init.Flags, emote.Flags)
+			log.AddChanges(c)
 		}
 		// Change versions
 		for i, ver := range emote.Versions {
@@ -94,34 +179,56 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if oldVer == nil {
 				continue // cannot update version that didn't exist
 			}
+			c := log.MakeChange("versions", structures.AuditLogChangeFormatArrayChange)
+
 			// Update: listed
+			changeCount := 0
 			if ver.State.Listed != oldVer.State.Listed {
 				if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 					return errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify listed state of version %s", strconv.Itoa(i))
 				}
+				changeCount++
 			}
 			if ver.Name != "" && ver.Name != oldVer.Name {
 				if err := ver.Validator().Name(); err != nil {
 					return err
 				}
+				changeCount++
 			}
 			if ver.Description != "" && ver.Description != oldVer.Description {
 				if err := ver.Validator().Description(); err != nil {
 					return err
 				}
+				changeCount++
+			}
+			if changeCount > 0 {
+				c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
+					New:      ver,
+					Old:      oldVer,
+					Position: int32(i),
+				})
 			}
 		}
 	}
 
 	// Update the emote
-	if err := m.mongo.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
-		ctx,
-		bson.M{"versions.id": emote.ID},
-		eb.Update,
-		options.FindOneAndUpdate().SetReturnDocument(options.After),
-	).Decode(emote); err != nil {
-		logrus.WithError(err).Error("mongo, couldn't edit emote")
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+	if len(eb.Update) > 0 {
+		if err := m.mongo.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
+			ctx,
+			bson.M{"versions.id": emote.ID},
+			eb.Update,
+			options.FindOneAndUpdate().SetReturnDocument(options.After),
+		).Decode(emote); err != nil {
+			logrus.WithError(err).Error("mongo, couldn't edit emote")
+			return errors.ErrInternalServerError().SetDetail(err.Error())
+		}
+
+		// Write audit log entry
+		go func() {
+			if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+				logrus.WithError(err).Error("failed to write audit log")
+			}
+		}()
 	}
 
 	eb.MarkAsTainted()

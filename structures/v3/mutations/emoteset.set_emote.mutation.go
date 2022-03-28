@@ -195,12 +195,13 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 			// Add active emote
 			at := time.Now()
-			esb.AddActiveEmote(tgt.ID, tgt.Name, at)
-			c.WriteArrayAdded("emotes", structures.ActiveEmote{
+			esb.AddActiveEmote(tgt.ID, tgt.Name, at, &actor.ID)
+			c.WriteArrayAdded(structures.ActiveEmote{
 				ID:        tgt.ID,
 				Name:      tgt.Name,
 				Flags:     tgt.Flags,
 				Timestamp: at,
+				ActorID:   actor.ID,
 			})
 		case ListItemActionUpdate, ListItemActionRemove:
 			// The emote must already be active
@@ -226,7 +227,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			if tgt.Action == ListItemActionUpdate {
 				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
 				if ae != nil {
-					c.WriteArrayUpdated("emotes", structures.AuditLogChangeSingleValue{
+					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
 						New: structures.ActiveEmote{
 							ID:        tgt.ID,
 							Name:      tgt.Name,
@@ -240,7 +241,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 			} else if tgt.Action == ListItemActionRemove {
 				esb.RemoveActiveEmote(tgt.ID)
-				c.WriteArrayRemoved("emotes", structures.ActiveEmote{
+				c.WriteArrayRemoved(structures.ActiveEmote{
 					ID: tgt.ID,
 				})
 			}

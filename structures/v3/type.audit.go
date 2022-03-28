@@ -60,7 +60,7 @@ type AuditLogChange struct {
 	Value  bson.Raw             `json:"value" bson:"value"`
 }
 
-func (alc *AuditLogChange) WriteSingleValues(key string, old interface{}, new interface{}) *AuditLogChange {
+func (alc *AuditLogChange) WriteSingleValues(old any, new any) *AuditLogChange {
 	sv := &AuditLogChangeSingleValue{}
 	sv.Old = old
 	sv.New = new
@@ -69,21 +69,21 @@ func (alc *AuditLogChange) WriteSingleValues(key string, old interface{}, new in
 	return alc
 }
 
-func (alc *AuditLogChange) WriteArrayAdded(key string, values ...interface{}) *AuditLogChange {
+func (alc *AuditLogChange) WriteArrayAdded(values ...any) *AuditLogChange {
 	ac := &AuditLogChangeArrayChange{}
 	ac.Added = append(ac.Added, values...)
 	alc.Value, _ = bson.Marshal(ac)
 	return alc
 }
 
-func (alc *AuditLogChange) WriteArrayRemoved(key string, values ...interface{}) *AuditLogChange {
+func (alc *AuditLogChange) WriteArrayRemoved(values ...any) *AuditLogChange {
 	ac := &AuditLogChangeArrayChange{}
 	ac.Removed = append(ac.Added, values...)
 	alc.Value, _ = bson.Marshal(ac)
 	return alc
 }
 
-func (alc *AuditLogChange) WriteArrayUpdated(key string, values ...AuditLogChangeSingleValue) *AuditLogChange {
+func (alc *AuditLogChange) WriteArrayUpdated(values ...AuditLogChangeSingleValue) *AuditLogChange {
 	ac := &AuditLogChangeArrayChange{}
 
 	for _, v := range values {
@@ -101,9 +101,9 @@ const (
 )
 
 type AuditLogChangeSingleValue struct {
-	New      interface{} `json:"n" bson:"n"`
-	Old      interface{} `json:"o" bson:"o"`
-	Position int32       `json:"p,omitempty" bson:"p,omitempty"`
+	New      any   `json:"n" bson:"n"`
+	Old      any   `json:"o" bson:"o"`
+	Position int32 `json:"p,omitempty" bson:"p,omitempty"`
 }
 
 type AuditLogChangeArrayChange struct {

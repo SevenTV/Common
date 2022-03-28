@@ -11,11 +11,12 @@ import (
 var emoteTagRegex = regexp.MustCompile(`^[0-9a-z]{3,30}$`)
 
 type Emote struct {
-	ID      ObjectID  `json:"id" bson:"_id"`
-	OwnerID ObjectID  `json:"owner_id" bson:"owner_id"`
-	Name    string    `json:"name" bson:"name"`
-	Flags   EmoteFlag `json:"flags" bson:"flags"`
-	Tags    []string  `json:"tags" bson:"tags"`
+	ID      ObjectID   `json:"id" bson:"_id"`
+	OwnerID ObjectID   `json:"owner_id" bson:"owner_id"`
+	Name    string     `json:"name" bson:"name"`
+	Flags   EmoteFlag  `json:"flags" bson:"flags"`
+	Tags    []string   `json:"tags" bson:"tags"`
+	State   EmoteState `json:"state" bson:"state"`
 
 	// Versioning
 
@@ -43,8 +44,9 @@ const (
 type EmoteFlag int32
 
 const (
-	EmoteFlagsPrivate   EmoteFlag = 1 << 0
-	EmoteFlagsZeroWidth EmoteFlag = 1 << 8
+	EmoteFlagsPrivate   EmoteFlag = 1 << 0 // The emote is private and can only be accessed by its owner, editors and moderators
+	EmoteFlagsAuthentic EmoteFlag = 1 << 1 // The emote was verified to be an original creation by the uploader
+	EmoteFlagsZeroWidth EmoteFlag = 1 << 8 // The emote is recommended to be enabled as Zero-Width
 
 	// Content Flags
 
@@ -52,8 +54,6 @@ const (
 	EmoteFlagsContentEpilepsy         EmoteFlag = 1 << 17 // Rapid flashing
 	EmoteFlagsContentEdgy             EmoteFlag = 1 << 18 // Edgy or distasteful, may be offensive to some users
 	EmoteFlagsContentTwitchDisallowed EmoteFlag = 1 << 24 // Not allowed specifically on the Twitch platform
-
-	EmoteFlagsAll EmoteFlag = (1 << iota) - 1
 )
 
 func (e EmoteFlag) String() string {
@@ -98,6 +98,11 @@ const (
 )
 
 type EmoteState struct {
+	// IDs of users who are eligible to claim ownership of this emote
+	Claimants []primitive.ObjectID `json:"claimants,omitempty" bson:"claimants,omitempty"`
+}
+
+type EmoteVersionState struct {
 	// The current life cycle of the emote
 	// indicating whether it's processing, live, deleted, etc.
 	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
@@ -118,7 +123,7 @@ type EmoteVersion struct {
 	Name        string             `json:"name,omitempty" bson:"name,omitempty"`
 	Description string             `json:"description,omitempty" bson:"description,omitempty"`
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
-	State       EmoteState         `json:"state" bson:"state"`
+	State       EmoteVersionState  `json:"state" bson:"state"`
 	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
 	Formats     []EmoteFormat      `json:"formats,omitempty" bson:"formats,omitempty"`
 }

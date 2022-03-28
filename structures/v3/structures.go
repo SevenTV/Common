@@ -71,6 +71,13 @@ func (u UpdateMap) Pull(key string, value UpdateValue) UpdateMap {
 	return u
 }
 
+func (u UpdateMap) UndoSet(key string) UpdateMap {
+	if m, ok := u["$set"]; ok {
+		delete(m.(bson.M), key)
+	}
+	return u
+}
+
 func (u UpdateMap) Clear() {
 	for k := range u {
 		delete(u, k)
