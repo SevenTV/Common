@@ -122,23 +122,22 @@ func (ev *EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int3
 	return count
 }
 
-func (ev *EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []*EmoteFile {
-	files := make([]*EmoteFile, ev.CountFiles(format, omitStatic))
+func (ev *EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []EmoteFile {
+	files := make([]EmoteFile, ev.CountFiles(format, omitStatic))
+	pos := 0
 	for _, f := range ev.Formats {
 		if format != "" && f.Name != format {
 			continue
 		}
-		pos := 0
 		for _, fi := range f.Files {
 			if omitStatic && (ev.FrameCount > 1 && !fi.Animated) {
 				continue
 			}
 			fi.format = &f.Name
-			files[pos] = &fi
+			files[pos] = fi
 			pos++
 		}
 	}
-
 	return files
 }
 
