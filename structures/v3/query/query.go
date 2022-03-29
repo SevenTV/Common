@@ -92,7 +92,7 @@ type QueryResult[T QueriableType] struct {
 }
 
 type QueriableType interface {
-	structures.User | structures.Emote | structures.Message | structures.Role
+	structures.User | structures.Emote | structures.EmoteSet | structures.Message | structures.Role
 }
 
 func (qr *QueryResult[T]) setItems(items []*T) *QueryResult[T] {

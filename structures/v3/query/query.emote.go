@@ -2,7 +2,9 @@ package query
 
 import (
 	"context"
+	"io"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/hashicorp/go-multierror"
@@ -11,7 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote, error) {
+func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
+	qr := &QueryResult[structures.Emote]{}
 	items := []*structures.Emote{}
 
 	bans := q.Bans(ctx, BanQueryOptions{
@@ -70,13 +73,16 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote,
 	})
 	if err != nil {
 		logrus.WithError(err).Error("query, failed to spawn aggregation")
-		return nil, err
+		return qr.setError(err)
 	}
 
 	cur.Next(ctx)
 	v := &aggregatedEmotesResult{}
 	if err = cur.Decode(v); err != nil {
-		return items, err
+		if err == io.EOF {
+			return qr.setError(errors.ErrNoItems())
+		}
+		return qr.setItems(items).setError(err)
 	}
 
 	// Map all objects
@@ -96,7 +102,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) ([]*structures.Emote,
 		logrus.WithError(err).Error("query, failed to close the cursor")
 	}
 
-	return items, nil
+	return qr.setItems(items)
 }
 
 type aggregatedEmotesResult struct {

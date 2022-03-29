@@ -15,13 +15,15 @@ var DeletedUser = &User{
 }
 
 var DeletedEmote = &Emote{
-	ID:       primitive.NilObjectID,
-	OwnerID:  DeletedUser.ID,
-	Name:     "*UnknownEmote",
-	Flags:    0,
-	Tags:     []string{},
-	Owner:    DeletedUser,
-	Channels: []*User{},
+	ID:          primitive.NilObjectID,
+	OwnerID:     DeletedUser.ID,
+	Name:        "*UnknownEmote",
+	Flags:       0,
+	Tags:        []string{},
+	State:       EmoteState{},
+	Versions:    []*EmoteVersion{},
+	ChildrenIDs: []primitive.ObjectID{},
+	Owner:       DeletedUser,
 }
 
 var RevocationRole = &Role{

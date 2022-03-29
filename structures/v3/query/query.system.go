@@ -4,9 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -22,10 +20,10 @@ func (q *Query) GlobalEmoteSet(ctx context.Context) (*structures.EmoteSet, error
 		return set, nil
 	}
 
+	var err error
 	sys := q.mongo.System(ctx)
-
-	if err := q.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": sys.EmoteSetID}).Decode(set); err != nil {
-		logrus.WithError(err).Error("mongo, couldn't decode global emote set")
+	set, err = q.EmoteSets(ctx, bson.M{"_id": sys.EmoteSetID}).First()
+	if err != nil {
 		return nil, err
 	}
 

@@ -99,6 +99,14 @@ func (e *apiError) Error() string {
 	return fmt.Sprintf("[%d] %s", e.code, strings.ToLower(e.s))
 }
 
+func Compare(er1 error, er2 APIError) bool {
+	switch er1 := er1.(type) {
+	case APIError:
+		return er1.Code() == er2.Code()
+	}
+	return false
+}
+
 func (e *apiError) Message() string {
 	return e.s
 }

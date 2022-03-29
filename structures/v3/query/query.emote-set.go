@@ -12,7 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.EmoteSet, error) {
+func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[structures.EmoteSet] {
+	qr := &QueryResult[structures.EmoteSet]{}
 	items := []*structures.EmoteSet{}
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, mongo.Pipeline{
 		{{Key: "$match", Value: filter}},
@@ -76,12 +77,12 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 	}
 
 	if ok := cur.Next(ctx); !ok {
-		return items, nil // nothing found!
+		return qr.setItems(items) // nothing found!
 	}
 	v := &aggregatedEmoteSets{}
 	if err = cur.Decode(v); err != nil {
 		logrus.WithError(err).Error("mongo, failed to decode aggregated emote sets")
-		return items, err
+		return qr.setItems(items).setError(err)
 	}
 
 	qb := &QueryBinder{ctx, q}
@@ -106,7 +107,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) ([]*structures.Emo
 		items = append(items, set)
 	}
 
-	return items, nil
+	return qr.setItems(items)
 }
 
 type aggregatedEmoteSets struct {
