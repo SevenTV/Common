@@ -86,6 +86,15 @@ type EmoteFile struct {
 	Animated       bool   `json:"a" bson:"animated"` // Whether or not this file is animated
 	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this file to be processed
 	Length         int64  `json:"b" bson:"length"`   // The file size in bytes
+
+	format *EmoteFormatName
+}
+
+func (ef *EmoteFile) Format() EmoteFormatName {
+	if ef.format == nil {
+		return ""
+	}
+	return *ef.format
 }
 
 type EmoteFormatName string
@@ -96,6 +105,42 @@ const (
 	EmoteFormatNameGIF  EmoteFormatName = "image/gif"
 	EmoteFormatNamePNG  EmoteFormatName = "image/png"
 )
+
+func (ev *EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int32 {
+	var count int32
+	for _, f := range ev.Formats {
+		if format != "" && f.Name != format {
+			continue
+		}
+		for _, fi := range f.Files {
+			if omitStatic && (ev.FrameCount > 1 && !fi.Animated) {
+				continue
+			}
+			count++
+		}
+	}
+	return count
+}
+
+func (ev *EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []*EmoteFile {
+	files := make([]*EmoteFile, ev.CountFiles(format, omitStatic))
+	for _, f := range ev.Formats {
+		if format != "" && f.Name != format {
+			continue
+		}
+		pos := 0
+		for _, fi := range f.Files {
+			if omitStatic && (ev.FrameCount > 1 && !fi.Animated) {
+				continue
+			}
+			fi.format = &f.Name
+			files[pos] = &fi
+			pos++
+		}
+	}
+
+	return files
+}
 
 type EmoteState struct {
 	// IDs of users who are eligible to claim ownership of this emote

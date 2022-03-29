@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
 	"github.com/SevenTV/Common/structures/v3"
@@ -108,15 +109,38 @@ func (qr *QueryResult[T]) Error() error {
 	return qr.err
 }
 
-func (qr *QueryResult[T]) First() *T {
-	if len(qr.items) == 0 {
-		return nil
+func (qr *QueryResult[T]) First() (*T, error) {
+	if qr.err != nil {
+		return nil, qr.err
 	}
-	return qr.items[0]
+	if len(qr.items) == 0 {
+		return nil, errors.ErrNoItems()
+	}
+	return qr.items[0], nil
 }
 
-func (qr *QueryResult[T]) Items() []*T {
-	return qr.items
+func (qr *QueryResult[T]) Index(pos int) (*T, error) {
+	if qr.err != nil {
+		return nil, qr.err
+	}
+	if pos+1 > len(qr.items) {
+		return nil, errors.ErrNoItems()
+	}
+	return qr.items[0], nil
+}
+
+func (qr *QueryResult[T]) Last() (*T, error) {
+	if qr.err != nil {
+		return nil, qr.err
+	}
+	if len(qr.items) == 0 {
+		return nil, errors.ErrNoItems()
+	}
+	return qr.items[len(qr.items)-1], nil
+}
+
+func (qr *QueryResult[T]) Items() ([]*T, error) {
+	return qr.items, qr.err
 }
 
 func (qr *QueryResult[T]) Empty() bool {
