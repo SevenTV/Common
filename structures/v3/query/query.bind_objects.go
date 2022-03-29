@@ -31,16 +31,34 @@ func (qb *QueryBinder) mapUsers(users []*structures.User, roleEnts ...*structure
 		m2[ent.UserID] = append(m2[ent.UserID], ref.ObjectReference)
 	}
 
-	if roles, err := qb.q.Roles(qb.ctx, bson.M{}); err == nil && len(roles) > 0 {
+	roles, _ := qb.q.Roles(qb.ctx, bson.M{})
+	if len(roles) > 0 {
 		roleMap := make(map[primitive.ObjectID]*structures.Role)
+		var defaultRole *structures.Role
 		for _, r := range roles {
+			if r.Default {
+				defaultRole = r
+			}
 			roleMap[r.ID] = r
 		}
 		for _, u := range m {
-			u.RoleIDs = append(u.RoleIDs, m2[u.ID]...)
-			for _, roleID := range u.RoleIDs {
-				if role, ok := roleMap[roleID]; ok {
-					u.Roles = append(u.Roles, role)
+			roleIDs := make([]primitive.ObjectID, len(m2[u.ID])+len(u.RoleIDs)+1)
+			switch defaultRole != nil { // add default role, or if no default role add nil role
+			case true:
+				roleIDs[0] = defaultRole.ID
+			case false:
+				roleIDs[0] = structures.NilRole.ID
+			}
+			roleIDs[0] = defaultRole.ID
+			copy(roleIDs[1:], u.RoleIDs)
+			copy(roleIDs[len(u.RoleIDs)+1:], m2[u.ID])
+
+			u.Roles = make([]*structures.Role, len(roleIDs)) // allocate space on the user's roles slice
+			for i, roleID := range roleIDs {
+				if role, ok := roleMap[roleID]; ok { // add role if exists
+					u.Roles[i] = role
+				} else {
+					u.Roles[i] = structures.NilRole // set nil role if role wasn't found
 				}
 			}
 		}

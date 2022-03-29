@@ -141,6 +141,13 @@ func Contains[T ComparableType](ary []T, compare T) bool {
 	return false
 }
 
+func PrependSlice[T any](s []T, v T) []T {
+	s = make([]T, len(s)+1)
+	copy(s[1:], s)
+	s[0] = v
+	return s
+}
+
 func IsPointer(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
 }
