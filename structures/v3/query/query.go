@@ -123,10 +123,10 @@ func (qr *QueryResult[T]) Index(pos int) (*T, error) {
 	if qr.err != nil {
 		return nil, qr.err
 	}
-	if pos+1 > len(qr.items) {
+	if pos > len(qr.items)-1 {
 		return nil, errors.ErrNoItems()
 	}
-	return qr.items[0], nil
+	return qr.items[pos], nil
 }
 
 func (qr *QueryResult[T]) Last() (*T, error) {

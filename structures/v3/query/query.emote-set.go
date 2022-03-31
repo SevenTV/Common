@@ -27,6 +27,15 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 		{{
 			Key: "$lookup",
 			Value: mongo.Lookup{
+				From:         mongo.CollectionNameUsers,
+				LocalField:   "sets.owner_id",
+				ForeignField: "_id",
+				As:           "set_owners",
+			},
+		}},
+		{{
+			Key: "$lookup",
+			Value: mongo.Lookup{
 				From:         mongo.CollectionNameEmotes,
 				LocalField:   "sets.emotes.id",
 				ForeignField: "versions.id",
@@ -43,14 +52,23 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			},
 		}},
 		{{
+			Key: "$set",
+			Value: bson.M{
+				"all_users": bson.M{
+					"$setUnion": bson.A{"$emote_owners", "$set_owners"},
+				},
+			},
+		}},
+		{{
 			Key: "$lookup",
 			Value: mongo.Lookup{
 				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "emote_owners._id",
+				LocalField:   "all_users._id",
 				ForeignField: "user_id",
 				As:           "role_entitlements",
 			},
 		}},
+		{{Key: "$unset", Value: bson.A{"all_users"}}},
 		{{
 			Key: "$set",
 			Value: bson.M{
@@ -86,11 +104,12 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap := qb.mapUsers(v.SetOwners)
+	eOwnerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
 	emoteMap := make(map[primitive.ObjectID]*structures.Emote)
 	var ok bool
 	for _, emote := range v.Emotes {
-		emote.Owner = ownerMap[emote.OwnerID]
+		emote.Owner = eOwnerMap[emote.OwnerID]
 		for _, ver := range emote.Versions {
 			emote := *emote
 			emote.ID = ver.ID
@@ -99,6 +118,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 
 	for _, set := range v.Sets {
+		set.Owner = ownerMap[set.OwnerID]
 		for indEmotes, ae := range set.Emotes {
 			if ae.Emote, ok = emoteMap[ae.ID]; !ok {
 				set.Emotes[indEmotes].Emote = structures.DeletedEmote
@@ -112,6 +132,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 
 type aggregatedEmoteSets struct {
 	Sets             []*structures.EmoteSet    `bson:"sets"`
+	SetOwners        []*structures.User        `bson:"set_owners"`
 	Emotes           []*structures.Emote       `bson:"emotes"`
 	EmoteOwners      []*structures.User        `bson:"emote_owners"`
 	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
