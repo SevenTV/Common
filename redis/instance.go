@@ -47,7 +47,7 @@ func (i *redisInst) RawClient() *redis.Client {
 }
 
 func (i *redisInst) ComposeKey(svc, name string) Key {
-	return Key(fmt.Sprintf("7tv-%s:%s", svc, name))
+	return Key(fmt.Sprintf("%s:%s", svc, name))
 }
 
 func (r *redisInst) Get(ctx context.Context, key Key) (string, error) {
