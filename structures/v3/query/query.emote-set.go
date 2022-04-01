@@ -104,8 +104,8 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.mapUsers(v.SetOwners)
-	eOwnerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap := qb.MapUsers(v.SetOwners)
+	eOwnerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 	emoteMap := make(map[primitive.ObjectID]*structures.Emote)
 	var ok bool
 	for _, emote := range v.Emotes {
@@ -215,7 +215,7 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 
 		// Map emotes bound to the set
 		qb := &QueryBinder{ctx, q}
-		ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
+		ownerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 		emoteMap := make(map[primitive.ObjectID]*structures.Emote)
 		for _, emote := range v.Emotes {
 			if _, ok := bans.NoOwnership[emote.OwnerID]; ok {

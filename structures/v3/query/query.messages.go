@@ -243,7 +243,7 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.mapUsers(v.Authors, v.RoleEntitlements...)
+	userMap := qb.MapUsers(v.Authors, v.RoleEntitlements...)
 
 	for _, msg := range v.Messages {
 		msg.Author = userMap[msg.AuthorID]

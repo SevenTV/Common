@@ -90,7 +90,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.mapUsers(v.Users, v.RoleEntitlements...)
+	userMap := qb.MapUsers(v.Users, v.RoleEntitlements...)
 	for _, u := range userMap {
 		items = append(items, u)
 	}

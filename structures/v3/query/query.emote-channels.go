@@ -142,7 +142,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.mapUsers(v.Users, v.RoleEntitlements...)
+	userMap := qb.MapUsers(v.Users, v.RoleEntitlements...)
 	users := make([]*structures.User, len(userMap))
 	for i, u := range v.Users {
 		users[i] = userMap[u.ID]

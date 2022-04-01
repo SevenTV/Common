@@ -254,7 +254,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 
 	for _, e := range v.Emotes { // iterate over emotes
 		if e == nil || e.ID.IsZero() {

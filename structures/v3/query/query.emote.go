@@ -87,7 +87,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.mapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 
 	for _, e := range v.Emotes { // iterate over emotes
 		// add owner
