@@ -47,15 +47,17 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		db:     database,
 		cache:  cache.New(time.Second*10, time.Second*20),
 	}
-
-	go collSync(inst)
+	if opt.CollSync {
+		go collSync(inst)
+	}
 	return inst, nil
 }
 
 type SetupOptions struct {
-	URI    string
-	DB     string
-	Direct bool
+	URI      string
+	DB       string
+	Direct   bool
+	CollSync bool
 }
 
 type IndexRef struct {
