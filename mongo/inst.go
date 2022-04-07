@@ -13,6 +13,7 @@ import (
 
 type Instance interface {
 	Collection(CollectionName) *mongo.Collection
+	ExternalCollection(db string, name CollectionName) *mongo.Collection
 	Ping(ctx context.Context) error
 	RawClient() *mongo.Client
 	RawDatabase() *mongo.Database
@@ -27,6 +28,10 @@ type mongoInst struct {
 
 func (i *mongoInst) Collection(name CollectionName) *mongo.Collection {
 	return i.db.Collection(string(name))
+}
+
+func (i *mongoInst) ExternalCollection(db string, name CollectionName) *mongo.Collection {
+	return i.client.Database(db).Collection(string(name))
 }
 
 func (i *mongoInst) Ping(ctx context.Context) error {

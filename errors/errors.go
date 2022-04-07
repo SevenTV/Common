@@ -37,6 +37,7 @@ var (
 	ErrUnknownReport         apiErrorFn = DefineError(70444, "Unknown Report", 404)          // can't find report object
 	ErrUnknownMessage        apiErrorFn = DefineError(70445, "Unknown Message", 404)         // can't find message object
 	ErrUnknownBan            apiErrorFn = DefineError(70446, "Unknown Ban", 404)             // can't find ban object
+	ErrUnknownRoute          apiErrorFn = DefineError(70447, "Unknown Route", 404)           // the requested api endpoint doesn't exist
 	ErrNoItems               apiErrorFn = DefineError(70449, "No Items Found", 404)          // search returned nothing
 
 	// Client Type Errors
@@ -47,7 +48,6 @@ var (
 	ErrValidationRejected apiErrorFn = DefineError(70413, "Validation Rejected", 400)
 	ErrInternalField      apiErrorFn = DefineError(70414, "Internal Field", 400)
 	ErrEmptyField         apiErrorFn = DefineError(70415, "Empty Field", 400)
-	ErrUnknownRoute       apiErrorFn = DefineError(70441, "Unknown Route", 400) // the requested api endpoint doesn't exist
 
 	// Other Client Errors
 
@@ -116,7 +116,7 @@ func (e *apiError) Code() int {
 }
 
 func (e *apiError) SetDetail(str string, a ...any) *apiError {
-	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a), str)
+	e.s = e.s + ": " + utils.Ternary(len(a) > 0, fmt.Sprintf(str, a...), str)
 	return e
 }
 
