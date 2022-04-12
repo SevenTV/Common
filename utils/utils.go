@@ -3,7 +3,9 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"math/big"
 	"reflect"
+	"time"
 	"unsafe"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -173,6 +175,12 @@ func EmptyChannel[T any](ch chan T) {
 			return
 		}
 	}
+}
+
+func JitterTime(lower, upper time.Duration) time.Duration {
+	n, _ := rand.Int(rand.Reader, big.NewInt(int64(upper-lower)))
+
+	return time.Duration(n.Int64()) + lower
 }
 
 type ComparableType interface {
