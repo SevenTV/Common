@@ -45,12 +45,12 @@ func (bef BanEffect) Has(eff BanEffect) bool {
 	return (bef & eff) == eff
 }
 
-func (bef BanEffect) Add(eff BanEffect) {
-	bef |= eff
+func (bef *BanEffect) Add(eff BanEffect) {
+	*bef |= eff
 }
 
-func (bef BanEffect) Remove(eff BanEffect) {
-	bef &= ^eff
+func (bef *BanEffect) Remove(eff BanEffect) {
+	*bef &= ^eff
 }
 
 var BanEffectMap = map[string]BanEffect{

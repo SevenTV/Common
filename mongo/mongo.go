@@ -48,7 +48,9 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		cache:  cache.New(time.Second*10, time.Second*20),
 	}
 	if opt.CollSync {
-		go collSync(inst)
+		go func() {
+			_ = collSync(inst)
+		}()
 	}
 	return inst, nil
 }

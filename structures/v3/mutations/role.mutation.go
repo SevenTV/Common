@@ -36,7 +36,7 @@ func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt
 	}
 
 	// Get the newly created role
-	if m.mongo.Collection(mongo.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rb.Role); err != nil {
+	if err = m.mongo.Collection(mongo.CollectionNameRoles).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(rb.Role); err != nil {
 		return err
 	}
 

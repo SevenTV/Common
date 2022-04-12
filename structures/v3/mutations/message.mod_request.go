@@ -50,12 +50,12 @@ func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.Messa
 	mb.Message.ID = msgID
 
 	// Create a read state
-	m.mongo.Collection(mongo.CollectionNameMessagesRead).InsertOne(ctx, &structures.MessageRead{
+	_, err = m.mongo.Collection(mongo.CollectionNameMessagesRead).InsertOne(ctx, &structures.MessageRead{
 		MessageID: msgID,
 		Kind:      structures.MessageKindModRequest,
 		Timestamp: time.Now(),
 	})
 
 	mb.MarkAsTainted()
-	return nil
+	return err
 }
