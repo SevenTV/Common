@@ -46,9 +46,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	filter := opt.Filter
 	if filter == nil {
 		filter = &SearchEmotesFilter{
-			CaseSensitive: utils.BoolPointer(false),
-			ExactMatch:    utils.BoolPointer(false),
-			IgnoreTags:    utils.BoolPointer(false),
+			CaseSensitive: utils.PointerOf(false),
+			ExactMatch:    utils.PointerOf(false),
+			IgnoreTags:    utils.PointerOf(false),
 			Document:      bson.M{},
 		}
 	}

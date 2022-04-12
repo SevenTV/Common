@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"math"
 	"reflect"
 	"unsafe"
 
@@ -122,8 +121,8 @@ func IsSliceArrayPointer(v interface{}) bool {
 	return false
 }
 
-func SliceIndexOf(s []string, val string) int {
-	for i, v := range s {
+func SliceIndexOf[T ComparableType](arr []T, val T) int {
+	for i, v := range arr {
 		if v == val {
 			return i
 		}
@@ -132,9 +131,9 @@ func SliceIndexOf(s []string, val string) int {
 	return -1
 }
 
-func Contains[T ComparableType](ary []T, compare T) bool {
-	for _, v := range ary {
-		if v == compare {
+func Contains[T ComparableType](arr []T, val T) bool {
+	for _, v := range arr {
+		if v == val {
 			return true
 		}
 	}
@@ -156,47 +155,22 @@ func PointerOf[T any](v T) *T {
 	return &v
 }
 
-func StringPointer(s string) *string {
-	return &s
-}
-
-func IntPointer(i int) *int {
-	return &i
-}
-
-func Int32Pointer(i int32) *int32 {
-	return &i
-}
-
-func Int64Pointer(i int64) *int64 {
-	return &i
-}
-
-func BoolPointer(b bool) *bool {
-	return &b
-}
-
-// Obtain the size ratio of width and height values
-// For image resizing
-func GetSizeRatio(og []float64, nw []float64) (int32, int32) {
-	ratio := math.Min(nw[0]/og[0], nw[1]/og[1])
-
-	var width int32 = int32(math.Floor(og[0] * ratio))
-	var height int32 = int32(math.Floor(og[1] * ratio))
-
-	return width, height
-}
-
 type Key string
-
-func ErrorOf(v interface{}, err error) error {
-	return err
-}
 
 func PanicHandler(handle func(err interface{})) {
 	if err := recover(); err != nil {
 		if handle != nil {
 			handle(err)
+		}
+	}
+}
+
+func EmptyChannel[T any](ch chan T) {
+	for {
+		select {
+		case <-ch:
+		default:
+			return
 		}
 	}
 }

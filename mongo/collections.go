@@ -25,11 +25,11 @@ var collections = []collectionRef{
 				"type": {BSONType: TList{BSONTypeString}, Enum: []string{"", "BOT", "SYSTEM"}},
 				"username": {
 					BSONType:  TList{BSONTypeString},
-					MinLength: utils.Int64Pointer(1),
-					MaxLength: utils.Int64Pointer(25),
+					MinLength: utils.PointerOf(int64(1)),
+					MaxLength: utils.PointerOf(int64(25)),
 				},
 				"dislay_name":   {BSONType: TList{BSONTypeString}},
-				"discriminator": {BSONType: TList{BSONTypeString}, MinLength: utils.Int64Pointer(4), MaxLength: utils.Int64Pointer(4)},
+				"discriminator": {BSONType: TList{BSONTypeString}, MinLength: utils.PointerOf(int64(4)), MaxLength: utils.PointerOf(int64(4))},
 				"email":         {BSONType: TList{BSONTypeString}},
 				"role_ids": {
 					BSONType: TList{BSONTypeArray},
@@ -88,7 +88,7 @@ var collections = []collectionRef{
 			Required: []string{"name", "versions"},
 			Properties: map[string]*jsonSchema{
 				"owner_id":    {BSONType: TList{BSONTypeObjectId}},
-				"name":        {BSONType: TList{BSONTypeString}, MinLength: utils.Int64Pointer(1)},
+				"name":        {BSONType: TList{BSONTypeString}, MinLength: utils.PointerOf(int64(1))},
 				"flags":       {BSONType: TList{BSONTypeInt32}},
 				"tags":        {BSONType: TList{BSONTypeArray}},
 				"frame_count": {BSONType: TList{BSONTypeInt32}},
@@ -130,8 +130,8 @@ var collections = []collectionRef{
 								Properties: map[string]*jsonSchema{
 									"lifecycle": {
 										BSONType: TList{BSONTypeInt32},
-										Minimum:  utils.Int64Pointer(-2),
-										Maximum:  utils.Int64Pointer(3),
+										Minimum:  utils.PointerOf(int64(-2)),
+										Maximum:  utils.PointerOf(int64(3)),
 									},
 								},
 							},

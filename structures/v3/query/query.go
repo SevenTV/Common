@@ -78,7 +78,10 @@ func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{},
 	b, err := json.Marshal(i)
 	if err == nil {
 		s := utils.B2S(b)
-		q.c.Add(key.String(), s, ex)
+		if err = q.c.Add(key.String(), s, ex); err != nil {
+			return err
+		}
+
 		if err = q.redis.SetEX(ctx, key, s, ex); err != nil {
 			return err
 		}
