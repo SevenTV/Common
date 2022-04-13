@@ -186,3 +186,18 @@ func JitterTime(lower, upper time.Duration) time.Duration {
 type ComparableType interface {
 	*any | int | int8 | int16 | int32 | float32 | float64 | string | bool | chan any | primitive.ObjectID
 }
+
+func DestructureMap[K ComparableType, V any](mp map[K]V) ([]K, []V) {
+	keys := make([]K, len(mp))
+	values := make([]V, len(mp))
+
+	idx := 0
+	for k, v := range mp {
+		keys[idx] = k
+		values[idx] = v
+
+		idx++
+	}
+
+	return keys, values
+}
