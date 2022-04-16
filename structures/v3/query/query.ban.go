@@ -10,12 +10,11 @@ import (
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
+func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) (*BanQueryResult, error) {
 	mx := q.lock("bans")
 	defer mx.Unlock()
 
@@ -69,7 +68,7 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
 
 	// Get cached items
 	if ok := q.getFromMemCache(ctx, k, &bans); ok {
-		return formatResult()
+		return formatResult(), nil
 	}
 
 	// Query
@@ -87,17 +86,15 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
 	})
 	if err == nil {
 		if err = cur.All(ctx, &bans); err != nil {
-			logrus.WithError(err).Error("mongo, couldn't find bans")
-			return r
+			return r, err
 		}
 	}
 
 	// Set cache
 	if err = q.setInMemCache(ctx, k, &bans, time.Second*1); err != nil {
-		logrus.WithError(err).Error("failed to cache bans")
-		return r
+		return r, err
 	}
-	return formatResult()
+	return formatResult(), nil
 }
 
 type BanQueryOptions struct {

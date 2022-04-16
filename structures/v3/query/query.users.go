@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,9 +15,13 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	items := []structures.User{}
 	r := &QueryResult[structures.User]{}
 
-	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return r.setError(err)
+	}
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
@@ -68,7 +71,6 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 		}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("query, failed to spawn aggregation (Users)")
 		return r.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 

@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -40,10 +39,6 @@ func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.Messa
 	// Create the message
 	result, err := m.mongo.Collection(mongo.CollectionNameMessages).InsertOne(ctx, mb.Message)
 	if err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"modrequest_target_kind": req.TargetKind,
-			"modrequest_target_id":   req.TargetID,
-		}).Error("mongo, failed to create mod request message")
 		return err
 	}
 	msgID := result.InsertedID.(primitive.ObjectID)

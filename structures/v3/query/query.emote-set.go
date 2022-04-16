@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -85,8 +84,9 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 		}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
+		return qr.setError(err)
 	}
+
 	// Get roles (to assign to emote owners)
 	roles, _ := q.Roles(ctx, bson.M{})
 	roleMap := make(map[primitive.ObjectID]structures.Role)
@@ -99,7 +99,6 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 	v := &aggregatedEmoteSets{}
 	if err = cur.Decode(v); err != nil {
-		logrus.WithError(err).Error("mongo, failed to decode aggregated emote sets")
 		return qr.setItems(items).setError(err)
 	}
 
@@ -211,17 +210,20 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 		},
 	))
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
+		return nil, err
 	}
 
 	// Iterate over cursor
-	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return nil, err
+	}
+
 	for i := 0; cur.Next(ctx); i++ {
 		v := &aggregatedUserEmoteSets{}
 		if err = cur.Decode(v); err != nil {
-			logrus.WithError(err).Error("mongo, couldn't decode user emote set item")
 			continue
 		}
 
@@ -264,10 +266,7 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 		}
 		items[v.UserID] = v.Sets
 	}
-	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
-		logrus.WithError(err).Error("mongo, failed to close the cursor")
-	}
-	return items, nil
+	return items, multierror.Append(err, cur.Close(ctx)).ErrorOrNil()
 }
 
 type aggregatedUserEmoteSets struct {

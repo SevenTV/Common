@@ -6,7 +6,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -34,7 +33,6 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrUnknownMessage().SetDetail("Couldn't find any read states related to the message")
 		}
-		logrus.WithError(err).Error("mongo, ")
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
@@ -101,9 +99,6 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 	if len(w) > 0 {
 		result, err := m.mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w)
 		if err != nil {
-			logrus.WithError(err).WithField(
-				"message_id", mb.Message.ID,
-			).Error("mongo, failed to update message read states")
 			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 		updated += result.ModifiedCount

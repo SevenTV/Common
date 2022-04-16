@@ -8,7 +8,6 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/structures/v3/aggregations"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -47,7 +46,6 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 		"kind":         structures.MessageKindInbox,
 	}, options.Find().SetProjection(bson.M{"message_id": 1}))
 	if err != nil {
-		logrus.WithError(err).WithField("user_id", user.ID.Hex()).Error("failed to find read states of inbox messages")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 	messageIDs := []primitive.ObjectID{}
@@ -228,7 +226,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		},
 	))
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
@@ -238,7 +235,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		if err == io.EOF {
 			return qr.setError(errors.ErrNoItems().SetDetail("No messages"))
 		}
-		logrus.WithError(err).Error("mongo, failed to decode aggregated result of mod requests query")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 

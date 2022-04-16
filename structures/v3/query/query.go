@@ -14,8 +14,8 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
 	"github.com/patrickmn/go-cache"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap"
 )
 
 type Query struct {
@@ -64,7 +64,10 @@ func (q *Query) getFromMemCache(ctx context.Context, key redis.Key, i interface{
 	if len(s) > 0 {
 		if err := multierror.Append(err, json.Unmarshal(utils.S2B(s), i)).ErrorOrNil(); err != nil {
 			if err != redis.Nil {
-				logrus.WithError(err).WithField("key", key).Error("redis, failed to retrieve a cache query item")
+				zap.S().Errorw("redis, failed to retrieve a cache query item",
+					"error", err,
+					"key", key,
+				)
 			}
 			return false
 		} else {

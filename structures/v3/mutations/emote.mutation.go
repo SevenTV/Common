@@ -9,10 +9,10 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 const EMOTE_CLAIMANTS_MOST = 10
@@ -231,14 +231,18 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			eb.Update,
 			options.FindOneAndUpdate().SetReturnDocument(options.After),
 		).Decode(emote); err != nil {
-			logrus.WithError(err).Error("mongo, couldn't edit emote")
+			zap.S().Errorw("mongo, couldn't edit emote",
+				"error", err,
+			)
 			return errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 
 		// Write audit log entry
 		go func() {
 			if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
-				logrus.WithError(err).Error("failed to write audit log")
+				zap.S().Errorw("failed to write audit log",
+					"error", err,
+				)
 			}
 		}()
 	}

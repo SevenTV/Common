@@ -10,9 +10,9 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt CreateBanOptions) error {
@@ -90,11 +90,12 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 		Recipients:           []primitive.ObjectID{victim.ID},
 		ConsiderBlockedUsers: false,
 	}); err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"actor_id":  actor.ID.Hex(),
-			"victim_id": victim.ID.Hex(),
-			"ban_id":    bb.Ban.ID.Hex(),
-		}).Error("failed to send inbox message to victim about created ban")
+		zap.S().Errorw("failed to send inbox message to victim about created ban",
+			"error", err,
+			"actor_id", actor.ID.Hex(),
+			"victim_id", victim.ID.Hex(),
+			"ban_id", bb.Ban.ID.Hex(),
+		)
 	}
 
 	bb.MarkAsTainted()

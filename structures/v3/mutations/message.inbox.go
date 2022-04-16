@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -38,18 +37,15 @@ func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBui
 		}(),
 	})
 	if err != nil {
-		logrus.WithError(err).Error("mongo")
 		return err
 	}
 	if err = cur.All(ctx, &recipients); err != nil {
-		logrus.WithError(err).Error("mongo")
 		return err
 	}
 
 	// Write message to DB
 	result, err := m.mongo.Collection(mongo.CollectionNameMessages).InsertOne(ctx, mb.Message)
 	if err != nil {
-		logrus.WithError(err).WithField("actor_id", actor.ID).Error("mongo, failed to create message")
 		return err
 	}
 	msgID := result.InsertedID.(primitive.ObjectID)
@@ -68,11 +64,7 @@ func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBui
 		}
 	}
 	if _, err = m.mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w); err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"message_id":      result.InsertedID,
-			"recipient_count": len(recipients),
-			"recipient_ids":   opt.Recipients,
-		}).Error("mongo, couldn't create a read state for message")
+		return err
 	}
 
 	mb.Message.ID = msgID

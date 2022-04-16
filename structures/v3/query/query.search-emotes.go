@@ -18,9 +18,9 @@ import (
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 const EMOTES_QUERY_LIMIT = 300
@@ -57,9 +57,13 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	query := strings.Trim(opt.Query, " ")
 
 	// Set up db query
-	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return nil, 0, err
+	}
+
 	match := bson.D{
 		{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive},
 		{Key: "owner_id", Value: bson.M{"$not": bson.M{
@@ -155,8 +159,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	// Complete the pipeline
 	totalCount, countErr := q.redis.RawClient().Get(ctx, string(queryKey)).Int()
 	wg := sync.WaitGroup{}
-	wg.Add(1)
 	if countErr == redis.Nil {
+		wg.Add(1)
 		go func() { // Run a separate pipeline to return the total count that could be paginated
 			defer wg.Done()
 			cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
@@ -170,7 +174,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 				cur.Next(ctx)
 				if err = multierror.Append(cur.Decode(&result), cur.Close(ctx)).ErrorOrNil(); err != nil {
 					if err != io.EOF {
-						logrus.WithError(err).Error("mongo, couldn't count")
+						zap.S().Errorw("mongo, couldn't count",
+							"error", err,
+						)
 					}
 				}
 			}
@@ -179,16 +185,14 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			totalCount = result["count"]
 			dur := utils.Ternary(query == "", time.Minute*10, time.Hour*1)
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
-				logrus.WithError(err).WithFields(logrus.Fields{
-					"key":   queryKey,
-					"count": totalCount,
-				}).Error("redis, failed to save total list count of emotes() gql query")
+				zap.S().Errorw("redis, failed to save total list count of emotes() gql query",
+					"error", err,
+					"key", queryKey,
+					"count", totalCount,
+				)
 			}
 		}()
-	} else {
-		wg.Done()
 	}
-
 	// Paginate and fetch the relevant emotes
 	result := []structures.Emote{}
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
@@ -240,7 +244,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		},
 	))
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 	v := &aggregatedEmotesResult{}
@@ -249,7 +252,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		if err == io.EOF {
 			return nil, 0, errors.ErrNoItems()
 		}
-		logrus.WithError(err).Error("mongo, failed to fetch emotes")
+		return nil, 0, err
 	}
 
 	// Map all objects

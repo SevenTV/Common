@@ -10,7 +10,6 @@ import (
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -49,7 +48,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				if err == mongo.ErrNoDocuments {
 					return errors.ErrUnknownUser().SetDetail("emote set owner")
 				}
-				logrus.WithError(err).Error("failed to find emote set owner")
 				return err
 			}
 		}
@@ -61,7 +59,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				{{Key: "$match", Value: bson.M{"_id": set.ID}}},
 			}, aggregations.EmoteSetRelationActiveEmotes...))
 			if err = multierror.Append(err, cur.All(ctx, &set.Emotes)).ErrorOrNil(); err != nil {
-				logrus.WithError(err).Error("failed to fetch emote data of active emote set emotes")
 				return err
 			}
 		}
@@ -77,7 +74,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Roles: true, Editors: true})...))
 		err = multierror.Append(err, cur.All(ctx, &targetEmotes)).ErrorOrNil()
 		if err != nil {
-			logrus.WithError(err).Error("failed to fetch target emotes during emote set mutation")
 			return err
 		}
 		for _, e := range targetEmotes {
@@ -258,16 +254,13 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		esb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(esb.EmoteSet); err != nil {
-		logrus.WithError(err).WithField("emote_set_id", set.ID).Error("mongo, failed to update emote set")
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	// Write audit log entry
-	go func() {
-		if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
-			logrus.WithError(err).Error("failed to write audit log")
-		}
-	}()
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+		return err
+	}
 
 	esb.MarkAsTainted()
 	return nil

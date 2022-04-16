@@ -8,7 +8,6 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -17,9 +16,13 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 	qr := &QueryResult[structures.Emote]{}
 	items := []structures.Emote{}
 
-	bans := q.Bans(ctx, BanQueryOptions{
+	bans, err := q.Bans(ctx, BanQueryOptions{
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return qr.setError(err)
+	}
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
@@ -72,7 +75,6 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 		}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("query, failed to spawn aggregation")
 		return qr.setError(err)
 	}
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -124,7 +123,6 @@ func (k ObjectKind) CollectionName() string {
 	case ObjectKindMessage:
 		return "messages"
 	default:
-		logrus.Fatalf("object kind %d doesn't have associated collection", k)
 		return ""
 	}
 }

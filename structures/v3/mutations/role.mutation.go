@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -31,7 +30,6 @@ func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt
 	rb.Role.ID = primitive.NewObjectID()
 	result, err := m.mongo.Collection(mongo.CollectionNameRoles).InsertOne(ctx, rb.Role)
 	if err != nil {
-		logrus.WithError(err).Error("mongo")
 		return err
 	}
 
@@ -40,9 +38,6 @@ func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt
 		return err
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"role_id": rb.Role.ID,
-	}).Info("Role Created")
 	return nil
 }
 
@@ -105,12 +100,11 @@ func (m *Mutate) DeleteRole(ctx context.Context, rb *structures.RoleBuilder, opt
 
 	// Delete the role
 	if _, err := m.mongo.Collection(mongo.CollectionNameRoles).DeleteOne(ctx, bson.M{"_id": rb.Role.ID}); err != nil {
-		logrus.WithError(err).Error("mongo")
 		return err
 	}
 
 	// Remove the role from any user who had it
-	ur, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
+	_, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
 		"role_ids": rb.Role.ID,
 	}, bson.M{
 		"$pull": bson.M{
@@ -118,13 +112,9 @@ func (m *Mutate) DeleteRole(ctx context.Context, rb *structures.RoleBuilder, opt
 		},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to remove deleted role from user assignments")
+		return err
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"role_id":       rb.Role.ID,
-		"users_updated": ur.ModifiedCount,
-	}).Info("Role Deleted")
 	return nil
 }
 

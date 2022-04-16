@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
@@ -45,7 +45,9 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logrus.WithField("err", err).Fatal("panic in subs")
+				zap.S().Errorw("panic in subs",
+					"error", err,
+				)
 			}
 		}()
 		ch := inst.sub.Channel()
@@ -58,7 +60,9 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 					select {
 					case value <- payload:
 					default:
-						logrus.Warn("channel blocked dropping message: ", msg.Channel)
+						zap.S().Warnw("channel blocked",
+							"channel", msg.Channel,
+						)
 					}
 					return true
 				})
