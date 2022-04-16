@@ -16,10 +16,12 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 
 	if opt.Sentinel {
 		rc = redis.NewFailoverClient(&redis.FailoverOptions{
-			MasterName:       "master",
+			MasterName:       opt.MasterName,
 			SentinelAddrs:    opt.Addresses,
 			SentinelUsername: opt.Username,
 			SentinelPassword: opt.Password,
+			Username:         opt.Username,
+			Password:         opt.Password,
 			DB:               opt.Database,
 		})
 	} else {
@@ -69,9 +71,10 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 }
 
 type SetupOptions struct {
-	Username string
-	Password string
-	Database int
+	MasterName string
+	Username   string
+	Password   string
+	Database   int
 
 	Addresses []string
 	Sentinel  bool
