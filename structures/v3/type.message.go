@@ -3,6 +3,7 @@ package structures
 import (
 	"time"
 
+	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -29,6 +30,34 @@ type Message[D MessageData] struct {
 
 	Author *User `json:"author,omitempty" bson:"author,skip,omitempty"`
 	Read   bool  `json:"read,omitempty" bson:"read,omitempty"`
+}
+
+func (m Message[D]) ToRaw() Message[bson.Raw] {
+	switch x := utils.ToAny(m.Data).(type) {
+	case bson.Raw:
+		return Message[bson.Raw]{
+			ID:        m.ID,
+			Kind:      m.Kind,
+			AuthorID:  m.AuthorID,
+			Anonymous: m.Anonymous,
+			CreatedAt: m.CreatedAt,
+			Data:      x,
+			Author:    m.Author,
+			Read:      m.Read,
+		}
+	}
+
+	raw, _ := bson.Marshal(m.Data)
+	return Message[bson.Raw]{
+		ID:        m.ID,
+		Kind:      m.Kind,
+		AuthorID:  m.AuthorID,
+		Anonymous: m.Anonymous,
+		CreatedAt: m.CreatedAt,
+		Data:      raw,
+		Author:    m.Author,
+		Read:      m.Read,
+	}
 }
 
 func ConvertMessage[D MessageData](c Message[bson.Raw]) (Message[D], error) {

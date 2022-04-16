@@ -1,6 +1,7 @@
 package structures
 
 import (
+	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,6 +21,34 @@ type Cosmetic[D CosmeticData] struct {
 
 	// User Relationals
 	Selected bool `json:"selected" bson:"selected,skip,omitempty"`
+}
+
+func (c Cosmetic[D]) ToRaw() Cosmetic[bson.Raw] {
+	switch x := utils.ToAny(c.Data).(type) {
+	case bson.Raw:
+		return Cosmetic[bson.Raw]{
+			ID:       c.ID,
+			Kind:     c.Kind,
+			Priority: c.Priority,
+			Name:     c.Name,
+			UserIDs:  c.UserIDs,
+			Users:    c.Users,
+			Data:     x,
+			Selected: c.Selected,
+		}
+	}
+
+	raw, _ := bson.Marshal(c.Data)
+	return Cosmetic[bson.Raw]{
+		ID:       c.ID,
+		Kind:     c.Kind,
+		Priority: c.Priority,
+		Name:     c.Name,
+		UserIDs:  c.UserIDs,
+		Users:    c.Users,
+		Data:     raw,
+		Selected: c.Selected,
+	}
 }
 
 func ConvertCosmetic[D CosmeticData](c Cosmetic[bson.Raw]) (Cosmetic[D], error) {

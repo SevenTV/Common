@@ -1,6 +1,7 @@
 package structures
 
 import (
+	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -22,6 +23,28 @@ type Entitlement[D EntitlementData] struct {
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
 	// Wether this entitlement is currently inactive
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
+}
+
+func (e Entitlement[D]) ToRaw() Entitlement[bson.Raw] {
+	switch x := utils.ToAny(e.Data).(type) {
+	case bson.Raw:
+		return Entitlement[bson.Raw]{
+			ID:       e.ID,
+			Kind:     e.Kind,
+			Data:     x,
+			UserID:   e.UserID,
+			Disabled: e.Disabled,
+		}
+	}
+
+	raw, _ := bson.Marshal(e.Data)
+	return Entitlement[bson.Raw]{
+		ID:       e.ID,
+		Kind:     e.Kind,
+		Data:     raw,
+		UserID:   e.UserID,
+		Disabled: e.Disabled,
+	}
 }
 
 func ConvertEntitlement[D EntitlementData](c Entitlement[bson.Raw]) (Entitlement[D], error) {

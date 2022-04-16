@@ -195,3 +195,7 @@ func DestructureMap[K comparable, V any](mp map[K]V) ([]K, []V) {
 
 	return keys, values
 }
+
+func ToAny(i any) any {
+	return i
+}

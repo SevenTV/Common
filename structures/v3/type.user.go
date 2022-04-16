@@ -191,6 +191,34 @@ type UserConnection[D UserConnectionData] struct {
 	EmoteSet *EmoteSet `json:"emote_set" bson:"emote_set,skip,omitempty"`
 }
 
+func (u UserConnection[D]) ToRaw() UserConnection[bson.Raw] {
+	switch x := utils.ToAny(u.Data).(type) {
+	case bson.Raw:
+		return UserConnection[bson.Raw]{
+			ID:         u.ID,
+			Platform:   u.Platform,
+			LinkedAt:   u.LinkedAt,
+			EmoteSlots: u.EmoteSlots,
+			EmoteSetID: u.EmoteSetID,
+			Data:       x,
+			Grant:      u.Grant,
+			EmoteSet:   u.EmoteSet,
+		}
+	}
+
+	raw, _ := bson.Marshal(u.Data)
+	return UserConnection[bson.Raw]{
+		ID:         u.ID,
+		Platform:   u.Platform,
+		LinkedAt:   u.LinkedAt,
+		EmoteSlots: u.EmoteSlots,
+		EmoteSetID: u.EmoteSetID,
+		Data:       raw,
+		Grant:      u.Grant,
+		EmoteSet:   u.EmoteSet,
+	}
+}
+
 func ConvertUserConnection[D UserConnectionData](c UserConnection[bson.Raw]) (UserConnection[D], error) {
 	var d D
 	err := bson.Unmarshal(c.Data, &d)
