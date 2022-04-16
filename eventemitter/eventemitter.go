@@ -1,7 +1,6 @@
 package eventemitter
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -42,7 +41,7 @@ func (c *container) publish(payload any) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	for _, v := range c.mp {
-		fmt.Println(v.publishRaw(c.evt, payload))
+		v.publishRaw(c.evt, payload)
 	}
 }
 
