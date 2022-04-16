@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/SevenTV/Common/errors"
@@ -20,7 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, page int, limit int) ([]*structures.User, int64, error) {
+func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, page int, limit int) ([]structures.User, int64, error) {
 	// Emote Sets that have this emote
 	setIDs := []primitive.ObjectID{}
 
@@ -37,8 +36,8 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			return nil, 0, err
 		}
 		for i := 0; cur.Next(ctx); i++ {
-			v := &structures.EmoteSet{}
-			if err = cur.Decode(v); err != nil {
+			v := structures.EmoteSet{}
+			if err = cur.Decode(&v); err != nil {
 				logrus.WithError(err).Error("mongo, couldn't decode into EmoteSet")
 			}
 			setIDs = append(setIDs, v.ID)
@@ -63,11 +62,10 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		},
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	doneCh := make(chan struct{})
 	count := int64(0)
 	go func() { // Get the total channel count
-		defer wg.Done()
+		defer close(doneCh)
 		k := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:channel_count", emoteID.Hex()))
 
 		count, err = q.redis.RawClient().Get(ctx, k.String()).Int64()
@@ -142,17 +140,22 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.MapUsers(v.Users, v.RoleEntitlements...)
-	users := make([]*structures.User, len(userMap))
+	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	users := make([]structures.User, len(userMap))
 	for i, u := range v.Users {
 		users[i] = userMap[u.ID]
 	}
-	wg.Wait()
+
+	<-doneCh
 
 	return users, count, nil
 }
 
 type aggregatedEmoteChannelsResult struct {
-	Users            []*structures.User        `bson:"users"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
+	Users            []structures.User                  `bson:"users"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }

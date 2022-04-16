@@ -16,7 +16,7 @@ import (
 )
 
 func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt CreateBanOptions) error {
-	if bb == nil || bb.Ban == nil {
+	if bb == nil {
 		return structures.ErrIncompleteMutation
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -61,12 +61,12 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 	_ = m.mongo.Collection(mongo.CollectionNameBans).FindOne(ctx, bson.M{"_id": bb.Ban.ID}).Decode(bb.Ban)
 
 	// Send a message to the victim
-	mb := structures.NewMessageBuilder(nil).
+	mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataInbox]{}).
 		SetKind(structures.MessageKindInbox).
 		SetAuthorID(actorID).
 		SetTimestamp(time.Now()).
 		SetAnonymous(opt.AnonymousActor).
-		AsInbox(structures.MessageDataInbox{
+		SetData(structures.MessageDataInbox{
 			Subject:   "inbox.generic.client_banned.subject",
 			Content:   "inbox.generic.client_banned.content",
 			Important: true,
@@ -108,7 +108,7 @@ type CreateBanOptions struct {
 }
 
 func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt EditBanOptions) error {
-	if bb == nil || bb.Ban == nil || bb.Ban.ID.IsZero() {
+	if bb == nil || bb.Ban.ID.IsZero() {
 		return structures.ErrIncompleteMutation
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()

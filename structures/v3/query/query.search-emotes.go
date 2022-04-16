@@ -25,7 +25,7 @@ import (
 
 const EMOTES_QUERY_LIMIT = 300
 
-func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*structures.Emote, int, error) {
+func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]structures.Emote, int, error) {
 	// Define limit (how many emotes can be returned in a single query)
 	limit := opt.Limit
 	if limit > EMOTES_QUERY_LIMIT {
@@ -190,7 +190,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 	}
 
 	// Paginate and fetch the relevant emotes
-	result := []*structures.Emote{}
+	result := []structures.Emote{}
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
 		pipeline,
 		mongo.Pipeline{
@@ -254,16 +254,20 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]*s
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	for _, e := range v.Emotes { // iterate over emotes
-		if e == nil || e.ID.IsZero() {
+		if e.ID.IsZero() {
 			continue
 		}
 		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
 			e.OwnerID = primitive.NilObjectID
 		} else {
-			e.Owner = ownerMap[e.OwnerID]
+			owner := ownerMap[e.OwnerID]
+			e.Owner = &owner
 		}
 
 		result = append(result, e)

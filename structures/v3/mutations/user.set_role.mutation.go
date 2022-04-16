@@ -13,7 +13,7 @@ import (
 
 // SetRole: add or remove a role for the user
 func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt SetUserRoleOptions) error {
-	if ub == nil || ub.User == nil {
+	if ub == nil {
 		return structures.ErrIncompleteMutation
 	} else if ub.IsTainted() {
 		return errors.ErrMutateTaintedObject()

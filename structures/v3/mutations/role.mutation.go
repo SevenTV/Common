@@ -15,7 +15,7 @@ import (
 
 // Create: create the new role
 func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleMutationOptions) error {
-	if rb == nil || rb.Role == nil {
+	if rb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	}
 	if rb.Role.Name == "" {
@@ -48,7 +48,7 @@ func (m *Mutate) CreateRole(ctx context.Context, rb *structures.RoleBuilder, opt
 
 // Edit: edit the role. Modify the RoleBuilder beforehand!
 func (m *Mutate) EditRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleEditOptions) error {
-	if rb == nil || rb.Role == nil {
+	if rb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	}
 
@@ -83,7 +83,7 @@ func (m *Mutate) EditRole(ctx context.Context, rb *structures.RoleBuilder, opt R
 
 // Delete: delete the role
 func (m *Mutate) DeleteRole(ctx context.Context, rb *structures.RoleBuilder, opt RoleMutationOptions) error {
-	if rb == nil || rb.Role == nil {
+	if rb == nil {
 		return structures.ErrIncompleteMutation
 	}
 

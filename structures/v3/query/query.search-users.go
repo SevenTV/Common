@@ -19,10 +19,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]*structures.User, int, error) {
+func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]structures.User, int, error) {
 	mx := q.lock("SearchUsers")
 	defer mx.Unlock()
-	items := []*structures.User{}
+	items := []structures.User{}
 
 	paginate := mongo.Pipeline{}
 	search := len(opts) > 0 && opts[0].Page != 0
@@ -158,7 +158,7 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 
 	// Get roles
 	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
+	roleMap := make(map[primitive.ObjectID]structures.Role)
 	for _, role := range roles {
 		roleMap[role.ID] = role
 	}
@@ -172,14 +172,14 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 		return items, 0, err
 	}
 
-	userMap := make(map[primitive.ObjectID]*structures.User)
+	userMap := make(map[primitive.ObjectID]structures.User)
 	entRoleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
 	for _, ent := range v.RoleEntitlements {
-		ref := ent.GetData().ReadRole()
-		if ref == nil {
-			continue
+		ent, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
+		if err != nil {
+			return nil, 0, err
 		}
-		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ref.ObjectReference)
+		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ent.Data.ObjectReference)
 	}
 	for _, user := range v.Users {
 		user.RoleIDs = append(user.RoleIDs, entRoleMap[user.ID]...)
@@ -211,9 +211,9 @@ type UserSearchOptions struct {
 	Sort  bson.M
 }
 type aggregatedUsersResult struct {
-	Users            []*structures.User        `bson:"users"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
-	TotalCount       int                       `bson:"total_count"`
+	Users            []structures.User                  `bson:"users"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
+	TotalCount       int                                `bson:"total_count"`
 }
 
 func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]*structures.UserEditor, error) {

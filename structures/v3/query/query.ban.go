@@ -36,7 +36,7 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) *BanQueryResult {
 	filter["expire_at"] = bson.M{"$gt": time.Now()}
 
 	r := &BanQueryResult{
-		All:           []*structures.Ban{},
+		All:           []structures.Ban{},
 		NoPermissions: BanMap{},
 		NoAuth:        BanMap{},
 		NoOwnership:   BanMap{},
@@ -106,11 +106,11 @@ type BanQueryOptions struct {
 
 type aggregatedBansResult struct {
 	UserID primitive.ObjectID `json:"id" bson:"_id"`
-	Bans   []*structures.Ban  `json:"bans" bson:"bans"`
+	Bans   []structures.Ban   `json:"bans" bson:"bans"`
 }
 
 type BanQueryResult struct {
-	All []*structures.Ban
+	All []structures.Ban
 	// A list of user IDs which will not have any permissions at all
 	NoPermissions BanMap
 	// A list of user IDs not allowed to authenticate
@@ -123,7 +123,7 @@ type BanQueryResult struct {
 }
 
 // BanMap is a map of user IDs to a ban object
-type BanMap map[primitive.ObjectID]*structures.Ban
+type BanMap map[primitive.ObjectID]structures.Ban
 
 // KeySlice returns a slice of user IDs for the ban map
 func (bm BanMap) KeySlice() []primitive.ObjectID {

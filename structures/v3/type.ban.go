@@ -62,7 +62,7 @@ var BanEffectMap = map[string]BanEffect{
 }
 
 type BanBuilder struct {
-	Ban    *Ban
+	Ban    Ban
 	Update UpdateMap
 
 	tainted bool
@@ -70,24 +70,21 @@ type BanBuilder struct {
 }
 
 // NewRoleBuilder: create a new role builder
-func NewBanBuilder(ban *Ban) *BanBuilder {
-	if ban == nil {
-		ban = &Ban{}
-	}
+func NewBanBuilder(ban Ban) *BanBuilder {
 	return &BanBuilder{
 		Update:  UpdateMap{},
 		Ban:     ban,
-		initial: *ban,
+		initial: ban,
 	}
 }
 
 // Initial returns a pointer to the value first passed to this Builder
-func (bb *BanBuilder) Initial() *Ban {
-	return &bb.initial
+func (bb BanBuilder) Initial() Ban {
+	return bb.initial
 }
 
 // IsTainted returns whether or not this Builder has been mutated before
-func (bb *BanBuilder) IsTainted() bool {
+func (bb BanBuilder) IsTainted() bool {
 	return bb.tainted
 }
 

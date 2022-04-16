@@ -24,7 +24,7 @@ type Role struct {
 }
 
 // HasPermissionBit: Check for specific bit in the role's allowed permissions
-func (r *Role) HasPermissionBit(bit RolePermission) bool {
+func (r Role) HasPermissionBit(bit RolePermission) bool {
 	sum := r.Allowed
 
 	return utils.BitField.HasBits(int64(sum), int64(bit))
@@ -88,11 +88,11 @@ const (
 
 type RoleBuilder struct {
 	Update UpdateMap
-	Role   *Role
+	Role   Role
 }
 
 // NewRoleBuilder: create a new role builder
-func NewRoleBuilder(role *Role) *RoleBuilder {
+func NewRoleBuilder(role Role) *RoleBuilder {
 	return &RoleBuilder{
 		Update: UpdateMap{},
 		Role:   role,

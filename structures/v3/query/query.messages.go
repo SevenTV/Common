@@ -14,8 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
+func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	actor := opt.Actor
 	user := opt.User
 	if user == nil {
@@ -72,8 +72,8 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 	})
 }
 
-func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
+func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	actor := opt.Actor
 	targets := opt.Targets
 
@@ -116,9 +116,9 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 	})
 }
 
-func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
-	items := []*structures.Message{}
+func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
+	items := []structures.Message[bson.Raw]{}
 
 	// Set limit?
 	limit := mongo.Pipeline{}
@@ -243,10 +243,14 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.MapUsers(v.Authors, v.RoleEntitlements...)
+	userMap, err := qb.MapUsers(v.Authors, v.RoleEntitlements...)
+	if err != nil {
+		return qr.setError(err)
+	}
 
 	for _, msg := range v.Messages {
-		msg.Author = userMap[msg.AuthorID]
+		author := userMap[msg.AuthorID]
+		msg.Author = &author
 		items = append(items, msg)
 	}
 
@@ -277,7 +281,7 @@ type MessageQueryOptions struct {
 }
 
 type aggregatedMessagesResult struct {
-	Messages         []*structures.Message     `bson:"messages"`
-	Authors          []*structures.User        `bson:"authors"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
+	Messages         []structures.Message[bson.Raw]     `bson:"messages"`
+	Authors          []structures.User                  `bson:"authors"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }

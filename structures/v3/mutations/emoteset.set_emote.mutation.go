@@ -18,7 +18,7 @@ import (
 
 // SetEmote: enable, edit or disable active emotes in the set
 func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationSetEmoteOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -117,11 +117,11 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	}
 
 	// Set up audit log entry
-	c := &structures.AuditLogChange{
+	c := structures.AuditLogChange{
 		Format: structures.AuditLogChangeFormatArrayChange,
 		Key:    "emotes",
 	}
-	log := structures.NewAuditLogBuilder(nil).
+	log := structures.NewAuditLogBuilder(structures.AuditLog{}).
 		SetKind(structures.AuditLogKindUpdateEmoteSet).
 		SetActor(actor.ID).
 		SetTargetKind(structures.ObjectKindEmoteSet).
@@ -226,7 +226,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 			if tgt.Action == ListItemActionUpdate {
 				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
-				if ae != nil {
+				if !ae.ID.IsZero() {
 					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
 						New: structures.ActiveEmote{
 							ID:        tgt.ID,

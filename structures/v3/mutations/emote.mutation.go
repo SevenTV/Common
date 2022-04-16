@@ -21,7 +21,7 @@ const EMOTE_CLAIMANTS_MOST = 10
 //
 // To account for editor permissions, the "editor_of" relation should be included in the actor's data
 func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt EmoteEditOptions) error {
-	if eb == nil || eb.Emote == nil {
+	if eb == nil {
 		return structures.ErrIncompleteMutation
 	} else if eb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -64,7 +64,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 	}
 
 	// Set up audit logs
-	log := structures.NewAuditLogBuilder(nil).
+	log := structures.NewAuditLogBuilder(structures.AuditLog{}).
 		SetKind(structures.AuditLogKindUpdateEmote).
 		SetActor(actorID).
 		SetTargetKind(structures.ObjectKindEmote).
@@ -78,7 +78,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if err := validator.Name(); err != nil {
 				return err
 			}
-			c := log.MakeChange("name", structures.AuditLogChangeFormatSingleValue)
+			c := structures.AuditLogChange{
+				Key:    "name",
+				Format: structures.AuditLogChangeFormatSingleValue,
+			}
 			c.WriteSingleValues(init.Name, emote.Name)
 			log.AddChanges(c)
 		}
@@ -108,11 +111,11 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					eb.Update.AddToSet("state.claimants", emote.OwnerID)
 
 					// Send a message to the claimant's inbox
-					mb := structures.NewMessageBuilder(nil).
+					mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataInbox]{}).
 						SetKind(structures.MessageKindInbox).
 						SetAuthorID(actorID).
 						SetTimestamp(time.Now()).
-						AsInbox(structures.MessageDataInbox{
+						SetData(structures.MessageDataInbox{
 							Subject: "inbox.generic.emote_ownership_claim_request.subject",
 							Content: "inbox.generic.emote_ownership_claim_request.content",
 							Locale:  true,
@@ -148,7 +151,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			}
 
 			// Write as audit change
-			c := log.MakeChange("owner_id", structures.AuditLogChangeFormatSingleValue)
+			c := structures.AuditLogChange{
+				Key:    "owner_id",
+				Format: structures.AuditLogChangeFormatSingleValue,
+			}
 			c.WriteSingleValues(init.OwnerID, emote.OwnerID)
 			log.AddChanges(c)
 		}
@@ -169,7 +175,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					}
 				}
 			}
-			c := log.MakeChange("flags", structures.AuditLogChangeFormatSingleValue)
+			c := structures.AuditLogChange{
+				Key:    "flags",
+				Format: structures.AuditLogChangeFormatSingleValue,
+			}
 			c.WriteSingleValues(init.Flags, emote.Flags)
 			log.AddChanges(c)
 		}
@@ -179,7 +188,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if oldVer == nil {
 				continue // cannot update version that didn't exist
 			}
-			c := log.MakeChange("versions", structures.AuditLogChangeFormatArrayChange)
+			c := structures.AuditLogChange{
+				Key:    "versions",
+				Format: structures.AuditLogChangeFormatArrayChange,
+			}
 
 			// Update: listed
 			changeCount := 0

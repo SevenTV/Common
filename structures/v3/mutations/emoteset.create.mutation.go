@@ -15,7 +15,7 @@ import (
 
 // Create: create the new emote set
 func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -58,7 +58,7 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 
 // Edit: change the emote set
 func (m *Mutate) EditEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()

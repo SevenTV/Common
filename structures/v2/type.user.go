@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -33,17 +34,17 @@ type User struct {
 	EmoteSlots       int32               `json:"emote_slots" bson:"emote_slots"` // User's maximum channel emote slots
 
 	// Relational Data
-	Emotes            []*Emote        `json:"emotes" bson:"-"`
-	OwnedEmotes       []*Emote        `json:"owned_emotes" bson:"-"`
-	Editors           []*User         `json:"editors" bson:"-"`
-	Role              Role            `json:"role" bson:"-"`
-	EditorIn          []*User         `json:"editor_in" bson:"-"`
-	AuditEntries      []*AuditLog     `json:"audit_entries" bson:"-"`
-	Reports           []*Report       `json:"reports" bson:"-"`
-	Bans              []*Ban          `json:"bans" bson:"-"`
-	Cosmetics         []*Cosmetic     `json:"cosmetics" bson:"-"`
-	Notifications     []*Notification `json:"-" bson:"-"`
-	NotificationCount int64           `json:"-" bson:"-"`
+	Emotes            []Emote              `json:"emotes" bson:"-"`
+	OwnedEmotes       []Emote              `json:"owned_emotes" bson:"-"`
+	Editors           []User               `json:"editors" bson:"-"`
+	Role              Role                 `json:"role" bson:"-"`
+	EditorIn          []User               `json:"editor_in" bson:"-"`
+	AuditEntries      []AuditLog           `json:"audit_entries" bson:"-"`
+	Reports           []Report             `json:"reports" bson:"-"`
+	Bans              []Ban                `json:"bans" bson:"-"`
+	Cosmetics         []Cosmetic[bson.Raw] `json:"cosmetics" bson:"-"`
+	Notifications     []Notification       `json:"-" bson:"-"`
+	NotificationCount int64                `json:"-" bson:"-"`
 }
 
 // Test whether a User has a permission flag

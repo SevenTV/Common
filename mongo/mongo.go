@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -41,25 +40,18 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 
 	database := client.Database(opt.DB)
 
-	logrus.Info("mongo, ok")
 	inst := &mongoInst{
 		client: client,
 		db:     database,
 		cache:  cache.New(time.Second*10, time.Second*20),
 	}
-	if opt.CollSync {
-		go func() {
-			_ = collSync(inst)
-		}()
-	}
 	return inst, nil
 }
 
 type SetupOptions struct {
-	URI      string
-	DB       string
-	Direct   bool
-	CollSync bool
+	URI    string
+	DB     string
+	Direct bool
 }
 
 type IndexRef struct {

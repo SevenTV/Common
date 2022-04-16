@@ -10,24 +10,17 @@ import (
 
 type EmoteSetBuilder struct {
 	Update   UpdateMap
-	EmoteSet *EmoteSet
+	EmoteSet EmoteSet
 
 	initial EmoteSet
 	tainted bool
 }
 
-func NewEmoteSetBuilder(emoteSet *EmoteSet) *EmoteSetBuilder {
-	init := EmoteSet{
-		Tags:   []string{},
-		Emotes: []*ActiveEmote{},
-	}
-	if emoteSet == nil {
-		emoteSet = &init
-	}
+func NewEmoteSetBuilder(emoteSet EmoteSet) *EmoteSetBuilder {
 	return &EmoteSetBuilder{
 		Update:   map[string]interface{}{},
 		EmoteSet: emoteSet,
-		initial:  init,
+		initial:  emoteSet,
 	}
 }
 
@@ -95,7 +88,7 @@ func (esb *EmoteSetBuilder) AddActiveEmote(id ObjectID, alias string, at time.Ti
 		}
 	}
 
-	v := &ActiveEmote{
+	v := ActiveEmote{
 		ID:        id,
 		Name:      alias,
 		Timestamp: at,
@@ -126,7 +119,7 @@ func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteS
 func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
 	ind := -1
 	for i := range esb.EmoteSet.Emotes {
-		if esb.EmoteSet.Emotes[i] == nil {
+		if esb.EmoteSet.Emotes[i].ID.IsZero() {
 			continue
 		}
 		if esb.EmoteSet.Emotes[i].ID != id {
@@ -140,7 +133,6 @@ func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
 	}
 
 	copy(esb.EmoteSet.Emotes[ind:], esb.EmoteSet.Emotes[ind+1:])
-	esb.EmoteSet.Emotes[len(esb.EmoteSet.Emotes)-1] = nil
 	esb.EmoteSet.Emotes = esb.EmoteSet.Emotes[:len(esb.EmoteSet.Emotes)-1]
 	esb.Update.Pull("emotes", bson.M{"id": id})
 	return esb

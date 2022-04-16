@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBuilder, opt SendInboxMessageOptions) error {
-	if mb == nil || mb.Message == nil {
+func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBuilder[structures.MessageDataInbox], opt SendInboxMessageOptions) error {
+	if mb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if mb.IsTainted() {
 		return errors.ErrMutateTaintedObject()

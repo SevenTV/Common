@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/utils"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -43,16 +42,16 @@ type User struct {
 
 	// Relational
 
-	Emotes       []*Emote       `json:"emotes" bson:"emotes,skip,omitempty"`
-	OwnedEmotes  []*Emote       `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
-	Bans         []*Ban         `json:"bans" bson:"bans,skip,omitempty"`
-	Entitlements []*Entitlement `json:"entitlements" bson:"entitlements,skip,omitempty"`
+	Emotes       []Emote                 `json:"emotes" bson:"emotes,skip,omitempty"`
+	OwnedEmotes  []Emote                 `json:"owned_emotes" bson:"owned_emotes,skip,omitempty"`
+	Bans         []Ban                   `json:"bans" bson:"bans,skip,omitempty"`
+	Entitlements []Entitlement[bson.Raw] `json:"entitlements" bson:"entitlements,skip,omitempty"`
 
 	// API-specific
 
-	Roles     []*Role       `json:"roles" bson:"roles,skip,omitempty"`
-	EditorOf  []*UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
-	AvatarURL string        `json:"avatar_url" bson:"-"`
+	Roles     []Role       `json:"roles" bson:"roles,skip,omitempty"`
+	EditorOf  []UserEditor `json:"editor_of" bson:"editor_of,skip,omitempty"`
+	AvatarURL string       `json:"avatar_url" bson:"-"`
 }
 
 type UserMetadata struct {
@@ -78,7 +77,7 @@ func (u *User) FinalPermission() (total RolePermission) {
 	return
 }
 
-func (u *User) AddRoles(roles ...*Role) {
+func (u *User) AddRoles(roles ...Role) {
 	for _, r := range roles {
 		exists := false
 		for _, ur := range u.Roles {
@@ -106,7 +105,7 @@ func (u *User) SortRoles() {
 	})
 }
 
-func (u *User) GetHighestRole() *Role {
+func (u *User) GetHighestRole() Role {
 	u.SortRoles()
 	if len(u.Roles) == 0 {
 		return NilRole
@@ -127,38 +126,28 @@ func (u *User) GetEditor(id primitive.ObjectID) (*UserEditor, bool, int) {
 
 type UserDiscriminator uint8
 
-type UserConnectionList []*UserConnection
+type UserConnectionList []UserConnection[bson.Raw]
 
 // Twitch returns the first Twitch user connection
-func (ucl UserConnectionList) Twitch(skipArg ...int) (*UserConnection, int) {
-	var skip int = 0
-	if len(skipArg) != 0 {
-		skip = skipArg[0]
+func (ucl UserConnectionList) Twitch() (UserConnection[UserConnectionDataTwitch], int, error) {
+	for idx, v := range ucl {
+		if v.Platform == UserConnectionPlatformTwitch {
+			conn, err := ConvertUserConnection[UserConnectionDataTwitch](v)
+			return conn, idx, err
+		}
 	}
-	return ucl.getOfPlatform(UserConnectionPlatformTwitch, skip)
+	return UserConnection[UserConnectionDataTwitch]{}, -1, fmt.Errorf("could not find any twitch connections")
 }
 
 // YouTube returns the first YouTube user connection
-func (ucl UserConnectionList) YouTube(skipArg ...int) (*UserConnection, int) {
-	var skip int = 0
-	if len(skipArg) != 0 {
-		skip = skipArg[0]
-	}
-	return ucl.getOfPlatform(UserConnectionPlatformYouTube, skip)
-}
-
-func (ucl UserConnectionList) getOfPlatform(platform UserConnectionPlatform, skip int) (*UserConnection, int) {
-	for i, con := range ucl {
-		if con.Platform != platform {
-			continue
+func (ucl UserConnectionList) YouTube() (UserConnection[UserConnectionDataYoutube], int, error) {
+	for idx, v := range ucl {
+		if v.Platform == UserConnectionPlatformYouTube {
+			conn, err := ConvertUserConnection[UserConnectionDataYoutube](v)
+			return conn, idx, err
 		}
-
-		if skip == 0 {
-			return con, i
-		}
-		skip--
 	}
-	return nil, -1
+	return UserConnection[UserConnectionDataYoutube]{}, -1, fmt.Errorf("could not find any youtube connections")
 }
 
 // UserConnectionPlatform Represents a platform that the app supports
@@ -177,8 +166,12 @@ var (
 	UserTypeSystem  UserType = "SYSTEM"
 )
 
+type UserConnectionData interface {
+	bson.Raw | UserConnectionDataTwitch | UserConnectionDataYoutube
+}
+
 // UserConnection: Represents an external connection to a platform for a user
-type UserConnection struct {
+type UserConnection[D UserConnectionData] struct {
 	ID string `json:"id,omitempty" bson:"id,omitempty"`
 	// the platform of this connection
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
@@ -189,13 +182,30 @@ type UserConnection struct {
 	// emote sets bound to this connection / channel
 	EmoteSetID ObjectID `json:"emote_set_id,omitempty" bson:"emote_set_id,omitempty"`
 	// third-party connection data
-	Data bson.Raw `json:"data" bson:"data"`
+	Data D `json:"data" bson:"data"`
 	// a full oauth2 token grant
 	Grant *UserConnectionGrant `json:"-" bson:"grant,omitempty"`
 
 	// Relational
 
 	EmoteSet *EmoteSet `json:"emote_set" bson:"emote_set,skip,omitempty"`
+}
+
+func ConvertUserConnection[D UserConnectionData](c UserConnection[bson.Raw]) (UserConnection[D], error) {
+	var d D
+	err := bson.Unmarshal(c.Data, &d)
+	c2 := UserConnection[D]{
+		ID:         c.ID,
+		Platform:   c.Platform,
+		LinkedAt:   c.LinkedAt,
+		EmoteSlots: c.EmoteSlots,
+		EmoteSetID: c.EmoteSetID,
+		Data:       d,
+		Grant:      c.Grant,
+		EmoteSet:   c.EmoteSet,
+	}
+
+	return c2, err
 }
 
 type UserConnectionGrant struct {
@@ -206,71 +216,51 @@ type UserConnectionGrant struct {
 }
 
 // UserConnectionBuilder: utility for creating a new UserConnection
-type UserConnectionBuilder struct {
+type UserConnectionBuilder[D UserConnectionData] struct {
 	Update         UpdateMap
-	UserConnection *UserConnection
+	UserConnection UserConnection[D]
 }
 
 // NewUserConnectionBuilder: create a new user connection builder
-func NewUserConnectionBuilder(v *UserConnection) *UserConnectionBuilder {
-	if v == nil {
-		v = &UserConnection{}
-	}
-	return &UserConnectionBuilder{
+func NewUserConnectionBuilder[D UserConnectionData](v UserConnection[D]) *UserConnectionBuilder[D] {
+	return &UserConnectionBuilder[D]{
 		Update:         UpdateMap{},
 		UserConnection: v,
 	}
 }
 
-func (ucb *UserConnectionBuilder) SetID(id string) *UserConnectionBuilder {
+func (ucb *UserConnectionBuilder[D]) SetID(id string) *UserConnectionBuilder[D] {
 	ucb.UserConnection.ID = id
 	ucb.Update.Set("connections.$.id", id)
 	return ucb
 }
 
 // SetPlatform: defines the platform a connection is for (i.e twitch/youtube)
-func (ucb *UserConnectionBuilder) SetPlatform(platform UserConnectionPlatform) *UserConnectionBuilder {
+func (ucb *UserConnectionBuilder[D]) SetPlatform(platform UserConnectionPlatform) *UserConnectionBuilder[D] {
 	ucb.UserConnection.Platform = platform
 	ucb.Update.Set("connections.$.platform", platform)
 	return ucb
 }
 
 // SetLinkedAt: set the time at which the connection was linked
-func (ucb *UserConnectionBuilder) SetLinkedAt(date time.Time) *UserConnectionBuilder {
+func (ucb *UserConnectionBuilder[D]) SetLinkedAt(date time.Time) *UserConnectionBuilder[D] {
 	ucb.UserConnection.LinkedAt = date
 	ucb.Update.Set("connections.$.linked_at", date)
 	return ucb
 }
 
-func (ucb *UserConnectionBuilder) SetActiveEmoteSet(id ObjectID) *UserConnectionBuilder {
+func (ucb *UserConnectionBuilder[D]) SetActiveEmoteSet(id ObjectID) *UserConnectionBuilder[D] {
 	ucb.UserConnection.EmoteSetID = id
 	ucb.Update.Set("connections.$.emote_set_id", id)
 	return ucb
 }
 
-// SetTwitchData: set the data for a twitch connection
-func (ucb *UserConnectionBuilder) SetTwitchData(data *TwitchConnection) *UserConnectionBuilder {
-	return ucb.setPlatformData(data)
-}
-
-// SetYouTubeData: set the data for a youtube connection
-func (ucb *UserConnectionBuilder) SetYouTubeData(data *YouTubeConnection) *UserConnectionBuilder {
-	return ucb.setPlatformData(data)
-}
-
-func (ucb *UserConnectionBuilder) setPlatformData(v interface{}) *UserConnectionBuilder {
-	b, err := bson.Marshal(v)
-	if err != nil {
-		logrus.WithError(err).Error("bson")
-		return ucb
-	}
-
-	ucb.UserConnection.Data = b
-	ucb.Update.Set("connections.$.data", v)
+func (ucb *UserConnectionBuilder[D]) SetData(data D) *UserConnectionBuilder[D] {
+	ucb.UserConnection.Data = data
 	return ucb
 }
 
-func (ucb *UserConnectionBuilder) SetGrant(at string, rt string, ex int, sc []string) *UserConnectionBuilder {
+func (ucb *UserConnectionBuilder[D]) SetGrant(at string, rt string, ex int, sc []string) *UserConnectionBuilder[D] {
 	g := &UserConnectionGrant{
 		AccessToken:  at,
 		RefreshToken: rt,
@@ -283,35 +273,7 @@ func (ucb *UserConnectionBuilder) SetGrant(at string, rt string, ex int, sc []st
 	return ucb
 }
 
-// DecodeTwitch: get the data of a twitch user connnection
-func (uc *UserConnection) DecodeTwitch() (*TwitchConnection, error) {
-	if uc.Platform != UserConnectionPlatformTwitch {
-		return nil, fmt.Errorf("wrong platform %s for DecodeTwitch", uc.Platform)
-	}
-
-	var c *TwitchConnection
-	if err := bson.Unmarshal(uc.Data, &c); err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-// DecodeYouTube: get the data of a youtube user connection
-func (uc *UserConnection) DecodeYouTube() (*YouTubeConnection, error) {
-	if uc.Platform != UserConnectionPlatformYouTube {
-		return nil, fmt.Errorf("wrong platform %s for DecodeYouTube", uc.Platform)
-	}
-
-	var c *YouTubeConnection
-	if err := bson.Unmarshal(uc.Data, &c); err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-type TwitchConnection struct {
+type UserConnectionDataTwitch struct {
 	ID              string    `json:"id" bson:"id"`
 	Login           string    `json:"login" bson:"login"`
 	DisplayName     string    `json:"display_name" bson:"display_name"`
@@ -324,7 +286,7 @@ type TwitchConnection struct {
 	CreatedAt       time.Time `json:"created_at" bson:"twitch_created_at"`
 }
 
-type YouTubeConnection struct {
+type UserConnectionDataYoutube struct {
 	ID          string `json:"id" bson:"id"`
 	Title       string `json:"title" bson:"title"`
 	Description string `json:"description" bson:"description"`

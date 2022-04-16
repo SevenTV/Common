@@ -13,7 +13,7 @@ import (
 )
 
 func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structures.User] {
-	items := []*structures.User{}
+	items := []structures.User{}
 	r := &QueryResult[structures.User]{}
 
 	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
@@ -74,7 +74,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 
 	// Get roles
 	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
+	roleMap := make(map[primitive.ObjectID]structures.Role)
 	for _, role := range roles {
 		roleMap[role.ID] = role
 	}
@@ -90,7 +90,10 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	if err != nil {
+		return r.setError(err)
+	}
 	for _, u := range userMap {
 		items = append(items, u)
 	}

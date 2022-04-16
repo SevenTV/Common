@@ -12,7 +12,7 @@ import (
 )
 
 func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *structures.UserBuilder, opt SetUserActiveEmoteSet) error {
-	if ub == nil || ub.User == nil {
+	if ub == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if ub.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -58,10 +58,11 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 	}
 
 	// Get the connection
-	conn, ok := ub.GetConnection(opt.Platform, opt.ConnectionID)
-	if !ok {
+	conn := ub.GetConnection(opt.Platform, opt.ConnectionID)
+	if conn == nil {
 		return errors.ErrUnknownUserConnection()
 	}
+
 	conn.SetActiveEmoteSet(opt.EmoteSetID)
 
 	// Update document

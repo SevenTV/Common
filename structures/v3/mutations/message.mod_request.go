@@ -12,15 +12,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.MessageBuilder) error {
-	if mb == nil || mb.Message == nil {
+func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.MessageBuilder[structures.MessageDataModRequest]) error {
+	if mb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if mb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
 	}
 
 	// Get the message
-	req := mb.DecodeModRequest()
+	req := mb.Message.Data
 
 	// Verify that the target item exists
 	var target interface{}

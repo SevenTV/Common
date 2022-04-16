@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
@@ -11,7 +12,7 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	var rc *redis.Client
 
 	if len(opt.Addresses) == 0 {
-		logrus.Fatal("you must provide at least one redis address")
+		return nil, fmt.Errorf("you must provide at least one redis address")
 	}
 
 	if opt.Sentinel {
@@ -36,8 +37,6 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	if err := rc.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
-
-	logrus.Info("redis, ok")
 
 	inst := &redisInst{
 		cl:  rc,

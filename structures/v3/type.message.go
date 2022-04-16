@@ -7,7 +7,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Message struct {
+type MessageData interface {
+	bson.Raw | MessageDataEmoteComment | MessageDataInbox | MessageDataPlaceholder | MessageDataModRequest
+}
+
+type Message[D MessageData] struct {
 	ID primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 
 	// The kind of message this is (i.e a comment, or inbox message)
@@ -19,12 +23,29 @@ type Message struct {
 	// The date on which this message was cretaed
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	// Message data
-	Data bson.Raw `json:"data" bson:"data"`
+	Data D `json:"data" bson:"data"`
 
 	// Relational
 
 	Author *User `json:"author,omitempty" bson:"author,skip,omitempty"`
 	Read   bool  `json:"read,omitempty" bson:"read,omitempty"`
+}
+
+func ConvertMessage[D MessageData](c Message[bson.Raw]) (Message[D], error) {
+	var d D
+	err := bson.Unmarshal(c.Data, &d)
+	c2 := Message[D]{
+		ID:        c.ID,
+		Kind:      c.Kind,
+		AuthorID:  c.AuthorID,
+		Anonymous: c.Anonymous,
+		CreatedAt: c.CreatedAt,
+		Data:      d,
+		Author:    c.Author,
+		Read:      c.Read,
+	}
+
+	return c2, err
 }
 
 type MessageKind int8
@@ -51,8 +72,6 @@ func (k MessageKind) String() string {
 	}
 }
 
-type MessageData bson.Raw
-
 type MessageDataEmoteComment struct {
 	EmoteID primitive.ObjectID `json:"emote_id" bson:"emote_id"`
 	// Whether or not the comment is an official statement
@@ -78,8 +97,8 @@ type MessageDataInbox struct {
 }
 
 type MessageDataPlaceholder struct {
-	Key   string
-	Value string
+	Key   string `json:"key" bson:"key"`
+	Value string `json:"value" bson:"value"`
 }
 
 type MessageDataModRequest struct {
