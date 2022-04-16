@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"time"
 	"unsafe"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GenerateRandomBytes returns securely generated random bytes.
@@ -82,7 +80,7 @@ func S2B(s string) (b []byte) {
 	return b
 }
 
-func DifferentArray[T ComparableType](a []T, b []T) bool {
+func DifferentArray[T comparable](a []T, b []T) bool {
 	if len(a) != len(b) {
 		return true
 	}
@@ -123,7 +121,7 @@ func IsSliceArrayPointer(v interface{}) bool {
 	return false
 }
 
-func SliceIndexOf[T ComparableType](arr []T, val T) int {
+func SliceIndexOf[T comparable](arr []T, val T) int {
 	for i, v := range arr {
 		if v == val {
 			return i
@@ -133,7 +131,7 @@ func SliceIndexOf[T ComparableType](arr []T, val T) int {
 	return -1
 }
 
-func Contains[T ComparableType](arr []T, val T) bool {
+func Contains[T comparable](arr []T, val T) bool {
 	for _, v := range arr {
 		if v == val {
 			return true
@@ -183,11 +181,7 @@ func JitterTime(lower, upper time.Duration) time.Duration {
 	return time.Duration(n.Int64()) + lower
 }
 
-type ComparableType interface {
-	*any | int | int8 | int16 | int32 | float32 | float64 | string | bool | chan any | primitive.ObjectID
-}
-
-func DestructureMap[K ComparableType, V any](mp map[K]V) ([]K, []V) {
+func DestructureMap[K comparable, V any](mp map[K]V) ([]K, []V) {
 	keys := make([]K, len(mp))
 	values := make([]V, len(mp))
 

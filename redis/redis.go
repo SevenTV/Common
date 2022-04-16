@@ -40,9 +40,8 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 	logrus.Info("redis, ok")
 
 	inst := &redisInst{
-		cl:   rc,
-		sub:  rc.Subscribe(context.Background()),
-		subs: map[Key][]*redisSub{},
+		cl:  rc,
+		sub: rc.Subscribe(context.Background()),
 	}
 	go func() {
 		defer func() {
@@ -55,15 +54,16 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		for {
 			msg = <-ch
 			payload := msg.Payload // dont change we want to copy the memory due to concurrency.
-			inst.subsMtx.Lock()
-			for _, s := range inst.subs[Key(msg.Channel)] {
-				select {
-				case s.ch <- payload:
-				default:
-					logrus.Warn("channel blocked dropping message: ", msg.Channel)
-				}
+			if subs, ok := inst.subs.Load(Key(msg.Channel)); ok {
+				subs.subs.Range(func(key uint64, value chan string) bool {
+					select {
+					case value <- payload:
+					default:
+						logrus.Warn("channel blocked dropping message: ", msg.Channel)
+					}
+					return true
+				})
 			}
-			inst.subsMtx.Unlock()
 		}
 	}()
 

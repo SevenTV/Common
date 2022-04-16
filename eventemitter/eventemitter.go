@@ -1,53 +1,46 @@
 package eventemitter
 
 import (
+	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/SevenTV/Common/sync_map"
 	"github.com/SevenTV/Common/utils"
 )
 
 type RawEventEmitter struct {
-	mtx  sync.Mutex
 	once sync.Once
 	done chan struct{}
-	mp   map[string]*container
+	sMp  sync_map.Map[string, *container]
 }
 
 type container struct {
-	i   uint64
+	i   *uint64
 	evt string
-	mtx sync.Mutex
-	mp  map[uint64]*EventListener
+	sMp sync_map.Map[uint64, *EventListener]
 }
 
 func (c *container) listen(l *EventListener) func() {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
+	id := atomic.AddUint64(c.i, 1)
 
-	id := c.i
-	c.i++
-
-	c.mp[id] = l
+	c.sMp.Store(id, l)
 
 	return func() {
-		c.mtx.Lock()
-		defer c.mtx.Unlock()
-		delete(c.mp, id)
+		c.sMp.Delete(id)
 	}
 }
 
 func (c *container) publish(payload any) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	for _, v := range c.mp {
-		v.publishRaw(c.evt, payload)
-	}
+	c.sMp.Range(func(key uint64, value *EventListener) bool {
+		value.publishRaw(c.evt, payload)
+		return true
+	})
 }
 
 func New() *RawEventEmitter {
 	e := &RawEventEmitter{
-		mp:   map[string]*container{},
 		done: make(chan struct{}),
 	}
 
@@ -57,25 +50,22 @@ func New() *RawEventEmitter {
 }
 
 func (e *RawEventEmitter) Listen(l *EventListener) func() {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
+	unbindFns := []func(){}
 
-	unbindFns := make([]func(), len(l.channels))
-
-	i := 0
-	for evt := range l.channels {
-		cn, ok := e.mp[evt]
+	l.channels.Range(func(evt string, value reflect.Value) bool {
+		cn, ok := e.sMp.Load(evt)
 		if !ok {
 			cn = &container{
+				i:   utils.PointerOf(uint64(0)),
 				evt: evt,
-				mp:  map[uint64]*EventListener{},
 			}
-			e.mp[evt] = cn
+			e.sMp.Store(evt, cn)
 		}
 
-		unbindFns[i] = cn.listen(l)
-		i++
-	}
+		unbindFns = append(unbindFns, cn.listen(l))
+
+		return true
+	})
 
 	return func() {
 		for _, fn := range unbindFns {
@@ -86,16 +76,12 @@ func (e *RawEventEmitter) Listen(l *EventListener) func() {
 }
 
 func (e *RawEventEmitter) PublishRaw(event string, payload any) {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if cn, ok := e.mp[event]; ok {
+	if cn, ok := e.sMp.Load(event); ok {
 		cn.publish(payload)
 	}
 }
 
 func (e *RawEventEmitter) clean() {
-
 	tick := time.NewTicker(time.Minute*30 + utils.JitterTime(time.Second, time.Minute))
 	defer tick.Stop()
 
@@ -104,15 +90,18 @@ func (e *RawEventEmitter) clean() {
 		case <-e.done:
 			return
 		case <-tick.C:
-			e.mtx.Lock()
-			for evt, cn := range e.mp {
-				cn.mtx.Lock()
-				if len(cn.mp) == 0 {
-					delete(e.mp, evt)
+			e.sMp.Range(func(evt string, cn *container) bool {
+				i := 0
+				cn.sMp.Range(func(key uint64, value *EventListener) bool {
+					i++
+					return false
+				})
+				if i == 0 {
+					e.sMp.Delete(evt)
 				}
-				cn.mtx.Unlock()
-			}
-			e.mtx.Unlock()
+
+				return true
+			})
 		}
 	}
 }

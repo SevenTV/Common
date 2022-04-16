@@ -3,9 +3,11 @@ package redis
 import (
 	"context"
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/SevenTV/Common/sync_map"
+	"github.com/SevenTV/Common/utils"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 )
@@ -28,14 +30,34 @@ type Instance interface {
 }
 
 type redisInst struct {
-	cl      *redis.Client
-	sub     *redis.PubSub
-	subsMtx sync.Mutex
-	subs    map[Key][]*redisSub
+	cl  *redis.Client
+	sub *redis.PubSub
+
+	subs sync_map.Map[Key, *subController]
 }
 
-type redisSub struct {
-	ch chan string
+type subController struct {
+	evt   Key
+	i     *uint64
+	count *int64
+	subs  sync_map.Map[uint64, chan string]
+	inst  *redisInst
+}
+
+func (s *subController) Subscribe(ch chan string) func() {
+	i := atomic.AddUint64(s.i, 1)
+	atomic.AddInt64(s.count, 1)
+	s.subs.Store(i, ch)
+	return func() {
+		if atomic.AddInt64(s.count, -1) == 0 {
+			s.inst.subs.Delete(Key(s.evt.String()))
+			if err := s.inst.sub.Unsubscribe(context.Background(), s.evt.String()); err != nil {
+				logrus.WithError(err).Error("failed to unsubscribe")
+			}
+		}
+		s.subs.Delete(i)
+
+	}
 }
 
 func (i *redisInst) Ping(ctx context.Context) error {
@@ -103,39 +125,21 @@ func (r *redisInst) Pipeline(ctx context.Context) redis.Pipeliner {
 }
 
 // Subscribe to a channel on Redis
-func (inst *redisInst) Subscribe(ctx context.Context, ch chan string, subscribeTo ...Key) {
-	inst.subsMtx.Lock()
-	defer inst.subsMtx.Unlock()
-	localSub := &redisSub{ch}
+func (r *redisInst) Subscribe(ctx context.Context, ch chan string, subscribeTo ...Key) {
 	for _, e := range subscribeTo {
-		if _, ok := inst.subs[e]; !ok {
-			_ = inst.sub.Subscribe(ctx, e.String())
+		sub, ok := r.subs.LoadOrStore(e, &subController{
+			evt:   e,
+			i:     utils.PointerOf(uint64(0)),
+			count: utils.PointerOf(int64(0)),
+			inst:  r,
+		})
+		if !ok {
+			_ = r.sub.Subscribe(ctx, e.String())
 		}
-		inst.subs[e] = append(inst.subs[e], localSub)
+		defer sub.Subscribe(ch)()
 	}
 
-	go func() {
-		<-ctx.Done()
-		inst.subsMtx.Lock()
-		defer inst.subsMtx.Unlock()
-		for _, e := range subscribeTo {
-			for i, v := range inst.subs[e] {
-				if v == localSub {
-					if i != len(inst.subs[e])-1 {
-						inst.subs[e][i] = inst.subs[e][len(inst.subs[e])-1]
-					}
-					inst.subs[e] = inst.subs[e][:len(inst.subs[e])-1]
-					if len(inst.subs[e]) == 0 {
-						delete(inst.subs, e)
-						if err := inst.sub.Unsubscribe(context.Background(), e.String()); err != nil {
-							logrus.WithError(err).Error("failed to unsubscribe")
-						}
-					}
-					break
-				}
-			}
-		}
-	}()
+	<-ctx.Done()
 }
 
 type Key string
