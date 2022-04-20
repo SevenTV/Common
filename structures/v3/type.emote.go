@@ -125,7 +125,7 @@ func (ev EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int32
 func (ev EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []EmoteFile {
 	files := []EmoteFile{}
 	for _, f := range ev.Formats {
-		if f.Name != format {
+		if format != "" && f.Name != format {
 			continue
 		}
 		for _, fi := range f.Files {

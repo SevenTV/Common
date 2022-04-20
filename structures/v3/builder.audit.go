@@ -48,7 +48,7 @@ func (alb *AuditLogBuilder) SetTargetID(id primitive.ObjectID) *AuditLogBuilder 
 }
 
 // AddChanges adds one or more changes in the audit log
-func (alb *AuditLogBuilder) AddChanges(changes ...AuditLogChange) *AuditLogBuilder {
+func (alb *AuditLogBuilder) AddChanges(changes ...*AuditLogChange) *AuditLogBuilder {
 	alb.AuditLog.Changes = append(alb.AuditLog.Changes, changes...)
 	alb.Update.Push("changes", changes)
 	return alb

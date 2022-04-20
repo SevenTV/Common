@@ -12,7 +12,7 @@ type AuditLog struct {
 
 	TargetID   primitive.ObjectID `json:"target_id" bson:"target_id"`
 	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
-	Changes    []AuditLogChange   `json:"changes" bson:"changes"`
+	Changes    []*AuditLogChange  `json:"changes" bson:"changes"`
 
 	Extra  map[string]any `json:"extra,omitempty" bson:"extra,omitempty"`
 	Reason string         `json:"reason,omitempty" bson:"reason,omitempty"`

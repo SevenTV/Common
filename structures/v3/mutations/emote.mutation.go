@@ -83,7 +83,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 			c.WriteSingleValues(init.Name, emote.Name)
-			log.AddChanges(c)
+			log.AddChanges(&c)
 		}
 		if init.OwnerID != emote.OwnerID {
 			// Verify that the new emote exists
@@ -156,7 +156,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 			c.WriteSingleValues(init.OwnerID, emote.OwnerID)
-			log.AddChanges(c)
+			log.AddChanges(&c)
 		}
 		if init.Flags != emote.Flags {
 			f := emote.Flags
@@ -180,7 +180,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 			c.WriteSingleValues(init.Flags, emote.Flags)
-			log.AddChanges(c)
+			log.AddChanges(&c)
 		}
 		// Change versions
 		for i, ver := range emote.Versions {

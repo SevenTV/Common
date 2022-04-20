@@ -113,7 +113,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	}
 
 	// Set up audit log entry
-	c := structures.AuditLogChange{
+	c := &structures.AuditLogChange{
 		Format: structures.AuditLogChangeFormatArrayChange,
 		Key:    "emotes",
 	}
@@ -253,7 +253,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		bson.M{"_id": set.ID},
 		esb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
-	).Decode(esb.EmoteSet); err != nil {
+	).Decode(&esb.EmoteSet); err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
