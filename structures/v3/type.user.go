@@ -26,7 +26,7 @@ type User struct {
 	// list of role IDs directly bound to the user (not via an entitlement)
 	RoleIDs []ObjectID `json:"role_ids" bson:"role_ids"`
 	// the user's editors
-	Editors []*UserEditor `json:"editors" bson:"editors"`
+	Editors []UserEditor `json:"editors" bson:"editors"`
 	// the user's avatar URL
 	AvatarID string `json:"avatar_id" bson:"avatar_id"`
 	// the user's biography
@@ -115,13 +115,13 @@ func (u *User) GetHighestRole() Role {
 }
 
 // GetEditor returns the specified user editor
-func (u *User) GetEditor(id primitive.ObjectID) (*UserEditor, bool, int) {
+func (u *User) GetEditor(id primitive.ObjectID) (UserEditor, bool, int) {
 	for i, ue := range u.Editors {
 		if ue.ID == id {
 			return ue, true, i
 		}
 	}
-	return nil, false, -1
+	return UserEditor{}, false, -1
 }
 
 type UserDiscriminator uint8

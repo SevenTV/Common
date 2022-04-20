@@ -149,14 +149,14 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				// Usable if actor is an editor of emote owner
 				// and has the correct permission
 				if tgt.emote.Owner != nil {
-					var editor *structures.UserEditor
+					var editor structures.UserEditor
 					for _, ed := range tgt.emote.Owner.Editors {
 						if opt.Actor.ID == ed.ID {
 							editor = ed
 							break
 						}
 					}
-					if editor != nil && editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
+					if !editor.ID.IsZero() && editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
 						usable = true
 					}
 				}

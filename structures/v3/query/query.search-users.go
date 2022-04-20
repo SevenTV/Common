@@ -208,7 +208,7 @@ type aggregatedUsersResult struct {
 	TotalCount       int                                `bson:"total_count"`
 }
 
-func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]*structures.UserEditor, error) {
+func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]structures.UserEditor, error) {
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key: "$match",
@@ -239,7 +239,7 @@ func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]*str
 		return nil, err
 	}
 
-	v := []*structures.UserEditor{}
+	v := []structures.UserEditor{}
 	if err = cur.All(ctx, &v); err != nil {
 		return nil, err
 	}

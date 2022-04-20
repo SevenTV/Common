@@ -11,7 +11,7 @@ var DeletedUser = User{
 	DisplayName:   "*DeletedUser",
 	Discriminator: "0000",
 	RoleIDs:       []primitive.ObjectID{},
-	Editors:       []*UserEditor{},
+	Editors:       []UserEditor{},
 	TokenVersion:  0,
 	Connections:   UserConnectionList{},
 }

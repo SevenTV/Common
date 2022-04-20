@@ -125,7 +125,7 @@ func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, 
 		}
 	}
 
-	ed := &UserEditor{
+	ed := UserEditor{
 		ID:          id,
 		Permissions: permissions,
 		Visible:     visible,
@@ -155,9 +155,6 @@ func (ub *UserBuilder) UpdateEditor(id ObjectID, permissions UserEditorPermissio
 func (ub *UserBuilder) RemoveEditor(id ObjectID) *UserBuilder {
 	ind := -1
 	for i := range ub.User.Editors {
-		if ub.User.Editors[i] == nil {
-			continue
-		}
 		if ub.User.Editors[i].ID != id {
 			continue
 		}
@@ -169,7 +166,7 @@ func (ub *UserBuilder) RemoveEditor(id ObjectID) *UserBuilder {
 	}
 
 	copy(ub.User.Editors[ind:], ub.User.Editors[ind+1:])
-	ub.User.Editors[len(ub.User.Editors)-1] = nil
+	ub.User.Editors[len(ub.User.Editors)-1] = UserEditor{}
 	ub.User.Editors = ub.User.Editors[:len(ub.User.Editors)-1]
 	ub.Update.Pull("editors", bson.M{"id": id})
 	return ub
