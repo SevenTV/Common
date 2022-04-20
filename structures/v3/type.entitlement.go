@@ -7,7 +7,7 @@ import (
 )
 
 type EntitlementData interface {
-	bson.Raw | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataRole | EntitlementDataSet
+	bson.Raw | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataPaint | EntitlementDataRole | EntitlementDataSet
 }
 
 // Entitlement is a binding between a resource and a user
@@ -87,6 +87,12 @@ type EntitlementDataBadge struct {
 	RoleBindingID *string             `json:"role_binding_id" bson:"-"`
 	RoleBinding   *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
 	Selected      bool                `json:"selected,omitempty" bson:"selected,omitempty"`
+}
+
+type EntitlementDataPaint struct {
+	ObjectReference primitive.ObjectID  `json:"-" bson:"ref"`
+	RoleBinding     *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
+	Selected        bool                `json:"selected,omitempty" bson:"selected,omitempty"`
 }
 
 // EntitledRole Role binding in an Entitlement
