@@ -132,7 +132,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			if emote, ok := emoteMap[ae.ID]; !ok {
 				set.Emotes[indEmotes].Emote = &structures.DeletedEmote
 			} else {
-				ae.Emote = &emote
+				set.Emotes[indEmotes].Emote = &emote
 			}
 		}
 		items = append(items, set)
