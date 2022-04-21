@@ -69,7 +69,7 @@ func (m *Mutate) EditRole(ctx context.Context, rb *structures.RoleBuilder, opt R
 		bson.M{"_id": rb.Role.ID},
 		rb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
-	).Decode(rb.Role); err != nil {
+	).Decode(&rb.Role); err != nil {
 		return err
 	}
 

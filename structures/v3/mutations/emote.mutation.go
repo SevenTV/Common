@@ -31,7 +31,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 	if actor != nil {
 		actorID = actor.ID
 	}
-	emote := eb.Emote
+	emote := &eb.Emote
 
 	// Check actor's permission
 	if actor != nil {

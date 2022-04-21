@@ -36,7 +36,7 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	}
 
 	// Get the newly created emote set
-	if err = m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(esb.EmoteSet); err != nil {
+	if err = m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(&esb.EmoteSet); err != nil {
 		return err
 	}
 	if err != nil {
