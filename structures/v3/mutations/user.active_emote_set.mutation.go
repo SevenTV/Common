@@ -20,7 +20,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 
 	// Check for actor's permission to do this
 	actor := opt.Actor
-	victim := ub.User
+	victim := &ub.User
 	if actor != nil && actor.ID != victim.ID {
 		ok := actor.HasPermission(structures.RolePermissionManageUsers)
 		for _, ed := range victim.Editors {
