@@ -11,21 +11,18 @@ import (
 
 type UserBuilder struct {
 	Update UpdateMap
-	User   *User
+	User   User
 
 	initial User
 	tainted bool
 }
 
 // NewUserBuilder: create a new user builder
-func NewUserBuilder(user *User) *UserBuilder {
-	if user == nil {
-		user = &User{}
-	}
+func NewUserBuilder(user User) *UserBuilder {
 	return &UserBuilder{
 		Update:  UpdateMap{},
 		User:    user,
-		initial: *user,
+		initial: user,
 	}
 }
 
@@ -85,7 +82,7 @@ func (ub *UserBuilder) SetAvatarID(url string) *UserBuilder {
 	return ub
 }
 
-func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*UserConnectionBuilder, bool) {
+func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) *UserConnectionBuilder[bson.Raw] {
 	// Filter by ID?
 	filterID := ""
 	if len(id) > 0 {
@@ -93,7 +90,7 @@ func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*U
 	}
 
 	// Find connection
-	var conn *UserConnection
+	var conn UserConnection[bson.Raw]
 	for _, c := range ub.User.Connections {
 		if c.Platform != p {
 			continue
@@ -105,15 +102,10 @@ func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*U
 		break
 	}
 
-	// Return a builder
-	var ucb *UserConnectionBuilder
-	if conn != nil {
-		ucb = NewUserConnectionBuilder(conn)
-	}
-	return ucb, ucb != nil
+	return NewUserConnectionBuilder(conn)
 }
 
-func (ub *UserBuilder) AddConnection(conn *UserConnection) *UserBuilder {
+func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder {
 	for _, c := range ub.User.Connections {
 		if c.ID == conn.ID {
 			return ub // connection already exists.
@@ -133,7 +125,7 @@ func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, 
 		}
 	}
 
-	ed := &UserEditor{
+	ed := UserEditor{
 		ID:          id,
 		Permissions: permissions,
 		Visible:     visible,
@@ -163,9 +155,6 @@ func (ub *UserBuilder) UpdateEditor(id ObjectID, permissions UserEditorPermissio
 func (ub *UserBuilder) RemoveEditor(id ObjectID) *UserBuilder {
 	ind := -1
 	for i := range ub.User.Editors {
-		if ub.User.Editors[i] == nil {
-			continue
-		}
 		if ub.User.Editors[i].ID != id {
 			continue
 		}
@@ -177,7 +166,7 @@ func (ub *UserBuilder) RemoveEditor(id ObjectID) *UserBuilder {
 	}
 
 	copy(ub.User.Editors[ind:], ub.User.Editors[ind+1:])
-	ub.User.Editors[len(ub.User.Editors)-1] = nil
+	ub.User.Editors[len(ub.User.Editors)-1] = UserEditor{}
 	ub.User.Editors = ub.User.Editors[:len(ub.User.Editors)-1]
 	ub.Update.Pull("editors", bson.M{"id": id})
 	return ub

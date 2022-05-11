@@ -10,7 +10,6 @@ import (
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,7 +17,7 @@ import (
 
 // SetEmote: enable, edit or disable active emotes in the set
 func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationSetEmoteOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -49,7 +48,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				if err == mongo.ErrNoDocuments {
 					return errors.ErrUnknownUser().SetDetail("emote set owner")
 				}
-				logrus.WithError(err).Error("failed to find emote set owner")
 				return err
 			}
 		}
@@ -61,7 +59,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				{{Key: "$match", Value: bson.M{"_id": set.ID}}},
 			}, aggregations.EmoteSetRelationActiveEmotes...))
 			if err = multierror.Append(err, cur.All(ctx, &set.Emotes)).ErrorOrNil(); err != nil {
-				logrus.WithError(err).Error("failed to fetch emote data of active emote set emotes")
 				return err
 			}
 		}
@@ -77,7 +74,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Roles: true, Editors: true})...))
 		err = multierror.Append(err, cur.All(ctx, &targetEmotes)).ErrorOrNil()
 		if err != nil {
-			logrus.WithError(err).Error("failed to fetch target emotes during emote set mutation")
 			return err
 		}
 		for _, e := range targetEmotes {
@@ -121,7 +117,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		Format: structures.AuditLogChangeFormatArrayChange,
 		Key:    "emotes",
 	}
-	log := structures.NewAuditLogBuilder(nil).
+	log := structures.NewAuditLogBuilder(structures.AuditLog{}).
 		SetKind(structures.AuditLogKindUpdateEmoteSet).
 		SetActor(actor.ID).
 		SetTargetKind(structures.ObjectKindEmoteSet).
@@ -153,14 +149,14 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				// Usable if actor is an editor of emote owner
 				// and has the correct permission
 				if tgt.emote.Owner != nil {
-					var editor *structures.UserEditor
+					var editor structures.UserEditor
 					for _, ed := range tgt.emote.Owner.Editors {
 						if opt.Actor.ID == ed.ID {
 							editor = ed
 							break
 						}
 					}
-					if editor != nil && editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
+					if !editor.ID.IsZero() && editor.HasPermission(structures.UserEditorPermissionUsePrivateEmotes) {
 						usable = true
 					}
 				}
@@ -226,7 +222,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 			if tgt.Action == ListItemActionUpdate {
 				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
-				if ae != nil {
+				if !ae.ID.IsZero() {
 					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
 						New: structures.ActiveEmote{
 							ID:        tgt.ID,
@@ -257,17 +253,14 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		bson.M{"_id": set.ID},
 		esb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
-	).Decode(esb.EmoteSet); err != nil {
-		logrus.WithError(err).WithField("emote_set_id", set.ID).Error("mongo, failed to update emote set")
+	).Decode(&esb.EmoteSet); err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	// Write audit log entry
-	go func() {
-		if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
-			logrus.WithError(err).Error("failed to write audit log")
-		}
-	}()
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+		return err
+	}
 
 	esb.MarkAsTainted()
 	return nil

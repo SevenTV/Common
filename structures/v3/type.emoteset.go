@@ -17,7 +17,7 @@ type EmoteSet struct {
 	// If true, the set is "privileged" and can only be modified by its owner or a super administrator, regardless of the "Edit Any Emote Set" permission
 	Privileged bool `json:"privilleged" bson:"privileged"`
 	// The emotes assigned to this set
-	Emotes []*ActiveEmote `json:"emotes" bson:"emotes"`
+	Emotes []ActiveEmote `json:"emotes" bson:"emotes"`
 	// The maximum amount of emotes this set is allowed to contain
 	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
 	// The ID of the parent set. If defined, this set is treated as a child set
@@ -61,11 +61,11 @@ const (
 )
 
 // HasEmote: returns whether or not the set has an emote active, as well as its index
-func (es *EmoteSet) GetEmote(id primitive.ObjectID) (*ActiveEmote, int) {
+func (es EmoteSet) GetEmote(id primitive.ObjectID) (ActiveEmote, int) {
 	for i, ae := range es.Emotes {
 		if ae.ID == id {
 			return ae, i
 		}
 	}
-	return nil, -1
+	return ActiveEmote{}, -1
 }

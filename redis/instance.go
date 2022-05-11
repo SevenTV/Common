@@ -9,7 +9,7 @@ import (
 	"github.com/SevenTV/Common/sync_map"
 	"github.com/SevenTV/Common/utils"
 	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type Instance interface {
@@ -52,7 +52,9 @@ func (s *subController) Subscribe(ch chan string) func() {
 		if atomic.AddInt64(s.count, -1) == 0 {
 			s.inst.subs.Delete(Key(s.evt.String()))
 			if err := s.inst.sub.Unsubscribe(context.Background(), s.evt.String()); err != nil {
-				logrus.WithError(err).Error("failed to unsubscribe")
+				zap.S().Errorw("failed to unsubscribe",
+					"error", err,
+				)
 			}
 		}
 		s.subs.Delete(i)

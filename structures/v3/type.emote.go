@@ -20,14 +20,14 @@ type Emote struct {
 
 	// Versioning
 
-	Versions    []*EmoteVersion      `json:"versions,omitempty" bson:"versions,omitempty"`
+	Versions    []EmoteVersion       `json:"versions,omitempty" bson:"versions,omitempty"`
 	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
 	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
 
 	// Relational
 
-	Owner    *User   `json:"owner" bson:"owner_user,skip,omitempty"`
-	Channels []*User `json:"channels" bson:"channels,skip,omitempty"`
+	Owner    *User  `json:"owner" bson:"owner_user,skip,omitempty"`
+	Channels []User `json:"channels" bson:"channels,skip,omitempty"`
 }
 
 type EmoteLifecycle int32
@@ -90,7 +90,7 @@ type EmoteFile struct {
 	format *EmoteFormatName
 }
 
-func (ef *EmoteFile) Format() EmoteFormatName {
+func (ef EmoteFile) Format() EmoteFormatName {
 	if ef.format == nil {
 		return ""
 	}
@@ -106,10 +106,10 @@ const (
 	EmoteFormatNamePNG  EmoteFormatName = "image/png"
 )
 
-func (ev *EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int32 {
+func (ev EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int32 {
 	var count int32
 	for _, f := range ev.Formats {
-		if format != "" && f.Name != format {
+		if f.Name != format {
 			continue
 		}
 		for _, fi := range f.Files {
@@ -122,9 +122,8 @@ func (ev *EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int3
 	return count
 }
 
-func (ev *EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []EmoteFile {
-	files := make([]EmoteFile, ev.CountFiles(format, omitStatic))
-	pos := 0
+func (ev EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []EmoteFile {
+	files := []EmoteFile{}
 	for _, f := range ev.Formats {
 		if format != "" && f.Name != format {
 			continue
@@ -134,8 +133,7 @@ func (ev *EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []Emot
 				continue
 			}
 			fi.format = &f.Name
-			files[pos] = fi
-			pos++
+			files = append(files, fi)
 		}
 	}
 	return files
@@ -172,21 +170,21 @@ type EmoteVersion struct {
 	Formats     []EmoteFormat      `json:"formats,omitempty" bson:"formats,omitempty"`
 }
 
-func (e *Emote) HasFlag(flag EmoteFlag) bool {
+func (e Emote) HasFlag(flag EmoteFlag) bool {
 	return utils.BitField.HasBits(int64(e.Flags), int64(flag))
 }
 
-func (e *Emote) GetVersion(id ObjectID) (*EmoteVersion, int) {
+func (e Emote) GetVersion(id ObjectID) (EmoteVersion, int) {
 	for i, v := range e.Versions {
 		if v.ID == id {
 			return v, i
 		}
 	}
-	return nil, -1
+	return EmoteVersion{}, -1
 }
 
-func (e *Emote) GetLatestVersion(onlyListed bool) *EmoteVersion {
-	var ver *EmoteVersion
+func (e Emote) GetLatestVersion(onlyListed bool) EmoteVersion {
+	var ver EmoteVersion
 	for _, v := range e.Versions {
 		if onlyListed && !v.State.Listed {
 			continue
@@ -194,17 +192,17 @@ func (e *Emote) GetLatestVersion(onlyListed bool) *EmoteVersion {
 		if v.IsUnavailable() {
 			continue
 		}
-		if ver == nil || ver.Timestamp.Before(v.Timestamp) {
+		if ver.ID.IsZero() || ver.Timestamp.Before(v.Timestamp) {
 			ver = v
 		}
 	}
 	return ver
 }
 
-func (ev *EmoteVersion) IsUnavailable() bool {
+func (ev EmoteVersion) IsUnavailable() bool {
 	return ev.State.Lifecycle == EmoteLifecycleDeleted || ev.State.Lifecycle == EmoteLifecycleDisabled || ev.State.Lifecycle == EmoteLifecycleFailed
 }
 
-func (ev *EmoteVersion) IsProcessing() bool {
+func (ev EmoteVersion) IsProcessing() bool {
 	return ev.State.Lifecycle == EmoteLifecyclePending || ev.State.Lifecycle == EmoteLifecycleProcessing
 }

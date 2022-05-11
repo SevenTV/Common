@@ -6,12 +6,11 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.MessageBuilder, read bool, opt MessageReadStateOptions) (*MessageReadStateResponse, error) {
-	if mb == nil || mb.Message == nil {
+func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.MessageBuilder[bson.Raw], read bool, opt MessageReadStateOptions) (*MessageReadStateResponse, error) {
+	if mb == nil {
 		return nil, errors.ErrInternalIncompleteMutation()
 	} else if mb.IsTainted() {
 		return nil, errors.ErrMutateTaintedObject()
@@ -34,7 +33,6 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrUnknownMessage().SetDetail("Couldn't find any read states related to the message")
 		}
-		logrus.WithError(err).Error("mongo, ")
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
@@ -50,21 +48,24 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 			switch rs.Kind {
 			// Check for a mod request
 			case structures.MessageKindModRequest:
-				d := mb.DecodeModRequest()
+				d, err := structures.ConvertMessage[structures.MessageDataModRequest](mb.Message)
+				if err != nil {
+					return nil, err
+				}
 				errf := errors.Fields{
 					"message_id":       rs.MessageID.Hex(),
 					"message_state_id": rs.ID.Hex(),
 					"msg_kind":         rs.Kind,
-					"target_kind":      d.TargetKind,
+					"target_kind":      d.Data.TargetKind,
 				}
 
-				if d.TargetKind == structures.ObjectKindEmote && !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+				if d.Data.TargetKind == structures.ObjectKindEmote && !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 					errorList = append(errorList, errors.ErrInsufficientPrivilege().SetFields(errf))
 					continue // target is emote but actor lacks "edit any emote" permission
-				} else if d.TargetKind == structures.ObjectKindEmoteSet && !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
+				} else if d.Data.TargetKind == structures.ObjectKindEmoteSet && !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
 					errorList = append(errorList, errors.ErrInsufficientPrivilege().SetFields(errf))
 					continue // target is emote set but actor lacks "edit any emote set" permission
-				} else if d.TargetKind == structures.ObjectKindReport && !actor.HasPermission(structures.RolePermissionManageReports) {
+				} else if d.Data.TargetKind == structures.ObjectKindReport && !actor.HasPermission(structures.RolePermissionManageReports) {
 					errorList = append(errorList, errors.ErrInsufficientPrivilege().SetFields(errf))
 					continue // target is report but actor lacks "manage reports" permission
 				}
@@ -98,9 +99,6 @@ func (m *Mutate) SetMessageReadStates(ctx context.Context, mb *structures.Messag
 	if len(w) > 0 {
 		result, err := m.mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w)
 		if err != nil {
-			logrus.WithError(err).WithField(
-				"message_id", mb.Message.ID,
-			).Error("mongo, failed to update message read states")
 			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 		updated += result.ModifiedCount

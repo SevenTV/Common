@@ -8,18 +8,21 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
 	qr := &QueryResult[structures.Emote]{}
-	items := []*structures.Emote{}
+	items := []structures.Emote{}
 
-	bans := q.Bans(ctx, BanQueryOptions{
+	bans, err := q.Bans(ctx, BanQueryOptions{
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return qr.setError(err)
+	}
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
@@ -72,7 +75,6 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 		}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("query, failed to spawn aggregation")
 		return qr.setError(err)
 	}
 
@@ -87,26 +89,30 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
-	ownerMap := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
+	if err != nil {
+		return qr.setError(err)
+	}
 
 	for _, e := range v.Emotes { // iterate over emotes
 		// add owner
 		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
 			e.OwnerID = primitive.NilObjectID
 		} else {
-			e.Owner = ownerMap[e.OwnerID]
+			owner := ownerMap[e.OwnerID]
+			e.Owner = &owner
 		}
 		items = append(items, e)
 	}
 	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
-		logrus.WithError(err).Error("query, failed to close the cursor")
+		qr.setError(err)
 	}
 
 	return qr.setItems(items)
 }
 
 type aggregatedEmotesResult struct {
-	Emotes           []*structures.Emote       `bson:"emotes"`
-	EmoteOwners      []*structures.User        `bson:"emote_owners"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
+	Emotes           []structures.Emote                 `bson:"emotes"`
+	EmoteOwners      []structures.User                  `bson:"emote_owners"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }

@@ -1,40 +1,71 @@
 package structures
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Cosmetic struct {
+type CosmeticData interface {
+	bson.Raw | CosmeticDataBadge | CosmeticDataPaint
+}
+
+type Cosmetic[D CosmeticData] struct {
 	ID       primitive.ObjectID   `json:"id" bson:"_id"`
 	Kind     CosmeticKind         `json:"kind" bson:"kind"`
 	Priority int                  `json:"priority" bson:"priority"`
 	Name     string               `json:"name" bson:"name"`
 	UserIDs  []primitive.ObjectID `json:"users" bson:"user_ids"`
-	Users    []*User              `json:"user_objects" bson:"user_objects,skip,omitempty"`
-	Data     bson.Raw             `json:"data" bson:"data"`
+	Users    []User               `json:"user_objects" bson:"user_objects,skip,omitempty"`
+	Data     D                    `json:"data" bson:"data"`
 
 	// User Relationals
 	Selected bool `json:"selected" bson:"selected,skip,omitempty"`
 }
 
-func (c *Cosmetic) decode(i interface{}) interface{} {
-	if err := bson.Unmarshal(c.Data, i); err != nil {
-		logrus.WithError(err).Error("cosmetic, failed to decode data")
+func (c Cosmetic[D]) ToRaw() Cosmetic[bson.Raw] {
+	switch x := utils.ToAny(c.Data).(type) {
+	case bson.Raw:
+		return Cosmetic[bson.Raw]{
+			ID:       c.ID,
+			Kind:     c.Kind,
+			Priority: c.Priority,
+			Name:     c.Name,
+			UserIDs:  c.UserIDs,
+			Users:    c.Users,
+			Data:     x,
+			Selected: c.Selected,
+		}
 	}
-	return i
+
+	raw, _ := bson.Marshal(c.Data)
+	return Cosmetic[bson.Raw]{
+		ID:       c.ID,
+		Kind:     c.Kind,
+		Priority: c.Priority,
+		Name:     c.Name,
+		UserIDs:  c.UserIDs,
+		Users:    c.Users,
+		Data:     raw,
+		Selected: c.Selected,
+	}
 }
 
-func (c *Cosmetic) ReadBadge() *CosmeticDataBadge {
-	b := c.decode(&CosmeticDataBadge{}).(*CosmeticDataBadge)
-	b.ID = c.ID
-	return b
-}
-func (c *Cosmetic) ReadPaint() *CosmeticDataPaint {
-	b := c.decode(&CosmeticDataPaint{}).(*CosmeticDataPaint)
-	b.ID = c.ID
-	return b
+func ConvertCosmetic[D CosmeticData](c Cosmetic[bson.Raw]) (Cosmetic[D], error) {
+	var d D
+	err := bson.Unmarshal(c.Data, &d)
+	c2 := Cosmetic[D]{
+		ID:       c.ID,
+		Kind:     c.Kind,
+		Priority: c.Priority,
+		Name:     c.Name,
+		UserIDs:  c.UserIDs,
+		Users:    c.Users,
+		Data:     d,
+		Selected: c.Selected,
+	}
+
+	return c2, err
 }
 
 type CosmeticKind string

@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) Roles(ctx context.Context, filter bson.M) ([]*structures.Role, error) {
+func (q *Query) Roles(ctx context.Context, filter bson.M) ([]structures.Role, error) {
 	mx := q.lock("ManyRoles")
 	defer mx.Unlock()
 
@@ -26,7 +26,7 @@ func (q *Query) Roles(ctx context.Context, filter bson.M) ([]*structures.Role, e
 		hs = hex.EncodeToString(h.Sum((nil)))
 	}
 	k := q.key(fmt.Sprintf("roles:%s", hs))
-	result := []*structures.Role{}
+	result := []structures.Role{}
 
 	// Get cached
 	if ok := q.getFromMemCache(ctx, k, &result); ok {

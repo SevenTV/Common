@@ -10,13 +10,13 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt CreateBanOptions) error {
-	if bb == nil || bb.Ban == nil {
+	if bb == nil {
 		return structures.ErrIncompleteMutation
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -61,12 +61,12 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 	_ = m.mongo.Collection(mongo.CollectionNameBans).FindOne(ctx, bson.M{"_id": bb.Ban.ID}).Decode(bb.Ban)
 
 	// Send a message to the victim
-	mb := structures.NewMessageBuilder(nil).
+	mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataInbox]{}).
 		SetKind(structures.MessageKindInbox).
 		SetAuthorID(actorID).
 		SetTimestamp(time.Now()).
 		SetAnonymous(opt.AnonymousActor).
-		AsInbox(structures.MessageDataInbox{
+		SetData(structures.MessageDataInbox{
 			Subject:   "inbox.generic.client_banned.subject",
 			Content:   "inbox.generic.client_banned.content",
 			Important: true,
@@ -90,11 +90,12 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 		Recipients:           []primitive.ObjectID{victim.ID},
 		ConsiderBlockedUsers: false,
 	}); err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"actor_id":  actor.ID.Hex(),
-			"victim_id": victim.ID.Hex(),
-			"ban_id":    bb.Ban.ID.Hex(),
-		}).Error("failed to send inbox message to victim about created ban")
+		zap.S().Errorw("failed to send inbox message to victim about created ban",
+			"error", err,
+			"actor_id", actor.ID.Hex(),
+			"victim_id", victim.ID.Hex(),
+			"ban_id", bb.Ban.ID.Hex(),
+		)
 	}
 
 	bb.MarkAsTainted()
@@ -108,7 +109,7 @@ type CreateBanOptions struct {
 }
 
 func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt EditBanOptions) error {
-	if bb == nil || bb.Ban == nil || bb.Ban.ID.IsZero() {
+	if bb == nil || bb.Ban.ID.IsZero() {
 		return structures.ErrIncompleteMutation
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()

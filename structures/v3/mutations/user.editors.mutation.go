@@ -10,7 +10,7 @@ import (
 )
 
 func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuilder, opt UserEditorsOptions) error {
-	if ub == nil || ub.User == nil {
+	if ub == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if ub.IsTainted() {
 		return errors.ErrMutateTaintedObject()

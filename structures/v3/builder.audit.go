@@ -8,16 +8,11 @@ import (
 
 type AuditLogBuilder struct {
 	Update   UpdateMap
-	AuditLog *AuditLog
+	AuditLog AuditLog
 }
 
 // NewAuditLogBuilder creates a new Builder utility for an Audit Log
-func NewAuditLogBuilder(log *AuditLog) *AuditLogBuilder {
-	init := AuditLog{}
-	if log == nil {
-		log = &init
-	}
-
+func NewAuditLogBuilder(log AuditLog) *AuditLogBuilder {
 	return &AuditLogBuilder{
 		Update:   UpdateMap{},
 		AuditLog: log,
@@ -57,16 +52,6 @@ func (alb *AuditLogBuilder) AddChanges(changes ...*AuditLogChange) *AuditLogBuil
 	alb.AuditLog.Changes = append(alb.AuditLog.Changes, changes...)
 	alb.Update.Push("changes", changes)
 	return alb
-}
-
-func (alb *AuditLogBuilder) MakeChange(key string, format AuditLogChangeFormat) *AuditLogChange {
-	c := &AuditLogChange{
-		Format: format,
-		Key:    key,
-	}
-	alb.AuditLog.Changes = append(alb.AuditLog.Changes, c)
-	alb.Update.Push("changes", c)
-	return c
 }
 
 // SetExtra defines arbitrary extraneous data that may be helpful in some cases

@@ -6,14 +6,13 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // SetRole: add or remove a role for the user
 func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt SetUserRoleOptions) error {
-	if ub == nil || ub.User == nil {
+	if ub == nil {
 		return structures.ErrIncompleteMutation
 	} else if ub.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -49,8 +48,7 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 		ub.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(target); err != nil {
-		logrus.WithError(err).Error("mongo")
-		return structures.ErrInternalError
+		return err
 	}
 
 	ub.MarkAsTainted()

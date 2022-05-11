@@ -4,11 +4,15 @@ go 1.18
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/sirupsen/logrus v1.8.1
 	go.mongodb.org/mongo-driver v1.9.0
+	go.uber.org/zap v1.21.0
 )
 
-require github.com/hashicorp/errwrap v1.1.0 // indirect
+require (
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -31,5 +35,4 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

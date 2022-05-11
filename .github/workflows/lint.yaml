@@ -35,12 +35,22 @@ jobs:
           echo "::set-output name=go-build::$(go env GOCACHE)"
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
 
+      # Cache go build cache, used to speedup go test
+      - name: Go Build Cache
+        uses: actions/cache@v3.0.2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
       # Cache go mod cache, used to speedup builds
       - name: Go Mod Cache
         uses: actions/cache@v3.0.2
         with:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: install deps
+        run: make deps
 
       - uses: actionsx/prettier@v2
         with:
@@ -54,3 +64,6 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.1.0
+
+      - name: lint
+        run: make lint

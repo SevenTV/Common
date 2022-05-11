@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/SevenTV/Common/mongo"
@@ -14,15 +13,15 @@ import (
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
-func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]*structures.User, int, error) {
+func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]structures.User, int, error) {
 	mx := q.lock("SearchUsers")
 	defer mx.Unlock()
-	items := []*structures.User{}
+	items := []structures.User{}
 
 	paginate := mongo.Pipeline{}
 	search := len(opts) > 0 && opts[0].Page != 0
@@ -55,9 +54,13 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 	h.Write(b)
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("user-search:%s", hex.EncodeToString(h.Sum(nil))))
 
-	bans := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
 	})
+	if err != nil {
+		return nil, 0, err
+	}
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
 		mongo.Pipeline{
 			{{
@@ -112,53 +115,45 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 		},
 	))
 	if err != nil {
-		logrus.WithError(err).Error("query, failed to execute find")
 		return items, 0, err
 	}
 
 	// Count the documents
 	totalCount, countErr := q.redis.RawClient().Get(ctx, queryKey.String()).Int()
-	if search {
-		wg := sync.WaitGroup{}
-		wg.Add(1)
-		if countErr == redis.Nil {
-			go func() {
-				defer wg.Done()
-				cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
-					mongo.Pipeline{
-						{{Key: "$match", Value: filter}},
-					},
-					mongo.Pipeline{
-						{{Key: "$count", Value: "count"}},
-						{{Key: "$project", Value: bson.M{"count": "$count"}}},
-					},
-				))
-				result := make(map[string]int, 1)
-				if err == nil {
-					if ok := cur.Next(ctx); ok {
-						if err = cur.Decode(&result); err != nil {
-							logrus.WithError(err).Error("mongo, couldn't count users")
-						}
-					}
-					_ = cur.Close(ctx)
+	if search && countErr == redis.Nil {
+		cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
+			mongo.Pipeline{
+				{{Key: "$match", Value: filter}},
+			},
+			mongo.Pipeline{
+				{{Key: "$count", Value: "count"}},
+				{{Key: "$project", Value: bson.M{"count": "$count"}}},
+			},
+		))
+		result := make(map[string]int, 1)
+		if err == nil {
+			if ok := cur.Next(ctx); ok {
+				if err = cur.Decode(&result); err != nil {
+					zap.S().Errorw("mongo, couldn't count users",
+						"error", err,
+					)
 				}
-				totalCount = result["count"]
-				if err = q.redis.SetEX(ctx, queryKey, totalCount, time.Minute*1); err != nil {
-					logrus.WithError(err).WithFields(logrus.Fields{
-						"key":   queryKey,
-						"count": totalCount,
-					}).Error("redis, failed to save total list count of \"Search Users\" query")
-				}
-			}()
-		} else {
-			wg.Done()
+			}
+			_ = cur.Close(ctx)
 		}
-		wg.Wait()
+		totalCount = result["count"]
+		if err = q.redis.SetEX(ctx, queryKey, totalCount, time.Minute*1); err != nil {
+			zap.S().Errorw("redis, failed to save total list count of \"Search Users\" query",
+				"error", err,
+				"key", queryKey,
+				"count", totalCount,
+			)
+		}
 	}
 
 	// Get roles
 	roles, _ := q.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]*structures.Role)
+	roleMap := make(map[primitive.ObjectID]structures.Role)
 	for _, role := range roles {
 		roleMap[role.ID] = role
 	}
@@ -172,14 +167,14 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 		return items, 0, err
 	}
 
-	userMap := make(map[primitive.ObjectID]*structures.User)
+	userMap := make(map[primitive.ObjectID]structures.User)
 	entRoleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
 	for _, ent := range v.RoleEntitlements {
-		ref := ent.GetData().ReadRole()
-		if ref == nil {
-			continue
+		ent, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
+		if err != nil {
+			return nil, 0, err
 		}
-		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ref.ObjectReference)
+		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ent.Data.ObjectReference)
 	}
 	for _, user := range v.Users {
 		user.RoleIDs = append(user.RoleIDs, entRoleMap[user.ID]...)
@@ -198,10 +193,7 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 		items = append(items, u)
 	}
 
-	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
-		logrus.WithError(err).Error("query, failed to close the cursor")
-	}
-	return items, totalCount, nil
+	return items, totalCount, multierror.Append(err, cur.Close(ctx)).ErrorOrNil()
 }
 
 type UserSearchOptions struct {
@@ -211,12 +203,12 @@ type UserSearchOptions struct {
 	Sort  bson.M
 }
 type aggregatedUsersResult struct {
-	Users            []*structures.User        `bson:"users"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
-	TotalCount       int                       `bson:"total_count"`
+	Users            []structures.User                  `bson:"users"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
+	TotalCount       int                                `bson:"total_count"`
 }
 
-func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]*structures.UserEditor, error) {
+func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]structures.UserEditor, error) {
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key: "$match",
@@ -244,11 +236,10 @@ func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]*str
 		{{Key: "$replaceRoot", Value: bson.M{"newRoot": "$editor"}}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("query, failed to spawn aggregation")
 		return nil, err
 	}
 
-	v := []*structures.UserEditor{}
+	v := []structures.UserEditor{}
 	if err = cur.All(ctx, &v); err != nil {
 		return nil, err
 	}

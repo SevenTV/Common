@@ -14,7 +14,8 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
 	"github.com/patrickmn/go-cache"
-	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap"
 )
 
 type Query struct {
@@ -63,7 +64,10 @@ func (q *Query) getFromMemCache(ctx context.Context, key redis.Key, i interface{
 	if len(s) > 0 {
 		if err := multierror.Append(err, json.Unmarshal(utils.S2B(s), i)).ErrorOrNil(); err != nil {
 			if err != redis.Nil {
-				logrus.WithError(err).WithField("key", key).Error("redis, failed to retrieve a cache query item")
+				zap.S().Errorw("redis, failed to retrieve a cache query item",
+					"error", err,
+					"key", key,
+				)
 			}
 			return false
 		} else {
@@ -90,15 +94,15 @@ func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{},
 }
 
 type QueryResult[T QueriableType] struct {
-	items []*T
+	items []T
 	err   error
 }
 
 type QueriableType interface {
-	structures.User | structures.Emote | structures.EmoteSet | structures.Message | structures.Role
+	structures.User | structures.Emote | structures.EmoteSet | structures.Message[bson.Raw] | structures.Role
 }
 
-func (qr *QueryResult[T]) setItems(items []*T) *QueryResult[T] {
+func (qr *QueryResult[T]) setItems(items []T) *QueryResult[T] {
 	qr.items = items
 	return qr
 }
@@ -112,37 +116,46 @@ func (qr *QueryResult[T]) Error() error {
 	return qr.err
 }
 
-func (qr *QueryResult[T]) First() (*T, error) {
+func (qr *QueryResult[T]) First() (T, error) {
+	var dT T
+
 	if qr.err != nil {
-		return nil, qr.err
+		return dT, qr.err
 	}
 	if len(qr.items) == 0 {
-		return nil, errors.ErrNoItems()
+		return dT, errors.ErrNoItems()
 	}
+
 	return qr.items[0], nil
 }
 
-func (qr *QueryResult[T]) Index(pos int) (*T, error) {
+func (qr *QueryResult[T]) Index(pos int) (T, error) {
+	var dT T
+
 	if qr.err != nil {
-		return nil, qr.err
+		return dT, qr.err
 	}
 	if pos > len(qr.items)-1 {
-		return nil, errors.ErrNoItems()
+		return dT, errors.ErrNoItems()
 	}
+
 	return qr.items[pos], nil
 }
 
-func (qr *QueryResult[T]) Last() (*T, error) {
+func (qr *QueryResult[T]) Last() (T, error) {
+	var dT T
+
 	if qr.err != nil {
-		return nil, qr.err
+		return dT, qr.err
 	}
 	if len(qr.items) == 0 {
-		return nil, errors.ErrNoItems()
+		return dT, errors.ErrNoItems()
 	}
+
 	return qr.items[len(qr.items)-1], nil
 }
 
-func (qr *QueryResult[T]) Items() ([]*T, error) {
+func (qr *QueryResult[T]) Items() ([]T, error) {
 	return qr.items, qr.err
 }
 

@@ -14,8 +14,8 @@ type AuditLog struct {
 	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
 	Changes    []*AuditLogChange  `json:"changes" bson:"changes"`
 
-	Extra  map[string]interface{} `json:"extra,omitempty" bson:"extra,omitempty"`
-	Reason string                 `json:"reason,omitempty" bson:"reason,omitempty"`
+	Extra  map[string]any `json:"extra,omitempty" bson:"extra,omitempty"`
+	Reason string         `json:"reason,omitempty" bson:"reason,omitempty"`
 }
 
 type AuditLogKind int8
@@ -86,9 +86,7 @@ func (alc *AuditLogChange) WriteArrayRemoved(values ...any) *AuditLogChange {
 func (alc *AuditLogChange) WriteArrayUpdated(values ...AuditLogChangeSingleValue) *AuditLogChange {
 	ac := &AuditLogChangeArrayChange{}
 
-	for _, v := range values {
-		ac.Updated = append(ac.Updated, &v)
-	}
+	ac.Updated = append(ac.Updated, values...)
 	alc.Value, _ = bson.Marshal(ac)
 	return alc
 }
@@ -107,7 +105,7 @@ type AuditLogChangeSingleValue struct {
 }
 
 type AuditLogChangeArrayChange struct {
-	Added   []interface{}                `json:"added,omitempty" bson:"added,omitempty"`
-	Removed []interface{}                `json:"removed,omitempty" bson:"removed,omitempty"`
-	Updated []*AuditLogChangeSingleValue `json:"updated,omitempty" bson:"updated,omitempty"`
+	Added   []any                       `json:"added,omitempty" bson:"added,omitempty"`
+	Removed []any                       `json:"removed,omitempty" bson:"removed,omitempty"`
+	Updated []AuditLogChangeSingleValue `json:"updated,omitempty" bson:"updated,omitempty"`
 }

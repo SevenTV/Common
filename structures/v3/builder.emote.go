@@ -10,7 +10,7 @@ import (
 // EmoteBuilder Wraps an Emote and offers methods to fetch and mutate emote data
 type EmoteBuilder struct {
 	Update UpdateMap
-	Emote  *Emote
+	Emote  Emote
 
 	initial         Emote
 	initialVersions []EmoteVersion
@@ -18,27 +18,21 @@ type EmoteBuilder struct {
 }
 
 // NewEmoteBuilder: create a new emote builder
-func NewEmoteBuilder(emote *Emote) *EmoteBuilder {
-	init := Emote{}
-	if emote == nil {
-		emote = &init
-	}
+func NewEmoteBuilder(emote Emote) *EmoteBuilder {
 	vers := make([]EmoteVersion, len(emote.Versions))
-	for i, v := range emote.Versions {
-		vers[i] = *v
-	}
+	copy(vers, emote.Versions)
 
 	return &EmoteBuilder{
 		Update:          UpdateMap{},
-		initial:         *emote,
+		initial:         emote,
 		initialVersions: vers,
 		Emote:           emote,
 	}
 }
 
 // Initial returns a pointer to the value first passed to this Builder
-func (eb *EmoteBuilder) Initial() *Emote {
-	return &eb.initial
+func (eb *EmoteBuilder) Initial() Emote {
+	return eb.initial
 }
 
 // IsTainted returns whether or not this Builder has been mutated before
@@ -102,7 +96,7 @@ func (eb *EmoteBuilder) SetTags(tags []string, validate bool) *EmoteBuilder {
 	return eb
 }
 
-func (eb *EmoteBuilder) AddVersion(v *EmoteVersion) *EmoteBuilder {
+func (eb *EmoteBuilder) AddVersion(v EmoteVersion) *EmoteBuilder {
 	for _, vv := range eb.Emote.Versions {
 		if vv.ID == v.ID {
 			return eb
@@ -114,7 +108,7 @@ func (eb *EmoteBuilder) AddVersion(v *EmoteVersion) *EmoteBuilder {
 	return eb
 }
 
-func (eb *EmoteBuilder) UpdateVersion(id ObjectID, v *EmoteVersion) *EmoteBuilder {
+func (eb *EmoteBuilder) UpdateVersion(id ObjectID, v EmoteVersion) *EmoteBuilder {
 	ind := -1
 	for i, vv := range eb.Emote.Versions {
 		if vv.ID == v.ID {
@@ -131,7 +125,7 @@ func (eb *EmoteBuilder) UpdateVersion(id ObjectID, v *EmoteVersion) *EmoteBuilde
 func (eb *EmoteBuilder) RemoveVersion(id ObjectID) *EmoteBuilder {
 	ind := -1
 	for i := range eb.Emote.Versions {
-		if eb.Emote.Versions[i] == nil {
+		if eb.Emote.Versions[i].ID.IsZero() {
 			continue
 		}
 		if eb.Emote.Versions[i].ID != id {
@@ -145,7 +139,6 @@ func (eb *EmoteBuilder) RemoveVersion(id ObjectID) *EmoteBuilder {
 	}
 
 	copy(eb.Emote.Versions[ind:], eb.Emote.Versions[ind+1:])
-	eb.Emote.Versions[len(eb.Emote.Versions)-1] = nil
 	eb.Emote.Versions = eb.Emote.Versions[:len(eb.Emote.Versions)-1]
 	eb.Update.Pull("versions", bson.M{"id": id})
 	return eb

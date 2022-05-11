@@ -7,7 +7,6 @@ import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,7 +14,7 @@ import (
 
 // Create: create the new emote set
 func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -33,32 +32,24 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	esb.EmoteSet.ID = primitive.NewObjectID()
 	result, err := m.mongo.Collection(mongo.CollectionNameEmoteSets).InsertOne(ctx, esb.EmoteSet)
 	if err != nil {
-		logrus.WithError(err).Error("mongo")
 		return err
 	}
 
 	// Get the newly created emote set
-	if err = m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(esb.EmoteSet); err != nil {
+	if err = m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(&esb.EmoteSet); err != nil {
 		return err
 	}
 	if err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"actor_id":     opt.Actor.ID,
-			"emote_set_id": result.InsertedID,
-		}).Error("mongo, was unable to return the created emote set")
+		return err
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"actor_id":     opt.Actor.ID,
-		"emote_set_id": esb.EmoteSet.ID,
-	}).Info("Emote Set Created")
 	esb.MarkAsTainted()
 	return nil
 }
 
 // Edit: change the emote set
 func (m *Mutate) EditEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
-	if esb == nil || esb.EmoteSet == nil {
+	if esb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if esb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
@@ -120,15 +111,10 @@ func (m *Mutate) EditEmoteSet(ctx context.Context, esb *structures.EmoteSetBuild
 		esb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(esb.EmoteSet); err != nil {
-		logrus.WithError(err).WithField("emote_set_id", set.ID).Error("mongo, failed to update emote set")
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	esb.MarkAsTainted()
-	logrus.WithFields(logrus.Fields{
-		"actor_id":     opt.Actor.ID,
-		"emote_set_id": esb.EmoteSet.ID,
-	}).Info("Emote Set Updated")
 	return nil
 }
 

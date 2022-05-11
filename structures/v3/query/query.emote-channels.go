@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/SevenTV/Common/errors"
@@ -14,13 +13,12 @@ import (
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, page int, limit int) ([]*structures.User, int64, error) {
+func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, page int, limit int) ([]structures.User, int64, error) {
 	// Emote Sets that have this emote
 	setIDs := []primitive.ObjectID{}
 
@@ -29,7 +27,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	asv, err := q.redis.Get(ctx, rKey)
 	if err == nil && asv != "" {
 		if err = json.Unmarshal(utils.S2B(asv), &setIDs); err != nil {
-			logrus.WithError(err).Error("couldn't decode emote's active set ids")
+			return nil, 0, err
 		}
 	} else {
 		cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Find(ctx, bson.M{"emotes.id": emoteID}, options.Find().SetProjection(bson.M{"owner_id": 1}))
@@ -37,9 +35,9 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			return nil, 0, err
 		}
 		for i := 0; cur.Next(ctx); i++ {
-			v := &structures.EmoteSet{}
-			if err = cur.Decode(v); err != nil {
-				logrus.WithError(err).Error("mongo, couldn't decode into EmoteSet")
+			v := structures.EmoteSet{}
+			if err = cur.Decode(&v); err != nil {
+				return nil, 0, err
 			}
 			setIDs = append(setIDs, v.ID)
 		}
@@ -47,27 +45,31 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		// Set in redis
 		b, err := json.Marshal(setIDs)
 		if err = multierror.Append(err, q.redis.SetEX(ctx, rKey, utils.B2S(b), time.Hour*6)).ErrorOrNil(); err != nil {
-			logrus.WithError(err).Error("failed to cache set ids in redis")
+			return nil, 0, err
 		}
+	}
+
+	bans, err := q.Bans(ctx, BanQueryOptions{
+		Filter: bson.M{"effects": bson.M{"$bitsAllSet": structures.BanEffectMemoryHole}},
+	})
+	if err != nil {
+		return nil, 0, err
 	}
 
 	// Fetch users with this set active
 	match := bson.M{
 		"_id": bson.M{"$not": bson.M{ // Filter out users banned with memory hole effect
-			"$in": q.Bans(ctx, BanQueryOptions{
-				Filter: bson.M{"effects": bson.M{"$bitsAllSet": structures.BanEffectMemoryHole}},
-			}).MemoryHole.KeySlice(),
+			"$in": bans.MemoryHole.KeySlice(),
 		}},
 		"connections.emote_set_id": bson.M{
 			"$in": setIDs,
 		},
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	doneCh := make(chan struct{})
 	count := int64(0)
 	go func() { // Get the total channel count
-		defer wg.Done()
+		defer close(doneCh)
 		k := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:channel_count", emoteID.Hex()))
 
 		count, err = q.redis.RawClient().Get(ctx, k.String()).Int64()
@@ -128,7 +130,6 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		}},
 	})
 	if err != nil {
-		logrus.WithError(err).Error("mongo, couldn't spawn aggregation")
 		return nil, count, err
 	}
 	v := &aggregatedEmoteChannelsResult{}
@@ -137,22 +138,26 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		if err == io.EOF {
 			return nil, count, errors.ErrNoItems()
 		}
-		logrus.WithError(err).Error("mongo, couldn't decode result for emote channels")
 		return nil, count, err
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.MapUsers(v.Users, v.RoleEntitlements...)
-	users := make([]*structures.User, len(userMap))
+	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	users := make([]structures.User, len(userMap))
 	for i, u := range v.Users {
 		users[i] = userMap[u.ID]
 	}
-	wg.Wait()
+
+	<-doneCh
 
 	return users, count, nil
 }
 
 type aggregatedEmoteChannelsResult struct {
-	Users            []*structures.User        `bson:"users"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
+	Users            []structures.User                  `bson:"users"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }

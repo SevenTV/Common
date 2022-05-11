@@ -8,14 +8,13 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/structures/v3/aggregations"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
+func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	actor := opt.Actor
 	user := opt.User
 	if user == nil {
@@ -47,7 +46,6 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 		"kind":         structures.MessageKindInbox,
 	}, options.Find().SetProjection(bson.M{"message_id": 1}))
 	if err != nil {
-		logrus.WithError(err).WithField("user_id", user.ID.Hex()).Error("failed to find read states of inbox messages")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 	messageIDs := []primitive.ObjectID{}
@@ -72,8 +70,8 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 	})
 }
 
-func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
+func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	actor := opt.Actor
 	targets := opt.Targets
 
@@ -116,9 +114,9 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 	})
 }
 
-func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message] {
-	qr := &QueryResult[structures.Message]{}
-	items := []*structures.Message{}
+func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
+	qr := &QueryResult[structures.Message[bson.Raw]]{}
+	items := []structures.Message[bson.Raw]{}
 
 	// Set limit?
 	limit := mongo.Pipeline{}
@@ -228,7 +226,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		},
 	))
 	if err != nil {
-		logrus.WithError(err).Error("mongo, failed to spawn aggregation")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
@@ -238,15 +235,18 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		if err == io.EOF {
 			return qr.setError(errors.ErrNoItems().SetDetail("No messages"))
 		}
-		logrus.WithError(err).Error("mongo, failed to decode aggregated result of mod requests query")
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap := qb.MapUsers(v.Authors, v.RoleEntitlements...)
+	userMap, err := qb.MapUsers(v.Authors, v.RoleEntitlements...)
+	if err != nil {
+		return qr.setError(err)
+	}
 
 	for _, msg := range v.Messages {
-		msg.Author = userMap[msg.AuthorID]
+		author := userMap[msg.AuthorID]
+		msg.Author = &author
 		items = append(items, msg)
 	}
 
@@ -277,7 +277,7 @@ type MessageQueryOptions struct {
 }
 
 type aggregatedMessagesResult struct {
-	Messages         []*structures.Message     `bson:"messages"`
-	Authors          []*structures.User        `bson:"authors"`
-	RoleEntitlements []*structures.Entitlement `bson:"role_entitlements"`
+	Messages         []structures.Message[bson.Raw]     `bson:"messages"`
+	Authors          []structures.User                  `bson:"authors"`
+	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }
