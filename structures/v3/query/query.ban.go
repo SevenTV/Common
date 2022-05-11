@@ -15,8 +15,9 @@ import (
 )
 
 func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) (*BanQueryResult, error) {
-	mx := q.lock("bans")
-	defer mx.Unlock()
+	mtx := q.mtx("bans")
+	mtx.Lock()
+	defer mtx.Unlock()
 
 	filter := bson.M{}
 	for k, v := range opt.Filter {

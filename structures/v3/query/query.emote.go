@@ -13,7 +13,7 @@ import (
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
-	qr := &QueryResult[structures.Emote]{}
+	qr := QueryResult[structures.Emote]{}
 	items := []structures.Emote{}
 
 	bans, err := q.Bans(ctx, BanQueryOptions{

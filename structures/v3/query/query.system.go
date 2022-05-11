@@ -9,8 +9,10 @@ import (
 )
 
 func (q *Query) GlobalEmoteSet(ctx context.Context) (structures.EmoteSet, error) {
-	mx := q.lock("GlobalEmoteSet")
-	defer mx.Unlock()
+	mtx := q.mtx("GlobalEmoteSet")
+	mtx.Lock()
+	defer mtx.Unlock()
+
 	k := q.key("global_emote_set")
 
 	set := structures.EmoteSet{}

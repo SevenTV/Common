@@ -11,6 +11,7 @@ import (
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
 	"github.com/SevenTV/Common/structures/v3"
+	"github.com/SevenTV/Common/sync_map"
 	"github.com/SevenTV/Common/utils"
 	"github.com/hashicorp/go-multierror"
 	"github.com/patrickmn/go-cache"
@@ -22,7 +23,7 @@ type Query struct {
 	mongo mongo.Instance
 	redis redis.Instance
 	c     *cache.Cache
-	mx    map[string]*sync.Mutex
+	mx    *sync_map.Map[string, *sync.Mutex]
 }
 
 func New(mongoInst mongo.Instance, redisInst redis.Instance) *Query {
@@ -30,18 +31,13 @@ func New(mongoInst mongo.Instance, redisInst redis.Instance) *Query {
 		mongo: mongoInst,
 		redis: redisInst,
 		c:     cache.New(time.Minute*1, time.Minute*5),
-		mx:    map[string]*sync.Mutex{},
+		mx:    &sync_map.Map[string, *sync.Mutex]{},
 	}
 }
 
-func (q *Query) lock(tag string) *sync.Mutex {
-	l, ok := q.mx[tag]
-	if !ok {
-		l = &sync.Mutex{}
-		q.mx[tag] = l
-	}
-	l.Lock()
-	return l
+func (q *Query) mtx(tag string) *sync.Mutex {
+	val, _ := q.mx.LoadOrStore(tag, &sync.Mutex{})
+	return val
 }
 
 func (q *Query) key(tag string) redis.Key {
