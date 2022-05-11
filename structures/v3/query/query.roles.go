@@ -15,8 +15,9 @@ import (
 )
 
 func (q *Query) Roles(ctx context.Context, filter bson.M) ([]structures.Role, error) {
-	mx := q.lock("ManyRoles")
-	defer mx.Unlock()
+	mtx := q.mtx("ManyRoles")
+	mtx.Lock()
+	defer mtx.Unlock()
 
 	hs := "all"
 	if len(filter) > 0 {

@@ -19,8 +19,10 @@ import (
 )
 
 func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]structures.User, int, error) {
-	mx := q.lock("SearchUsers")
-	defer mx.Unlock()
+	mtx := q.mtx("SearchUsers")
+	mtx.Lock()
+	defer mtx.Unlock()
+
 	items := []structures.User{}
 
 	paginate := mongo.Pipeline{}
