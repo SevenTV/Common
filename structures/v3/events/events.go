@@ -1,6 +1,9 @@
 package events
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Message[D any] struct {
 	Op        Opcode `json:"op"`
@@ -19,6 +22,19 @@ func NewMessage[D any](op Opcode, data D) (Message[D], error) {
 	return msg, nil
 }
 
+func ConvertMessage[D any](c Message[json.RawMessage]) (Message[D], error) {
+	var d D
+	err := json.Unmarshal(c.Data, &d)
+	c2 := Message[D]{
+		Op:        c.Op,
+		Timestamp: c.Timestamp,
+		Data:      d,
+		Sequence:  c.Sequence,
+	}
+
+	return c2, err
+}
+
 type Opcode uint8
 
 const (
@@ -28,6 +44,7 @@ const (
 	OpcodeHeartbeat     Opcode = 2 // R - Keep the connection alive
 	OpcodeReconnect     Opcode = 4 // R - Server demands that the client reconnects
 	OpcodeInboundSignal Opcode = 5 // R - A spectator signal is received
+	OpcodeError         Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
 
 	// Commands (33-64)
 	OpcodeIdentify  Opcode = 33 // S - Authenticate the session
@@ -39,15 +56,18 @@ const (
 type CloseCode uint16
 
 const (
-	CloseCodeServerError       CloseCode = 4000 // an error occured on the server's end
-	CloseCodeUnknownOperation  CloseCode = 4001 // the client sent an unexpected opcode
-	CloseCodeInvalidPayload    CloseCode = 4002 // the client sent a payload that couldn't be decoded
-	CloseCodeAuthFailure       CloseCode = 4003 // the client unsucessfully tried to identify
-	CloseCodeAlreadyIdentified CloseCode = 4004 // the client wanted to identify again
-	CloseCodeRateLimit         CloseCode = 4005 // the client is being rate-limited
-	CloseCodeRestart           CloseCode = 4006 // the server is restarting and the client should reconnect
-	CloseCodeMaintenance       CloseCode = 4007 // the server is in maintenance mode and not accepting connections
-	CloseCodeTimeout           CloseCode = 4008 // the client was idle for too long
+	CloseCodeServerError           CloseCode = 4000 // an error occured on the server's end
+	CloseCodeUnknownOperation      CloseCode = 4001 // the client sent an unexpected opcode
+	CloseCodeInvalidPayload        CloseCode = 4002 // the client sent a payload that couldn't be decoded
+	CloseCodeAuthFailure           CloseCode = 4003 // the client unsucessfully tried to identify
+	CloseCodeAlreadyIdentified     CloseCode = 4004 // the client wanted to identify again
+	CloseCodeRateLimit             CloseCode = 4005 // the client is being rate-limited
+	CloseCodeRestart               CloseCode = 4006 // the server is restarting and the client should reconnect
+	CloseCodeMaintenance           CloseCode = 4007 // the server is in maintenance mode and not accepting connections
+	CloseCodeTimeout               CloseCode = 4008 // the client was idle for too long
+	CloseCodeAlreadySubscribed     CloseCode = 4009 // the client tried to subscribe to an event twice
+	CloseCodeNotSubscribed         CloseCode = 4010 // the client tried to unsubscribe from an event they weren't subscribing to
+	CloseCodeInsufficientPrivilege CloseCode = 4011 // the client did something that they did not have permission for
 )
 
 func (c CloseCode) String() string {
@@ -70,6 +90,12 @@ func (c CloseCode) String() string {
 		return "Maintenance Mode"
 	case CloseCodeTimeout:
 		return "Timeout"
+	case CloseCodeAlreadySubscribed:
+		return "Already Subscribed"
+	case CloseCodeNotSubscribed:
+		return "Not Subscribed"
+	case CloseCodeInsufficientPrivilege:
+		return "Insufficient Privilege"
 	default:
 		return "Undocumented Closure"
 	}

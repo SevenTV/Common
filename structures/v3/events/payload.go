@@ -14,8 +14,13 @@ type HeartbeatPayload struct {
 	Count int64 `json:"count"`
 }
 
+type SubscribePayload struct {
+	Type    EventType `json:"type"`
+	Targets []string  `json:"targets"`
+}
+
 type DispatchPayload[B EmptyObject | structures.Object] struct {
-	Type MessageType  `json:"type"`
+	Type EventType    `json:"type"`
 	Body ChangeMap[B] `json:"body"`
 }
 
@@ -29,4 +34,10 @@ type SignalUser struct {
 	ChannelID   string             `json:"channel_id"`
 	Username    string             `json:"username"`
 	DisplayName string             `json:"display_name"`
+}
+
+type ErrorPayload struct {
+	Message       string         `json:"message"`
+	MessageLocale string         `json:"message_locale,omitempty"`
+	Fields        map[string]any `json:"fields"`
 }

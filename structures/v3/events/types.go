@@ -5,37 +5,37 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type MessageType string
+type EventType string
 
 const (
+	// System
+
+	EventTypeAnySystem          EventType = "system.*"
+	EventTypeSystemAnnouncement EventType = "system.announcement"
+
 	// Emote
 
-	MessageTypeCreateEmote MessageType = "CREATE_EMOTE"
-	MessageTypeUpdateEmote MessageType = "UPDATE_EMOTE"
-	MessageTypeDeleteEmote MessageType = "DELETE_EMOTE"
+	EventTypeAnyEmote    EventType = "emote.*"
+	EventTypeCreateEmote EventType = "emote.create"
+	EventTypeUpdateEmote EventType = "emote.update"
+	EventTypeDeleteEmote EventType = "emote.delete"
 
 	// Emote Set
 
-	MessageTypeCreateEmoteSet MessageType = "CREATE_EMOTE_SET"
-	MessageTypeUpdateEmoteSet MessageType = "UPDATE_EMOTE_SET"
-	MessageTypeDeleteEmoteSet MessageType = "DELETE_EMOTE_SET"
+	EventTypeAnyEmoteSet    EventType = "emote_set.*"
+	EventTypeCreateEmoteSet EventType = "emote_set.create"
+	EventTypeUpdateEmoteSet EventType = "emote_set.update"
+	EventTypeDeleteEmoteSet EventType = "emote_set.delete"
 
 	// User
 
-	MessageTypeCreateUser           MessageType = "CREATE_USER"
-	MessageTypeUpdateUser           MessageType = "UPDATE_USER"
-	MessageTypeDeleteUser           MessageType = "DELETE_USER"
-	MessageTypeAddUserConnection    MessageType = "ADD_USER_CONNECTION"
-	MessageTypeUpdateUserConnection MessageType = "UPDATE_USER_CONNECTION"
-	MessageTypeDeleteUserConnection MessageType = "DELETE_USER_CONNECTION"
-)
-
-type Topic uint32
-
-const (
-	TopicEmote    Topic = 1 << 0
-	TopicEmoteSet Topic = 1 << 1
-	TopîcUser     Topic = 1 << 2
+	EventTypeAnyUser              EventType = "user.*"
+	EventTypeCreateUser           EventType = "user.create"
+	EventTypeUpdateUser           EventType = "user.update"
+	EventTypeDeleteUser           EventType = "user.delete"
+	EventTypeAddUserConnection    EventType = "user.add_connection"
+	EventTypeUpdateUserConnection EventType = "user.update_connection"
+	EventTypeDeleteUserConnection EventType = "user.delete_connection"
 )
 
 type EmptyObject = struct{}
