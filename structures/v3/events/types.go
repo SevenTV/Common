@@ -22,13 +22,20 @@ const (
 
 	// User
 
-	MessageTypeUserSignal           MessageType = "USER_SIGNAL"
 	MessageTypeCreateUser           MessageType = "CREATE_USER"
 	MessageTypeUpdateUser           MessageType = "UPDATE_USER"
 	MessageTypeDeleteUser           MessageType = "DELETE_USER"
 	MessageTypeAddUserConnection    MessageType = "ADD_USER_CONNECTION"
 	MessageTypeUpdateUserConnection MessageType = "UPDATE_USER_CONNECTION"
 	MessageTypeDeleteUserConnection MessageType = "DELETE_USER_CONNECTION"
+)
+
+type Topic uint32
+
+const (
+	TopicEmote    Topic = 1 << 0
+	TopicEmoteSet Topic = 1 << 1
+	TopîcUser     Topic = 1 << 2
 )
 
 type EmptyObject = struct{}

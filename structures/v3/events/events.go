@@ -2,14 +2,14 @@ package events
 
 import "time"
 
-type Message[D MessagePayload] struct {
+type Message[D any] struct {
 	Op        Opcode `json:"op"`
 	Timestamp int64  `json:"t"`
 	Data      D      `json:"d"`
-	Sequence  int64  `json:"s,omitempty"`
+	Sequence  uint64 `json:"s,omitempty"`
 }
 
-func NewMessage[D MessagePayload](op Opcode, data D) (Message[D], error) {
+func NewMessage[D any](op Opcode, data D) (Message[D], error) {
 	msg := Message[D]{
 		Op:        op,
 		Timestamp: time.Now().UnixMilli(),
@@ -23,19 +23,20 @@ type Opcode uint8
 
 const (
 	// Default ops (0-32)
-	OpcodeDispatch  Opcode = 0 // R - Server dispatches data to the client
-	OpcodeHello     Opcode = 1 // R - Server greets the client
-	OpcodeHeartbeat Opcode = 2 // S - Keep the connection alive
-	OpcodeIdentify  Opcode = 3 // S - Authenticate the session
-	OpcodeReconnect Opcode = 4 // R - Server demands that the client reconnects
-	OpcodeResume    Opcode = 5 // S - Resume the previous session and receive missed events
-	OpcodeSubscribe Opcode = 8 // S - Subscribe to one or multiple topics
+	OpcodeDispatch      Opcode = 0 // R - Server dispatches data to the client
+	OpcodeHello         Opcode = 1 // R - Server greets the client
+	OpcodeHeartbeat     Opcode = 2 // R - Keep the connection alive
+	OpcodeReconnect     Opcode = 4 // R - Server demands that the client reconnects
+	OpcodeInboundSignal Opcode = 5 // R - A spectator signal is received
 
-	// Commands (33-255)
-	OpcodeSignalPresence Opcode = 33 // S -
+	// Commands (33-64)
+	OpcodeIdentify  Opcode = 33 // S - Authenticate the session
+	OpcodeResume    Opcode = 34 // S - Resume the previous session and receive missed events
+	OpcodeSubscribe Opcode = 35 // S - Subscribe to one or multiple topics
+	OpcodeSignal    Opcode = 36 // S - Emit a spectator signal
 )
 
-type CloseCode int
+type CloseCode uint16
 
 const (
 	CloseCodeServerError       CloseCode = 4000 // an error occured on the server's end
