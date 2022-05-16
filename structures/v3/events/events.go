@@ -3,6 +3,8 @@ package events
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/SevenTV/Common/utils"
 )
 
 type Message[D any] struct {
@@ -20,6 +22,26 @@ func NewMessage[D any](op Opcode, data D) (Message[D], error) {
 	}
 
 	return msg, nil
+}
+
+func (e Message[D]) ToRaw() Message[json.RawMessage] {
+	switch x := utils.ToAny(e.Data).(type) {
+	case json.RawMessage:
+		return Message[json.RawMessage]{
+			Op:        e.Op,
+			Timestamp: e.Timestamp,
+			Data:      x,
+			Sequence:  e.Sequence,
+		}
+	}
+
+	raw, _ := json.Marshal(e.Data)
+	return Message[json.RawMessage]{
+		Op:        e.Op,
+		Timestamp: e.Timestamp,
+		Data:      raw,
+		Sequence:  e.Sequence,
+	}
 }
 
 func ConvertMessage[D any](c Message[json.RawMessage]) (Message[D], error) {
@@ -52,6 +74,34 @@ const (
 	OpcodeSubscribe Opcode = 35 // S - Subscribe to one or multiple topics
 	OpcodeSignal    Opcode = 36 // S - Emit a spectator signal
 )
+
+func (op Opcode) String() string {
+	switch op {
+	case OpcodeDispatch:
+		return "DISPATCH"
+	case OpcodeHello:
+		return "HELLO"
+	case OpcodeHeartbeat:
+		return "HEARTBEAT"
+	case OpcodeReconnect:
+		return "RECONNECT"
+	case OpcodeInboundSignal:
+		return "INBOUND_SIGNAL"
+	case OpcodeError:
+		return "ERROR"
+
+	case OpcodeIdentify:
+		return "IDENTIFY"
+	case OpcodeResume:
+		return "RESUME"
+	case OpcodeSubscribe:
+		return "SUBSCRIBE"
+	case OpcodeSignal:
+		return "SIGNAL"
+	default:
+		return "UNDOCUMENTED_OPERATION"
+	}
+}
 
 type CloseCode uint16
 
