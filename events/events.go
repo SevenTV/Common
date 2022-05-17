@@ -2,6 +2,8 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SevenTV/Common/utils"
@@ -69,10 +71,11 @@ const (
 	OpcodeError         Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
 
 	// Commands (33-64)
-	OpcodeIdentify  Opcode = 33 // S - Authenticate the session
-	OpcodeResume    Opcode = 34 // S - Resume the previous session and receive missed events
-	OpcodeSubscribe Opcode = 35 // S - Subscribe to one or multiple topics
-	OpcodeSignal    Opcode = 36 // S - Emit a spectator signal
+	OpcodeIdentify    Opcode = 33 // S - Authenticate the session
+	OpcodeResume      Opcode = 34 // S - Resume the previous session and receive missed events
+	OpcodeSubscribe   Opcode = 35 // S - Subscribe to an event
+	OpcodeUnsubscribe Opcode = 36 // S - Unsubscribe from an event
+	OpcodeSignal      Opcode = 36 // S - Emit a spectator signal
 )
 
 func (op Opcode) String() string {
@@ -101,6 +104,10 @@ func (op Opcode) String() string {
 	default:
 		return "UNDOCUMENTED_OPERATION"
 	}
+}
+
+func (op Opcode) PublishKey() string {
+	return fmt.Sprintf("events:%s:%s", "op", strings.ToLower(op.String()))
 }
 
 type CloseCode uint16

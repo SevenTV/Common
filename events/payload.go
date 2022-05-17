@@ -7,7 +7,7 @@ import (
 )
 
 type AnyPayload interface {
-	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload | DispatchPayload | SignalPayload | ErrorPayload
+	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload | ErrorPayload
 }
 
 type HelloPayload struct {
@@ -23,6 +23,10 @@ type HeartbeatPayload struct {
 type SubscribePayload struct {
 	Type    EventType `json:"type"`
 	Targets []string  `json:"targets"`
+}
+
+type UnsubscribePayload struct {
+	Type EventType `json:"type"`
 }
 
 type DispatchPayload struct {

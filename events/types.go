@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,6 +40,18 @@ const (
 	EventTypeUpdateUserConnection EventType = "user.update_connection"
 	EventTypeDeleteUserConnection EventType = "user.delete_connection"
 )
+
+func (et EventType) Split() []string {
+	a := strings.Split(string(et), ".")
+	if len(a) == 0 {
+		return []string{"any", "*"}
+	}
+	return a
+}
+
+func (et EventType) ObjectName() string {
+	return et.Split()[0]
+}
 
 type EmptyObject = struct{}
 
