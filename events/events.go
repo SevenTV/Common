@@ -7,14 +7,14 @@ import (
 	"github.com/SevenTV/Common/utils"
 )
 
-type Message[D any] struct {
+type Message[D AnyPayload] struct {
 	Op        Opcode `json:"op"`
 	Timestamp int64  `json:"t"`
 	Data      D      `json:"d"`
 	Sequence  uint64 `json:"s,omitempty"`
 }
 
-func NewMessage[D any](op Opcode, data D) (Message[D], error) {
+func NewMessage[D AnyPayload](op Opcode, data D) (Message[D], error) {
 	msg := Message[D]{
 		Op:        op,
 		Timestamp: time.Now().UnixMilli(),
@@ -44,7 +44,7 @@ func (e Message[D]) ToRaw() Message[json.RawMessage] {
 	}
 }
 
-func ConvertMessage[D any](c Message[json.RawMessage]) (Message[D], error) {
+func ConvertMessage[D AnyPayload](c Message[json.RawMessage]) (Message[D], error) {
 	var d D
 	err := json.Unmarshal(c.Data, &d)
 	c2 := Message[D]{

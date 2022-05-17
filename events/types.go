@@ -1,6 +1,8 @@
 package events
 
 import (
+	"encoding/json"
+
 	"github.com/SevenTV/Common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -40,7 +42,7 @@ const (
 
 type EmptyObject = struct{}
 
-type ChangeMap[O EmptyObject | structures.Object] struct {
+type ChangeMap struct {
 	// The object's ID
 	ID primitive.ObjectID `json:"id"`
 	// The type of the object
@@ -52,7 +54,7 @@ type ChangeMap[O EmptyObject | structures.Object] struct {
 	// A list of removed fields
 	Removed []ChangeField `json:"removed,omitempty"`
 	// A full object. Only available during a "create" event
-	Object *O `json:"object,omitempty"`
+	Object json.RawMessage `json:"object,omitempty"`
 }
 
 type ChangeField struct {

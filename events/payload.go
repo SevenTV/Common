@@ -1,12 +1,18 @@
 package events
 
 import (
-	"github.com/SevenTV/Common/structures/v3"
+	"encoding/json"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type AnyPayload interface {
+	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload | DispatchPayload | SignalPayload | ErrorPayload
+}
+
 type HelloPayload struct {
 	HeartbeatInterval int64               `json:"heartbeat_interval"`
+	SessionID         string              `json:"session_id"`
 	Actor             *primitive.ObjectID `json:"actor,omitempty"`
 }
 
@@ -19,9 +25,9 @@ type SubscribePayload struct {
 	Targets []string  `json:"targets"`
 }
 
-type DispatchPayload[B EmptyObject | structures.Object] struct {
-	Type EventType    `json:"type"`
-	Body ChangeMap[B] `json:"body"`
+type DispatchPayload struct {
+	Type EventType `json:"type"`
+	Body ChangeMap `json:"body"`
 }
 
 type SignalPayload struct {
