@@ -7,7 +7,9 @@ import (
 )
 
 type AnyPayload interface {
-	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload | ErrorPayload
+	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload |
+		UnsubscribePayload | DispatchPayload | SignalPayload | ErrorPayload |
+		EndOfStreamPayload
 }
 
 type HelloPayload struct {
@@ -50,4 +52,9 @@ type ErrorPayload struct {
 	Message       string         `json:"message"`
 	MessageLocale string         `json:"message_locale,omitempty"`
 	Fields        map[string]any `json:"fields"`
+}
+
+type EndOfStreamPayload struct {
+	Code    CloseCode `json:"code"`
+	Message string    `json:"message"`
 }

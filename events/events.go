@@ -69,6 +69,7 @@ const (
 	OpcodeReconnect     Opcode = 4 // R - Server demands that the client reconnects
 	OpcodeInboundSignal Opcode = 5 // R - A spectator signal is received
 	OpcodeError         Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
+	OpcodeEndOfStream   Opcode = 7 // R - The connection's data stream is ending
 
 	// Commands (33-64)
 	OpcodeIdentify    Opcode = 33 // S - Authenticate the session
@@ -92,6 +93,8 @@ func (op Opcode) String() string {
 		return "INBOUND_SIGNAL"
 	case OpcodeError:
 		return "ERROR"
+	case OpcodeEndOfStream:
+		return "END_OF_STREAM"
 
 	case OpcodeIdentify:
 		return "IDENTIFY"
