@@ -38,6 +38,7 @@ var (
 	ErrUnknownMessage        apiErrorFn = DefineError(70445, "Unknown Message", 404)         // can't find message object
 	ErrUnknownBan            apiErrorFn = DefineError(70446, "Unknown Ban", 404)             // can't find ban object
 	ErrUnknownRoute          apiErrorFn = DefineError(70447, "Unknown Route", 404)           // the requested api endpoint doesn't exist
+	ErrUnknownSession        apiErrorFn = DefineError(70448, "Unknown Session", 404)         // can't find requested session (used by event api)
 	ErrNoItems               apiErrorFn = DefineError(70449, "No Items Found", 404)          // search returned nothing
 
 	// Client Type Errors

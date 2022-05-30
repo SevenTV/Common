@@ -63,13 +63,13 @@ type Opcode uint8
 
 const (
 	// Default ops (0-32)
-	OpcodeDispatch      Opcode = 0 // R - Server dispatches data to the client
-	OpcodeHello         Opcode = 1 // R - Server greets the client
-	OpcodeHeartbeat     Opcode = 2 // R - Keep the connection alive
-	OpcodeReconnect     Opcode = 4 // R - Server demands that the client reconnects
-	OpcodeInboundSignal Opcode = 5 // R - A spectator signal is received
-	OpcodeError         Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
-	OpcodeEndOfStream   Opcode = 7 // R - The connection's data stream is ending
+	OpcodeDispatch    Opcode = 0 // R - Server dispatches data to the client
+	OpcodeHello       Opcode = 1 // R - Server greets the client
+	OpcodeHeartbeat   Opcode = 2 // R - Keep the connection alive
+	OpcodeReconnect   Opcode = 4 // R - Server demands that the client reconnects
+	OpcodeReserved5   Opcode = 5 // R - Reserved for future use
+	OpcodeError       Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
+	OpcodeEndOfStream Opcode = 7 // R - The connection's data stream is ending
 
 	// Commands (33-64)
 	OpcodeIdentify    Opcode = 33 // S - Authenticate the session
@@ -89,8 +89,8 @@ func (op Opcode) String() string {
 		return "HEARTBEAT"
 	case OpcodeReconnect:
 		return "RECONNECT"
-	case OpcodeInboundSignal:
-		return "INBOUND_SIGNAL"
+	case OpcodeReserved5:
+		return "RESERVED"
 	case OpcodeError:
 		return "ERROR"
 	case OpcodeEndOfStream:

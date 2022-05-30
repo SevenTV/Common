@@ -130,3 +130,11 @@ func (k ObjectKind) CollectionName() string {
 		return ""
 	}
 }
+
+type ListItemAction string
+
+const (
+	ListItemActionAdd    ListItemAction = "ADD"
+	ListItemActionUpdate ListItemAction = "UPDATE"
+	ListItemActionRemove ListItemAction = "REMOVE"
+)

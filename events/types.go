@@ -75,3 +75,15 @@ type ChangeField struct {
 	OldValue any    `json:"old_value"`
 	NewValue any    `json:"new_value"`
 }
+
+type SessionMutation struct {
+	Ref     string                 `json:"ref"`
+	Events  []SessionMutationEvent `json:"events,omitempty"`
+	ActorID primitive.ObjectID     `json:"actor_id,omitempty"`
+}
+
+type SessionMutationEvent struct {
+	Action  structures.ListItemAction `json:"action"`
+	Type    EventType                 `json:"type"`
+	Targets []string                  `json:"targets"`
+}
