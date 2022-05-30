@@ -67,7 +67,7 @@ const (
 	OpcodeHello       Opcode = 1 // R - Server greets the client
 	OpcodeHeartbeat   Opcode = 2 // R - Keep the connection alive
 	OpcodeReconnect   Opcode = 4 // R - Server demands that the client reconnects
-	OpcodeReserved5   Opcode = 5 // R - Reserved for future use
+	OpcodeAck         Opcode = 5 // R - Acknowledgement of an action
 	OpcodeError       Opcode = 6 // R - Extra error context in cases where the closing frame is not enough
 	OpcodeEndOfStream Opcode = 7 // R - The connection's data stream is ending
 
@@ -89,8 +89,8 @@ func (op Opcode) String() string {
 		return "HEARTBEAT"
 	case OpcodeReconnect:
 		return "RECONNECT"
-	case OpcodeReserved5:
-		return "RESERVED"
+	case OpcodeAck:
+		return "ACK"
 	case OpcodeError:
 		return "ERROR"
 	case OpcodeEndOfStream:

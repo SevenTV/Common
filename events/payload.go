@@ -7,15 +7,20 @@ import (
 )
 
 type AnyPayload interface {
-	json.RawMessage | HelloPayload | HeartbeatPayload | SubscribePayload |
-		UnsubscribePayload | DispatchPayload | SignalPayload | ErrorPayload |
-		EndOfStreamPayload
+	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload |
+		SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload |
+		ErrorPayload | EndOfStreamPayload
 }
 
 type HelloPayload struct {
 	HeartbeatInterval int64               `json:"heartbeat_interval"`
 	SessionID         string              `json:"session_id"`
 	Actor             *primitive.ObjectID `json:"actor,omitempty"`
+}
+
+type AckPayload struct {
+	RequestID string         `json:"request_id"`
+	Data      map[string]any `json:"data"`
 }
 
 type HeartbeatPayload struct {

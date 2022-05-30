@@ -77,9 +77,10 @@ type ChangeField struct {
 }
 
 type SessionMutation struct {
-	Ref     string                 `json:"ref"`
-	Events  []SessionMutationEvent `json:"events,omitempty"`
-	ActorID primitive.ObjectID     `json:"actor_id,omitempty"`
+	Ref       string                 `json:"ref"`
+	SessionID string                 `json:"session_id"`
+	Events    []SessionMutationEvent `json:"events,omitempty"`
+	ActorID   primitive.ObjectID     `json:"actor_id,omitempty"`
 }
 
 type SessionMutationEvent struct {
