@@ -16,14 +16,14 @@ type Message[D AnyPayload] struct {
 	Sequence  uint64 `json:"s,omitempty"`
 }
 
-func NewMessage[D AnyPayload](op Opcode, data D) (Message[D], error) {
+func NewMessage[D AnyPayload](op Opcode, data D) Message[D] {
 	msg := Message[D]{
 		Op:        op,
 		Timestamp: time.Now().UnixMilli(),
 		Data:      data,
 	}
 
-	return msg, nil
+	return msg
 }
 
 func (e Message[D]) ToRaw() Message[json.RawMessage] {
