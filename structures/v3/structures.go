@@ -106,6 +106,10 @@ const (
 	ObjectKindReport      ObjectKind = 8
 )
 
+type Object interface {
+	AuditLog | Ban | Cosmetic[bson.Raw] | Emote | EmoteSet | Entitlement[bson.Raw] | Message[bson.Raw] | Report | Role | User
+}
+
 func (k ObjectKind) CollectionName() string {
 	switch k {
 	case ObjectKindUser:
@@ -126,3 +130,11 @@ func (k ObjectKind) CollectionName() string {
 		return ""
 	}
 }
+
+type ListItemAction string
+
+const (
+	ListItemActionAdd    ListItemAction = "ADD"
+	ListItemActionUpdate ListItemAction = "UPDATE"
+	ListItemActionRemove ListItemAction = "REMOVE"
+)

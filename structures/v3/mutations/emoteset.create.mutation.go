@@ -130,7 +130,7 @@ type EmoteSetMutationSetEmoteOptions struct {
 }
 
 type EmoteSetMutationSetEmoteItem struct {
-	Action ListItemAction
+	Action structures.ListItemAction
 	ID     primitive.ObjectID
 	Name   string
 	Flags  structures.ActiveEmoteFlag

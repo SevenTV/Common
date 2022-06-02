@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -25,7 +26,7 @@ type Instance interface {
 	TTL(ctx context.Context, key Key) (time.Duration, error)
 	Pipeline(ctx context.Context) redis.Pipeliner
 	Subscribe(ctx context.Context, ch chan string, subscribeTo ...Key)
-	ComposeKey(svc, name string) Key
+	ComposeKey(svc string, args ...string) Key
 	RawClient() *redis.Client
 }
 
@@ -70,8 +71,8 @@ func (i *redisInst) RawClient() *redis.Client {
 	return i.cl
 }
 
-func (i *redisInst) ComposeKey(svc, name string) Key {
-	return Key(fmt.Sprintf("%s:%s", svc, name))
+func (i *redisInst) ComposeKey(svc string, args ...string) Key {
+	return Key(fmt.Sprintf("%s:%s", svc, strings.Join(args, ":")))
 }
 
 func (r *redisInst) Get(ctx context.Context, key Key) (string, error) {

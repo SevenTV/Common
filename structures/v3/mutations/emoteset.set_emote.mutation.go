@@ -138,7 +138,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 		switch tgt.Action {
 		// ADD EMOTE
-		case ListItemActionAdd:
+		case structures.ListItemActionAdd:
 			// Handle emote privacy
 			if utils.BitField.HasBits(int64(tgt.emote.Flags), int64(structures.EmoteFlagsPrivate)) {
 				usable := false
@@ -199,11 +199,11 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				Timestamp: at,
 				ActorID:   actor.ID,
 			})
-		case ListItemActionUpdate, ListItemActionRemove:
+		case structures.ListItemActionUpdate, structures.ListItemActionRemove:
 			// The emote must already be active
 			found := false
 			for _, e := range set.Emotes {
-				if tgt.Action == ListItemActionUpdate && e.Name == tgt.Name {
+				if tgt.Action == structures.ListItemActionUpdate && e.Name == tgt.Name {
 					return errors.ErrEmoteNameConflict().SetFields(errors.Fields{
 						"EMOTE_ID":          tgt.ID.Hex(),
 						"CONFLICT_EMOTE_ID": tgt.ID.Hex(),
@@ -220,7 +220,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				})
 			}
 
-			if tgt.Action == ListItemActionUpdate {
+			if tgt.Action == structures.ListItemActionUpdate {
 				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
 				if !ae.ID.IsZero() {
 					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
@@ -235,7 +235,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					})
 					esb.UpdateActiveEmote(tgt.ID, tgt.Name)
 				}
-			} else if tgt.Action == ListItemActionRemove {
+			} else if tgt.Action == structures.ListItemActionRemove {
 				esb.RemoveActiveEmote(tgt.ID)
 				c.WriteArrayRemoved(structures.ActiveEmote{
 					ID: tgt.ID,

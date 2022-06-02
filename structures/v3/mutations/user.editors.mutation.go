@@ -34,7 +34,7 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 		// actor is an editor of target but they must also have "Manage Editors" permission to do this
 		if !ed.HasPermission(structures.UserEditorPermissionManageEditors) {
 			// the actor is allowed to *remove* themselve as an editor
-			if !(actor.ID == editor.ID && opt.Action == ListItemActionRemove) {
+			if !(actor.ID == editor.ID && opt.Action == structures.ListItemActionRemove) {
 				return errors.ErrInsufficientPrivilege().SetDetail("You don't have permission to manage this user's editors")
 			}
 		}
@@ -42,11 +42,11 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 
 	switch opt.Action {
 	// add editor
-	case ListItemActionAdd:
+	case structures.ListItemActionAdd:
 		ub.AddEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
-	case ListItemActionUpdate:
+	case structures.ListItemActionUpdate:
 		ub.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
-	case ListItemActionRemove:
+	case structures.ListItemActionRemove:
 		ub.RemoveEditor(editor.ID)
 	}
 
@@ -66,5 +66,5 @@ type UserEditorsOptions struct {
 	Editor            *structures.User
 	EditorPermissions structures.UserEditorPermission
 	EditorVisible     bool
-	Action            ListItemAction
+	Action            structures.ListItemAction
 }

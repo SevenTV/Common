@@ -36,9 +36,9 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 	target := ub.User
 	// Change the role
 	switch opt.Action {
-	case ListItemActionAdd:
+	case structures.ListItemActionAdd:
 		ub.Update.AddToSet("role_ids", opt.Role.ID)
-	case ListItemActionRemove:
+	case structures.ListItemActionRemove:
 		ub.Update.Pull("role_ids", opt.Role.ID)
 	}
 
@@ -58,5 +58,5 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 type SetUserRoleOptions struct {
 	Role   *structures.Role
 	Actor  *structures.User
-	Action ListItemAction
+	Action structures.ListItemAction
 }

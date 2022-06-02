@@ -7,14 +7,6 @@ import (
 	"github.com/SevenTV/Common/redis"
 )
 
-type ListItemAction string
-
-const (
-	ListItemActionAdd    ListItemAction = "ADD"
-	ListItemActionUpdate ListItemAction = "UPDATE"
-	ListItemActionRemove ListItemAction = "REMOVE"
-)
-
 type Mutate struct {
 	mongo mongo.Instance
 	redis redis.Instance
