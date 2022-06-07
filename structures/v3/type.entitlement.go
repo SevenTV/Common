@@ -1,13 +1,15 @@
 package structures
 
 import (
+	"time"
+
 	"github.com/SevenTV/Common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type EntitlementData interface {
-	bson.Raw | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataPaint | EntitlementDataRole | EntitlementDataSet
+	bson.Raw | EntitlementDataBase | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataPaint | EntitlementDataRole | EntitlementDataEmoteSet
 }
 
 // Entitlement is a binding between a resource and a user
@@ -21,6 +23,8 @@ type Entitlement[D EntitlementData] struct {
 	Data D `json:"data" bson:"data"`
 	// The user who is entitled to the item
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
+	// Eligibility conditions for this entitlement
+	Condition EntitlementCondition `json:"condition,omitempty" bson:"condition,omitempty"`
 	// Wether this entitlement is currently inactive
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
 }
@@ -72,21 +76,23 @@ const (
 	EntitlementKindEmoteSet     = EntitlementKind("EMOTE_SET")    // Emote Set Entitlement
 )
 
+type EntitlementDataBase struct {
+	// The ID of the subscription
+	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+}
+
 // EntitledSubscription Subscription binding in an Entitlement
 type EntitlementDataSubscription struct {
-	ID string `json:"id" bson:"-"`
 	// The ID of the subscription
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
 }
 
 // EntitledBadge Badge binding in an Entitlement
 type EntitlementDataBadge struct {
-	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
-	// The role required for the badge to show up
-	RoleBindingID *string             `json:"role_binding_id" bson:"-"`
-	RoleBinding   *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
-	Selected      bool                `json:"selected,omitempty" bson:"selected,omitempty"`
+	// DEPRECATED: use Entitlement.Condition
+	RoleBinding *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
+	Selected    bool                `json:"selected,omitempty" bson:"selected,omitempty"`
 }
 
 type EntitlementDataPaint struct {
@@ -97,12 +103,17 @@ type EntitlementDataPaint struct {
 
 // EntitledRole Role binding in an Entitlement
 type EntitlementDataRole struct {
-	ID              string             `json:"id" bson:"-"`
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
 }
 
 // EntitledEmoteSet Emote Set binding in an Entitlement
-type EntitlementDataSet struct {
-	ID              string             `json:"id" bson:"-"`
+type EntitlementDataEmoteSet struct {
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+}
+
+type EntitlementCondition struct {
+	AnyRoles []primitive.ObjectID `json:"any_roles,omitempty" bson:"any_roles,omitempty"`
+	AllRoles []primitive.ObjectID `json:"all_roles,omitempty" bson:"all_roles,omitempty"`
+	MinDate  time.Time            `json:"min_date,omitempty" bson:"min_date,omitempty"`
+	MaxDate  time.Time            `json:"max_date,omitempty" bson:"max_date,omitempty"`
 }

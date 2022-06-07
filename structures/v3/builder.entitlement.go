@@ -5,7 +5,15 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 type EntitlementBuilder[D EntitlementData] struct {
 	Entitlement Entitlement[D]
 
-	User *User
+	User    *User
+	initial Entitlement[D]
+}
+
+func NewEntitlementBuilder[D EntitlementData](ent Entitlement[D]) *EntitlementBuilder[D] {
+	return &EntitlementBuilder[D]{
+		Entitlement: ent,
+		initial:     ent,
+	}
 }
 
 // SetKind: Change the entitlement's kind
@@ -25,5 +33,10 @@ func (b *EntitlementBuilder[D]) SetUserID(id primitive.ObjectID) *EntitlementBui
 // SetSubscriptionData: Add a subscription reference to the entitlement
 func (b *EntitlementBuilder[D]) SetData(data D) *EntitlementBuilder[D] {
 	b.Entitlement.Data = data
+	return b
+}
+
+func (b *EntitlementBuilder[D]) SetCondition(cond EntitlementCondition) *EntitlementBuilder[D] {
+	b.Entitlement.Condition = cond
 	return b
 }
