@@ -169,29 +169,13 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 		return items, 0, err
 	}
 
-	userMap := make(map[primitive.ObjectID]structures.User)
-	entRoleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
-	for _, ent := range v.RoleEntitlements {
-		ent, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
-		if err != nil {
-			return nil, 0, err
-		}
-		entRoleMap[ent.UserID] = append(entRoleMap[ent.UserID], ent.Data.ObjectReference)
-	}
-	for _, user := range v.Users {
-		user.RoleIDs = append(user.RoleIDs, entRoleMap[user.ID]...)
-		userMap[user.ID] = user
+	qb := &QueryBinder{ctx, q}
+	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	for _, u := range v.Users { // iterare over users
-		// add user roles
-		for _, roleID := range u.RoleIDs {
-			role, rok := roleMap[roleID]
-			if !rok {
-				continue
-			}
-			u.Roles = append(u.Roles, role)
-		}
+	for _, u := range userMap {
 		items = append(items, u)
 	}
 
