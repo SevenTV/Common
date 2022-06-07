@@ -104,9 +104,9 @@ type CosmeticDataPaint struct {
 type CosmeticPaintFunction string
 
 const (
-	CosmeticPaintFunctionLinearGradient CosmeticPaintFunction = "linear-gradient"
-	CosmeticPaintFunctionRadialGradient CosmeticPaintFunction = "radial-gradient"
-	CosmeticPaintFunctionImageURL       CosmeticPaintFunction = "url"
+	CosmeticPaintFunctionLinearGradient CosmeticPaintFunction = "LINEAR_GRADIENT"
+	CosmeticPaintFunctionRadialGradient CosmeticPaintFunction = "RADIAL_GRADIENT"
+	CosmeticPaintFunctionImageURL       CosmeticPaintFunction = "URL"
 )
 
 type CosmeticPaintGradientStop struct {
