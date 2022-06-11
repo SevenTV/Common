@@ -64,5 +64,6 @@ type (
 	WriteModel     = mongo.WriteModel
 	InsertOneModel = mongo.InsertOneModel
 	UpdateOneModel = mongo.UpdateOneModel
+	DeleteOneModel = mongo.DeleteOneModel
 	IndexModel     = mongo.IndexModel
 )

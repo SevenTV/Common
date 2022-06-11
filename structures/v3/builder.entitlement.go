@@ -40,3 +40,8 @@ func (b *EntitlementBuilder[D]) SetCondition(cond EntitlementCondition) *Entitle
 	b.Entitlement.Condition = cond
 	return b
 }
+
+func (b *EntitlementBuilder[D]) SetApp(app EntitlementApp) *EntitlementBuilder[D] {
+	b.Entitlement.App = &app
+	return b
+}

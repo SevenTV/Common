@@ -25,8 +25,10 @@ type Entitlement[D EntitlementData] struct {
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
 	// Eligibility conditions for this entitlement
 	Condition EntitlementCondition `json:"condition,omitempty" bson:"condition,omitempty"`
-	// Wether this entitlement is currently inactive
+	// Whether this entitlement is currently inactive
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
+	// Information about the app that created this entitlement
+	App *EntitlementApp `json:"app,omitempty" bson:"app,omitempty"`
 }
 
 func (e Entitlement[D]) ToRaw() Entitlement[bson.Raw] {
@@ -116,4 +118,9 @@ type EntitlementCondition struct {
 	AllRoles []primitive.ObjectID `json:"all_roles,omitempty" bson:"all_roles,omitempty"`
 	MinDate  time.Time            `json:"min_date,omitempty" bson:"min_date,omitempty"`
 	MaxDate  time.Time            `json:"max_date,omitempty" bson:"max_date,omitempty"`
+}
+
+type EntitlementApp struct {
+	Name  string         `json:"name"`
+	State map[string]any `json:"state"`
 }
