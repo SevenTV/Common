@@ -38,7 +38,7 @@ type User struct {
 	// the ID of users who have been blocked by the user
 	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 	// persisted non-structural data that can be used internally for querying
-	Metadata UserMetadata `json:"-" bson:"metadata"`
+	State UserState `json:"-" bson:"state"`
 
 	// Relational
 
@@ -54,7 +54,7 @@ type User struct {
 	AvatarURL string       `json:"avatar_url" bson:"-"`
 }
 
-type UserMetadata struct {
+type UserState struct {
 	RolePosition int `json:"-" bson:"role_position"`
 }
 
