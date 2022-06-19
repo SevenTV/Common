@@ -65,7 +65,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	}
 
 	match := bson.D{
-		{Key: "versions.0.state.lifecycle", Value: structures.EmoteLifecycleLive},
+		{Key: "versions.state.lifecycle", Value: structures.EmoteLifecycleLive},
 		{Key: "owner_id", Value: bson.M{"$not": bson.M{
 			"$in": bans.NoOwnership.KeySlice(),
 		}}},
@@ -82,9 +82,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 		privileged = 0
 		match = append(match, bson.E{
-			Key:   "flags",
-			Value: bson.M{"$bitsAllClear": structures.EmoteFlagsPrivate},
-		}, bson.E{
 			Key:   "versions.state.listed",
 			Value: true,
 		})

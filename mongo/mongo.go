@@ -54,11 +54,6 @@ type SetupOptions struct {
 	Direct bool
 }
 
-type IndexRef struct {
-	Collection CollectionName
-	Index      mongo.IndexModel
-}
-
 type (
 	Pipeline       = mongo.Pipeline
 	WriteModel     = mongo.WriteModel
