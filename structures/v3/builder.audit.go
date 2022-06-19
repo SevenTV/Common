@@ -19,6 +19,12 @@ func NewAuditLogBuilder(log AuditLog) *AuditLogBuilder {
 	}
 }
 
+func NewAuditChange(key string) *AuditLogChange {
+	return &AuditLogChange{
+		Key: key,
+	}
+}
+
 // SetKind sets the kind of the audit log
 func (alb *AuditLogBuilder) SetKind(kind AuditLogKind) *AuditLogBuilder {
 	alb.AuditLog.Kind = kind
