@@ -3,7 +3,7 @@ package aggregations
 import (
 	"time"
 
-	"github.com/SevenTV/Common/mongo"
+	"github.com/seventv/common/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

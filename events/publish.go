@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/SevenTV/Common/redis"
+	"github.com/seventv/common/redis"
 )
 
 func Publish[D AnyPayload](ctx context.Context, msg Message[D], redis redis.Instance) error {

@@ -3,10 +3,10 @@ package query
 import (
 	"context"
 
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/structures/v3/aggregations"
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/structures/v3/aggregations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

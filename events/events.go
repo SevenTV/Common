@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
+	"github.com/seventv/common/utils"
 )
 
 type Message[D AnyPayload] struct {

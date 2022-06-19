@@ -3,8 +3,8 @@ package mutations
 import (
 	"sync"
 
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/redis"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/redis"
 )
 
 type Mutate struct {

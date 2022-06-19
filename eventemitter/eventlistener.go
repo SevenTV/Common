@@ -3,7 +3,7 @@ package eventemitter
 import (
 	"reflect"
 
-	"github.com/SevenTV/Common/sync_map"
+	"github.com/seventv/common/sync_map"
 )
 
 type EventListener struct {

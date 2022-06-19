@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/seventv/common/utils"
 )
 
 func SignJWT(secret string, claim jwt.Claims) (string, error) {

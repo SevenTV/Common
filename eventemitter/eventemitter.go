@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/SevenTV/Common/sync_map"
-	"github.com/SevenTV/Common/utils"
+	"github.com/seventv/common/sync_map"
+	"github.com/seventv/common/utils"
 )
 
 type RawEventEmitter struct {

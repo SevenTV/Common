@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SevenTV/Common/utils"
+	"github.com/seventv/common/utils"
 )
 
 type APIError interface {

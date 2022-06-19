@@ -1,6 +1,6 @@
 package priority_queue
 
-import "github.com/SevenTV/Common/datastructures/heap"
+import "github.com/seventv/common/datastructures/heap"
 
 type Item[T any] struct {
 	priority int

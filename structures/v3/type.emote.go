@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/seventv/common/utils"
 )
 
 /*

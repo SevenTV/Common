@@ -1,6 +1,6 @@
 package structures
 
-import "github.com/SevenTV/Common/mongo"
+import "github.com/seventv/common/mongo"
 
 var (
 	CollectionNameEmotes            = mongo.CollectionName("emotes")
