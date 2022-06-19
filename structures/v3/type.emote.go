@@ -139,7 +139,7 @@ type EmoteVersion struct {
 	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
 	InputFile   EmoteFile          `json:"input_file" bson:"input_file"`
 	ImageFiles  []EmoteFile        `json:"image_files" bson:"image_files"`
-	ZipFile     EmoteFile          `json:"zip_file" bson:"zip_file"`
+	ArchiveFile EmoteFile          `json:"archive_file" bson:"archive_file"`
 }
 
 func (e Emote) HasFlag(flag EmoteFlag) bool {
