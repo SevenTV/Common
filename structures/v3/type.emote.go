@@ -74,23 +74,13 @@ func (e EmoteFlag) String() string {
 	return ""
 }
 
-type EmoteImageFile struct {
-	Name         string `json:"name" bson:"name"`               // The name of the file
-	Width        int32  `json:"width" bson:"width"`             // The pixel width of the emote
-	Height       int32  `json:"height" bson:"height"`           // The pixel height of the emote
-	FrameCount   int32  `json:"frame_count" bson:"frame_count"` // Whether or not this file is animated
-	Size         int64  `json:"size" bson:"size"`               // The file size in bytes
+type EmoteFile struct {
+	Name         string `json:"name" bson:"name"`                         // The name of the file
+	Width        int32  `json:"width" bson:"width,omitempty"`             // The pixel width of the emote
+	Height       int32  `json:"height" bson:"height,omitempty"`           // The pixel height of the emote
+	FrameCount   int32  `json:"frame_count" bson:"frame_count,omitempty"` // Whether or not this file is animated
+	Size         int64  `json:"size" bson:"size"`                         // The file size in bytes
 	ContentType  string `json:"content_type" bson:"content_type"`
-	SHA3         string `json:"sha3" bson:"sha3"`
-	Key          string `json:"key" bson:"key"`
-	Bucket       string `json:"bucket" bson:"bucket"`
-	ACL          string `json:"acl"`
-	CacheControl string `json:"cache_control"`
-}
-
-type EmoteZipFile struct {
-	Name         string `json:"name" bson:"name"` // The name of the file
-	Size         int64  `json:"size" bson:"size"` // The file size in bytes
 	SHA3         string `json:"sha3" bson:"sha3"`
 	Key          string `json:"key" bson:"key"`
 	Bucket       string `json:"bucket" bson:"bucket"`
@@ -108,8 +98,8 @@ func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 	return count
 }
 
-func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteImageFile {
-	files := []EmoteImageFile{}
+func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
+	files := []EmoteFile{}
 	for _, f := range ev.ImageFiles {
 		if omitStatic && (ev.FrameCount > 1 && f.FrameCount == 1) {
 			continue
@@ -147,9 +137,9 @@ type EmoteVersion struct {
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 	State       EmoteVersionState  `json:"state" bson:"state"`
 	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
-	InputFile   EmoteImageFile     `json:"input_file" bson:"input_file"`
-	ImageFiles  []EmoteImageFile   `json:"image_files" bson:"image_files"`
-	ZipFile     EmoteZipFile       `json:"zip_file" bson:"zip_file"`
+	InputFile   EmoteFile          `json:"input_file" bson:"input_file"`
+	ImageFiles  []EmoteFile        `json:"image_files" bson:"image_files"`
+	ZipFile     EmoteFile          `json:"zip_file" bson:"zip_file"`
 }
 
 func (e Emote) HasFlag(flag EmoteFlag) bool {
