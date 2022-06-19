@@ -20,9 +20,9 @@ type Emote struct {
 
 	// Versioning
 
-	Versions    []EmoteVersion       `json:"versions,omitempty" bson:"versions,omitempty"`
-	ChildrenIDs []primitive.ObjectID `json:"children_ids,omitempty" bson:"children_ids,omitempty"`
-	ParentID    *primitive.ObjectID  `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	Versions    []EmoteVersion       `json:"versions" bson:"versions"`
+	ChildrenIDs []primitive.ObjectID `json:"children_ids" bson:"children_ids"`
+	ParentID    *primitive.ObjectID  `json:"parent_id" bson:"parent_id"`
 
 	// Relational
 
@@ -74,74 +74,44 @@ func (e EmoteFlag) String() string {
 	return ""
 }
 
-type EmoteFormat struct {
-	Name  EmoteFormatName `json:"name" bson:"name"`
-	Files []EmoteFile     `json:"files" bson:"files"`
-}
-
 type EmoteFile struct {
-	Name           string `json:"n" bson:"name"`     // The name of the file
-	Width          int32  `json:"w" bson:"width"`    // The pixel width of the emote
-	Height         int32  `json:"h" bson:"height"`   // The pixel height of the emote
-	Animated       bool   `json:"a" bson:"animated"` // Whether or not this file is animated
-	ProcessingTime int64  `json:"-" bson:"time"`     // The amount of time in nanoseconds it took for this file to be processed
-	Length         int64  `json:"b" bson:"length"`   // The file size in bytes
-
-	format *EmoteFormatName
+	Name         string `json:"name" bson:"name"`                         // The name of the file
+	Width        int32  `json:"width" bson:"width,omitempty"`             // The pixel width of the emote
+	Height       int32  `json:"height" bson:"height,omitempty"`           // The pixel height of the emote
+	FrameCount   int32  `json:"frame_count" bson:"frame_count,omitempty"` // Whether or not this file is animated
+	Size         int64  `json:"size" bson:"size"`                         // The file size in bytes
+	ContentType  string `json:"content_type" bson:"content_type"`
+	SHA3         string `json:"sha3" bson:"sha3"`
+	Key          string `json:"key" bson:"key"`
+	Bucket       string `json:"bucket" bson:"bucket"`
+	ACL          string `json:"acl"`
+	CacheControl string `json:"cache_control"`
 }
 
-func (ef EmoteFile) Format() EmoteFormatName {
-	if ef.format == nil {
-		return ""
-	}
-	return *ef.format
-}
-
-type EmoteFormatName string
-
-const (
-	EmoteFormatNameWEBP EmoteFormatName = "image/webp"
-	EmoteFormatNameAVIF EmoteFormatName = "image/avif"
-	EmoteFormatNameGIF  EmoteFormatName = "image/gif"
-	EmoteFormatNamePNG  EmoteFormatName = "image/png"
-)
-
-func (ev EmoteVersion) CountFiles(format EmoteFormatName, omitStatic bool) int32 {
+func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 	var count int32
-	for _, f := range ev.Formats {
-		if f.Name != format {
+	for _, f := range ev.ImageFiles {
+		if omitStatic && (ev.FrameCount > 1 && f.FrameCount == 1) {
 			continue
-		}
-		for _, fi := range f.Files {
-			if omitStatic && (ev.FrameCount > 1 && !fi.Animated) {
-				continue
-			}
-			count++
 		}
 	}
 	return count
 }
 
-func (ev EmoteVersion) GetFiles(format EmoteFormatName, omitStatic bool) []EmoteFile {
+func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
 	files := []EmoteFile{}
-	for _, f := range ev.Formats {
-		if format != "" && f.Name != format {
+	for _, f := range ev.ImageFiles {
+		if omitStatic && (ev.FrameCount > 1 && f.FrameCount == 1) {
 			continue
 		}
-		for _, fi := range f.Files {
-			if omitStatic && (ev.FrameCount > 1 && !fi.Animated) {
-				continue
-			}
-			fi.format = &f.Name
-			files = append(files, fi)
-		}
+		files = append(files, f)
 	}
 	return files
 }
 
 type EmoteState struct {
 	// IDs of users who are eligible to claim ownership of this emote
-	Claimants []primitive.ObjectID `json:"claimants,omitempty" bson:"claimants,omitempty"`
+	Claimants []primitive.ObjectID `json:"claimants" bson:"claimants"`
 }
 
 type EmoteVersionState struct {
@@ -152,22 +122,24 @@ type EmoteVersionState struct {
 	Listed bool `json:"listed" bson:"listed"`
 	// The ranked position for the amount of channels this emote is added on to.
 	// This value is to be determined with an external cron job
-	ChannelCountRank int32 `json:"-" bson:"channel_count_rank,omitempty"`
+	ChannelCountRank int32 `json:"-" bson:"channel_count_rank"`
 	// The amount of channels this emote is added on to.
 	// This value is to be determined with an external cron job
-	ChannelCount int32 `json:"-" bson:"channel_count,omitempty"`
+	ChannelCount int32 `json:"-" bson:"channel_count"`
 	// The time at which the ChannelCount value was last checked
-	ChannelCountCheckAt time.Time `json:"-" bson:"channel_count_check_at,omitempty"`
+	ChannelCountCheckAt time.Time `json:"-" bson:"channel_count_check_at"`
 }
 
 type EmoteVersion struct {
 	ID          primitive.ObjectID `json:"id" bson:"id"`
-	Name        string             `json:"name,omitempty" bson:"name,omitempty"`
-	Description string             `json:"description,omitempty" bson:"description,omitempty"`
+	Name        string             `json:"name" bson:"name"`
+	Description string             `json:"description" bson:"description"`
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 	State       EmoteVersionState  `json:"state" bson:"state"`
 	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
-	Formats     []EmoteFormat      `json:"formats,omitempty" bson:"formats,omitempty"`
+	InputFile   EmoteFile          `json:"input_file" bson:"input_file"`
+	ImageFiles  []EmoteFile        `json:"image_files" bson:"image_files"`
+	ArchiveFile EmoteFile          `json:"archive_file" bson:"archive_file"`
 }
 
 func (e Emote) HasFlag(flag EmoteFlag) bool {
