@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/SevenTV/Common/structures/v3"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

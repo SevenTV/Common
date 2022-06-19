@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/SevenTV/Common/structures/v3"
 	"github.com/patrickmn/go-cache"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

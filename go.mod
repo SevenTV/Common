@@ -1,4 +1,4 @@
-module github.com/SevenTV/Common
+module github.com/seventv/common
 
 go 1.18
 

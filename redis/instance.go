@@ -7,9 +7,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/SevenTV/Common/sync_map"
-	"github.com/SevenTV/Common/utils"
 	"github.com/go-redis/redis/v8"
+	"github.com/seventv/common/sync_map"
+	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 )
 

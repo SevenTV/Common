@@ -1,6 +1,6 @@
 package structures
 
-import "github.com/SevenTV/Common/errors"
+import "github.com/seventv/common/errors"
 
 type EmoteValidator struct {
 	v *Emote

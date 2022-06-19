@@ -4,10 +4,10 @@ import (
 	"context"
 	"io"
 
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

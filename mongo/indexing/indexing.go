@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SevenTV/Common/mongo"
+	"github.com/seventv/common/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
