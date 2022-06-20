@@ -134,12 +134,16 @@ type EmoteVersion struct {
 	ID          primitive.ObjectID `json:"id" bson:"id"`
 	Name        string             `json:"name" bson:"name"`
 	Description string             `json:"description" bson:"description"`
-	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
-	State       EmoteVersionState  `json:"state" bson:"state"`
 	Animated    bool               `json:"animated" bson:"animated"`
-	InputFile   EmoteFile          `json:"input_file" bson:"input_file"`
-	ImageFiles  []EmoteFile        `json:"image_files" bson:"image_files"`
-	ArchiveFile EmoteFile          `json:"archive_file" bson:"archive_file"`
+	State       EmoteVersionState  `json:"state" bson:"state"`
+
+	InputFile   EmoteFile   `json:"input_file" bson:"input_file"`
+	ImageFiles  []EmoteFile `json:"image_files" bson:"image_files"`
+	ArchiveFile EmoteFile   `json:"archive_file" bson:"archive_file"`
+
+	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
+	StartedAt   time.Time `json:"started_at" bson:"started_at"`
+	CompletedAt time.Time `json:"completed_at" bson:"completed_at"`
 }
 
 func (e Emote) HasFlag(flag EmoteFlag) bool {
@@ -164,7 +168,7 @@ func (e Emote) GetLatestVersion(onlyListed bool) EmoteVersion {
 		if v.IsUnavailable() {
 			continue
 		}
-		if ver.ID.IsZero() || ver.Timestamp.Before(v.Timestamp) {
+		if ver.ID.IsZero() || ver.CreatedAt.Before(v.CreatedAt) {
 			ver = v
 		}
 	}
