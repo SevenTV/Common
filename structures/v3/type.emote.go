@@ -91,7 +91,7 @@ type EmoteFile struct {
 func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 	var count int32
 	for _, f := range ev.ImageFiles {
-		if omitStatic && (ev.FrameCount > 1 && f.FrameCount == 1) {
+		if omitStatic && (ev.Animated && f.FrameCount == 1) {
 			continue
 		}
 	}
@@ -101,7 +101,7 @@ func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
 	files := []EmoteFile{}
 	for _, f := range ev.ImageFiles {
-		if omitStatic && (ev.FrameCount > 1 && f.FrameCount == 1) {
+		if omitStatic && (ev.Animated && f.FrameCount == 1) {
 			continue
 		}
 		files = append(files, f)
@@ -136,7 +136,7 @@ type EmoteVersion struct {
 	Description string             `json:"description" bson:"description"`
 	Timestamp   time.Time          `json:"timestamp" bson:"timestamp"`
 	State       EmoteVersionState  `json:"state" bson:"state"`
-	FrameCount  int32              `json:"frame_count" bson:"frame_count"`
+	Animated    bool               `json:"animated" bson:"animated"`
 	InputFile   EmoteFile          `json:"input_file" bson:"input_file"`
 	ImageFiles  []EmoteFile        `json:"image_files" bson:"image_files"`
 	ArchiveFile EmoteFile          `json:"archive_file" bson:"archive_file"`
