@@ -88,37 +88,10 @@ var DatabaseRefAPI = []collectionRef{
 			Title:    "Emotes",
 			Required: []string{"name", "versions"},
 			Properties: map[string]*jsonSchema{
-				"owner_id":    {BSONType: TList{BSONTypeObjectId}},
-				"name":        {BSONType: TList{BSONTypeString}, MinLength: utils.PointerOf(int64(1))},
-				"flags":       {BSONType: TList{BSONTypeInt32}},
-				"tags":        {BSONType: TList{BSONTypeArray}},
-				"frame_count": {BSONType: TList{BSONTypeInt32}},
-				"formats": {
-					BSONType: TList{BSONTypeArray},
-					Items: []*jsonSchema{{
-						BSONType: TList{BSONTypeObject},
-						Properties: map[string]*jsonSchema{
-							"name": {
-								BSONType: TList{BSONTypeString},
-								Enum:     []string{"image/webp", "image/avif", "image/gif", "image/png"},
-							},
-							"sizes": {
-								BSONType: TList{BSONTypeArray},
-								Items: []*jsonSchema{{
-									BSONType: TList{BSONTypeObject},
-									Properties: map[string]*jsonSchema{
-										"scale":    {BSONType: TList{BSONTypeString}},
-										"width":    {BSONType: TList{BSONTypeInt32}},
-										"height":   {BSONType: TList{BSONTypeInt32}},
-										"animated": {BSONType: TList{BSONTypeBoolean}},
-										"time":     {BSONType: TList{BSONTypeInt64}},
-										"length":   {BSONType: TList{BSONTypeInt64}},
-									},
-								}},
-							},
-						},
-					}},
-				},
+				"owner_id": {BSONType: TList{BSONTypeObjectId}},
+				"name":     {BSONType: TList{BSONTypeString}, MinLength: utils.PointerOf(int64(1))},
+				"flags":    {BSONType: TList{BSONTypeInt32}},
+				"tags":     {BSONType: TList{BSONTypeArray}},
 				"versions": {
 					BSONType: TList{BSONTypeArray},
 					Items: []*jsonSchema{{
@@ -139,7 +112,7 @@ var DatabaseRefAPI = []collectionRef{
 						},
 					}},
 				},
-				"parent_id":    {BSONType: TList{BSONTypeObjectId}},
+				"parent_id":    {BSONType: TList{BSONTypeObjectId, BSONTypeNull}},
 				"children_ids": {BSONType: TList{BSONTypeArray}, Items: []*jsonSchema{{BSONType: TList{BSONTypeObjectId}}}},
 			},
 		},
