@@ -13,4 +13,5 @@ type Options struct {
 	Endpoint    string
 	AccessToken string
 	SecretKey   string
+	Namespace   string
 }

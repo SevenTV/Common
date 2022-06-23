@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -106,4 +107,8 @@ func (a *MockInstance) DownloadFile(ctx context.Context, output io.WriterAt, opt
 	} else {
 		return errors.New(s3.ErrCodeNoSuchBucket)
 	}
+}
+
+func (a *MockInstance) ComposeKey(s ...string) string {
+	return path.Join(s...)
 }

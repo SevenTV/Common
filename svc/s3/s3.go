@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"io"
+	"path"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,6 +16,7 @@ type Instance interface {
 	UploadFile(ctx context.Context, opts *s3manager.UploadInput) error
 	DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error
 	ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
+	ComposeKey(s ...string) string
 }
 
 type s3Inst struct {
@@ -22,6 +24,7 @@ type s3Inst struct {
 	downloader *s3manager.Downloader
 	uploader   *s3manager.Uploader
 	s3         *s3.S3
+	ns         string
 }
 
 func New(ctx context.Context, o Options) (Instance, error) {
@@ -40,6 +43,7 @@ func New(ctx context.Context, o Options) (Instance, error) {
 		downloader: s3manager.NewDownloader(s),
 		uploader:   s3manager.NewUploader(s),
 		s3:         s3.New(s),
+		ns:         o.Namespace,
 	}, nil
 }
 
@@ -57,4 +61,8 @@ func (a *s3Inst) DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.
 	_, err := a.downloader.DownloadWithContext(ctx, output, opts)
 
 	return err
+}
+
+func (a *s3Inst) ComposeKey(s ...string) string {
+	return path.Join(a.ns, path.Join(s...))
 }

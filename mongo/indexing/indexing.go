@@ -93,6 +93,7 @@ func CollSync(inst mongo.Instance, colls []collectionRef) error {
 		if err != nil {
 			zap.S().Errorw("mongo, failed to set up indexes",
 				"collection", col.Name,
+				"error", err,
 			)
 		} else if len(ind) > 0 {
 			zap.S().Infow("Indexes ensured",
@@ -111,6 +112,7 @@ func CollSync(inst mongo.Instance, colls []collectionRef) error {
 			}).Err(); err != nil {
 				zap.S().Errorw("mongo, failed to update collection validator",
 					"collection", col.Name,
+					"error", err,
 				)
 			}
 		}
