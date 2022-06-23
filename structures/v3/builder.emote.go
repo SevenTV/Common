@@ -104,7 +104,7 @@ func (eb *EmoteBuilder) AddVersion(v EmoteVersion) *EmoteBuilder {
 	}
 
 	eb.Emote.Versions = append(eb.Emote.Versions, v)
-	eb.Update.AddToSet("versions", v)
+	eb.Update.Push("versions", v)
 	return eb
 }
 
