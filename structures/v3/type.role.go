@@ -75,6 +75,7 @@ const (
 	RolePermissionManageNews         RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows creating and editing news
 	RolePermissionManageStack        RolePermission = 1 << 55 // 36028797018963968 - (Admin) Allows managing the application stack
 	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
+	RolePermissionRunJobs            RolePermission = 1 << 57 // 144115188075855872 - (Admin) Allows firing processing jobs
 )
 
 // All permissions
