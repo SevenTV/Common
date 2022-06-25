@@ -85,7 +85,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		}},
 		{{
 			Key:   "$sort",
-			Value: bson.D{{Key: "metadata.role_position", Value: -1}},
+			Value: bson.D{{Key: "state.role_position", Value: -1}},
 		}},
 		{{Key: "$skip", Value: (page - 1) * limit}},
 		{{
@@ -126,7 +126,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		}},
 		{{
 			Key:   "$sort",
-			Value: bson.D{{Key: "users.metadata.role_position", Value: -1}, {Key: "users.username", Value: 1}},
+			Value: bson.D{{Key: "users.state.role_position", Value: -1}, {Key: "users.username", Value: 1}},
 		}},
 	})
 	if err != nil {
