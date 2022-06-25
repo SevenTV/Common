@@ -109,6 +109,11 @@ func (a *MockInstance) DownloadFile(ctx context.Context, output io.WriterAt, opt
 	}
 }
 
+// TODO
+func (a *MockInstance) SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error {
+	return nil
+}
+
 func (a *MockInstance) ComposeKey(s ...string) string {
 	return path.Join(s...)
 }
