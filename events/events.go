@@ -76,7 +76,7 @@ const (
 	OpcodeResume      Opcode = 34 // S - Resume the previous session and receive missed events
 	OpcodeSubscribe   Opcode = 35 // S - Subscribe to an event
 	OpcodeUnsubscribe Opcode = 36 // S - Unsubscribe from an event
-	OpcodeSignal      Opcode = 36 // S - Emit a spectator signal
+	OpcodeSignal      Opcode = 37 // S - Emit a spectator signal
 )
 
 func (op Opcode) String() string {
