@@ -9,7 +9,7 @@ import (
 )
 
 type EntitlementData interface {
-	bson.Raw | EntitlementDataBase | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataPaint | EntitlementDataRole | EntitlementDataEmoteSet
+	bson.Raw | EntitlementDataBase | EntitlementDataBaseSelectable | EntitlementDataSubscription | EntitlementDataBadge | EntitlementDataPaint | EntitlementDataRole | EntitlementDataEmoteSet
 }
 
 // Entitlement is a binding between a resource and a user
@@ -24,7 +24,7 @@ type Entitlement[D EntitlementData] struct {
 	// The user who is entitled to the item
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
 	// Eligibility conditions for this entitlement
-	Condition EntitlementCondition `json:"condition,omitempty" bson:"condition,omitempty"`
+	Condition EntitlementCondition `json:"condition" bson:"condition"`
 	// Whether this entitlement is currently inactive
 	Disabled bool `json:"disabled,omitempty" bson:"disabled,omitempty"`
 	// Information about the app that created this entitlement
@@ -45,11 +45,12 @@ func (e Entitlement[D]) ToRaw() Entitlement[bson.Raw] {
 
 	raw, _ := bson.Marshal(e.Data)
 	return Entitlement[bson.Raw]{
-		ID:       e.ID,
-		Kind:     e.Kind,
-		Data:     raw,
-		UserID:   e.UserID,
-		Disabled: e.Disabled,
+		ID:        e.ID,
+		Kind:      e.Kind,
+		Data:      raw,
+		UserID:    e.UserID,
+		Disabled:  e.Disabled,
+		Condition: e.Condition,
 	}
 }
 
@@ -57,11 +58,12 @@ func ConvertEntitlement[D EntitlementData](c Entitlement[bson.Raw]) (Entitlement
 	var d D
 	err := bson.Unmarshal(c.Data, &d)
 	c2 := Entitlement[D]{
-		ID:       c.ID,
-		Kind:     c.Kind,
-		Data:     d,
-		UserID:   c.UserID,
-		Disabled: c.Disabled,
+		ID:        c.ID,
+		Kind:      c.Kind,
+		Data:      d,
+		UserID:    c.UserID,
+		Disabled:  c.Disabled,
+		Condition: c.Condition,
 	}
 
 	return c2, err
@@ -81,6 +83,12 @@ const (
 type EntitlementDataBase struct {
 	// The ID of the subscription
 	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+}
+
+type EntitlementDataBaseSelectable struct {
+	// The ID of the subscription
+	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+	Selected        bool               `json:"selected" bson:"selected"`
 }
 
 // EntitledSubscription Subscription binding in an Entitlement
