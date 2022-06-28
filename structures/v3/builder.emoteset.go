@@ -116,7 +116,7 @@ func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteS
 	return esb
 }
 
-func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
+func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) (*EmoteSetBuilder, int) {
 	ind := -1
 	for i := range esb.EmoteSet.Emotes {
 		if esb.EmoteSet.Emotes[i].ID.IsZero() {
@@ -129,11 +129,11 @@ func (esb *EmoteSetBuilder) RemoveActiveEmote(id ObjectID) *EmoteSetBuilder {
 		break
 	}
 	if ind == -1 {
-		return esb // did not find index
+		return esb, ind // did not find index
 	}
 
 	copy(esb.EmoteSet.Emotes[ind:], esb.EmoteSet.Emotes[ind+1:])
 	esb.EmoteSet.Emotes = esb.EmoteSet.Emotes[:len(esb.EmoteSet.Emotes)-1]
 	esb.Update.Pull("emotes", bson.M{"id": id})
-	return esb
+	return esb, ind
 }

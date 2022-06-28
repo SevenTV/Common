@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/aggregations"
@@ -199,6 +200,24 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				Timestamp: at,
 				ActorID:   actor.ID,
 			})
+
+			// Publish a message to the Event API
+			_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+				Type: events.EventTypeUpdateEmoteSet,
+				Body: events.ChangeMap{
+					ID:   esb.EmoteSet.ID,
+					Kind: structures.ObjectKindEmoteSet,
+					Pushed: []events.ChangeField{{
+						Key: "emotes",
+						Value: structures.ActiveEmote{
+							ID:        tgt.ID,
+							Name:      tgt.Name,
+							Timestamp: at,
+							ActorID:   actor.ID,
+						}.ToPublic(tgt.emote.ToPublic(m.id.CDN)),
+					}},
+				},
+			}).ToRaw())
 		case structures.ListItemActionUpdate, structures.ListItemActionRemove:
 			// The emote must already be active
 			found := false
@@ -234,12 +253,49 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						Position: int32(ind),
 					})
 					esb.UpdateActiveEmote(tgt.ID, tgt.Name)
+
+					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+						Type: events.EventTypeUpdateEmoteSet,
+						Body: events.ChangeMap{
+							ID:   esb.EmoteSet.ID,
+							Kind: structures.ObjectKindEmoteSet,
+							Updated: []events.ChangeField{{
+								Key:      "emotes",
+								Index:    int32(ind),
+								OldValue: ae,
+								Value: structures.ActiveEmote{
+									ID:        tgt.ID,
+									Name:      tgt.Name,
+									Timestamp: ae.Timestamp,
+									ActorID:   actor.ID,
+									Emote:     tgt.emote,
+								}.ToPublic(tgt.emote.ToPublic(m.id.CDN)),
+							}},
+						},
+					}).ToRaw())
 				}
 			} else if tgt.Action == structures.ListItemActionRemove {
-				esb.RemoveActiveEmote(tgt.ID)
+				_, ind := esb.RemoveActiveEmote(tgt.ID)
 				c.WriteArrayRemoved(structures.ActiveEmote{
 					ID: tgt.ID,
 				})
+
+				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+					Type: events.EventTypeUpdateEmoteSet,
+					Body: events.ChangeMap{
+						ID:   esb.EmoteSet.ID,
+						Kind: structures.ObjectKindEmoteSet,
+						Pulled: []events.ChangeField{{
+							Key:   "emotes",
+							Index: int32(ind),
+							Value: structures.ActiveEmote{
+								ID:      tgt.ID,
+								Name:    tgt.Name,
+								ActorID: actor.ID,
+							}.ToPublic(structures.PublicEmote{}),
+						}},
+					},
+				}).ToRaw())
 			}
 		}
 	}

@@ -66,14 +66,19 @@ type ChangeMap struct {
 	Updated []ChangeField `json:"updated,omitempty"`
 	// A list of removed fields
 	Removed []ChangeField `json:"removed,omitempty"`
+	// A list of items pushed to an array
+	Pushed []ChangeField `json:"pushed,omitempty"`
+	// A list of items pulled from an array
+	Pulled []ChangeField `json:"pulled,omitempty"`
 	// A full object. Only available during a "create" event
 	Object json.RawMessage `json:"object,omitempty"`
 }
 
 type ChangeField struct {
 	Key      string `json:"key"`
-	OldValue any    `json:"old_value"`
-	NewValue any    `json:"new_value"`
+	Index    int32  `json:"index,omitempty"`
+	OldValue any    `json:"old_value,omitempty"`
+	Value    any    `json:"value"`
 }
 
 type SessionMutation struct {
