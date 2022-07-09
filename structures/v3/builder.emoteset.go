@@ -69,9 +69,9 @@ func (esb *EmoteSetBuilder) SetParentID(id *ObjectID) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) SetEmoteSlots(slots int32) *EmoteSetBuilder {
-	esb.EmoteSet.EmoteSlots = slots
-	esb.Update.Set("emote_slots", slots)
+func (esb *EmoteSetBuilder) SetCapacity(slots int32) *EmoteSetBuilder {
+	esb.EmoteSet.Capacity = slots
+	esb.Update.Set("capacity", slots)
 	return esb
 }
 

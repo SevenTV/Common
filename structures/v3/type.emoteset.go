@@ -11,7 +11,7 @@ type EmoteSet struct {
 	// The emote set's name
 	Name string `json:"name" bson:"name"`
 	// Search tags for the emote set
-	Tags []string `json:"tags,omitempty" bson:"tags,omitempty"`
+	Tags []string `json:"tags" bson:"tags"`
 	// Whether or not the emote set can be edited
 	Immutable bool `json:"immutable" bson:"immutable"`
 	// If true, the set is "privileged" and can only be modified by its owner or a super administrator, regardless of the "Edit Any Emote Set" permission
@@ -19,18 +19,28 @@ type EmoteSet struct {
 	// The emotes assigned to this set
 	Emotes []ActiveEmote `json:"emotes" bson:"emotes"`
 	// The maximum amount of emotes this set is allowed to contain
-	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
+	Capacity int32 `json:"capacity" bson:"capacity"`
 	// The ID of the parent set. If defined, this set is treated as a child set
 	// and its emotes are derived from the parent
-	ParentID *ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	ParentID *ObjectID `json:"parent_id" bson:"parent_id"`
 	// The ID of the user who owns this emote set
 	OwnerID ObjectID `json:"owner_id" bson:"owner_id"`
 
-	// TODO: filters, i.e allow set to be used only in specific channels
+	// Conditions governing how this emote set may be utilized
+	Condition EmoteSetCondition `json:"condition" bson:"condition"`
 
 	// Relational
 
 	Owner *User `json:"owner,omitempty" bson:"owner_user,skip,omitempty"`
+}
+
+type EmoteSetCondition struct {
+	// If true, this emote set may be assigned to users and used globally
+	//
+	// - This is affected by the channels property
+	Bindable bool `json:"bindable" bson:"bindable"`
+	// A list of channel IDs (user connections) where this set is allowed to be used. If empty it is unrestricted
+	Channels []string `json:"channels"`
 }
 
 const (

@@ -10,7 +10,7 @@ type PublicActiveEmote struct {
 	ID        primitive.ObjectID `json:"id"`
 	Name      string             `json:"name"`
 	Flags     ActiveEmoteFlag    `json:"flags"`
-	Timestamp time.Time          `json:"timestap"`
+	Timestamp time.Time          `json:"timestamp"`
 	ActorID   primitive.ObjectID `json:"actor_id"`
 
 	Emote *PublicEmote `json:"emote,omitempty"`
