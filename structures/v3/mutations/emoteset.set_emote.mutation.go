@@ -171,10 +171,10 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 			// Verify that the set has available slots
 			if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
-				if len(set.Emotes) >= int(set.EmoteSlots) {
+				if len(set.Emotes) >= int(set.Capacity) {
 					return errors.ErrNoSpaceAvailable().
 						SetDetail("This set does not have enough slots").
-						SetFields(errors.Fields{"SLOTS": set.EmoteSlots})
+						SetFields(errors.Fields{"CAPACITY": set.Capacity})
 				}
 			}
 
@@ -204,11 +204,16 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			// Publish a message to the Event API
 			_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 				Type: events.EventTypeUpdateEmoteSet,
+				Condition: map[string]string{
+					"object_id": esb.EmoteSet.ID.Hex(),
+				},
 				Body: events.ChangeMap{
-					ID:   esb.EmoteSet.ID,
-					Kind: structures.ObjectKindEmoteSet,
+					ID:    esb.EmoteSet.ID,
+					Kind:  structures.ObjectKindEmoteSet,
+					Actor: actor.ToPublic(),
 					Pushed: []events.ChangeField{{
-						Key: "emotes",
+						Key:   "emotes",
+						Index: int32(len(esb.EmoteSet.Emotes)),
 						Value: structures.ActiveEmote{
 							ID:        tgt.ID,
 							Name:      tgt.Name,
@@ -256,20 +261,23 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 						Type: events.EventTypeUpdateEmoteSet,
+						Condition: map[string]string{
+							"object_id": esb.EmoteSet.ID.Hex(),
+						},
 						Body: events.ChangeMap{
-							ID:   esb.EmoteSet.ID,
-							Kind: structures.ObjectKindEmoteSet,
+							ID:    esb.EmoteSet.ID,
+							Kind:  structures.ObjectKindEmoteSet,
+							Actor: actor.ToPublic(),
 							Updated: []events.ChangeField{{
 								Key:      "emotes",
 								Index:    int32(ind),
-								OldValue: ae,
+								OldValue: ae.ToPublic(structures.PublicEmote{}),
 								Value: structures.ActiveEmote{
 									ID:        tgt.ID,
 									Name:      tgt.Name,
 									Timestamp: ae.Timestamp,
 									ActorID:   actor.ID,
-									Emote:     tgt.emote,
-								}.ToPublic(tgt.emote.ToPublic(m.id.CDN)),
+								}.ToPublic(structures.PublicEmote{}),
 							}},
 						},
 					}).ToRaw())
@@ -282,13 +290,17 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 					Type: events.EventTypeUpdateEmoteSet,
+					Condition: map[string]string{
+						"object_id": esb.EmoteSet.ID.Hex(),
+					},
 					Body: events.ChangeMap{
-						ID:   esb.EmoteSet.ID,
-						Kind: structures.ObjectKindEmoteSet,
+						ID:    esb.EmoteSet.ID,
+						Kind:  structures.ObjectKindEmoteSet,
+						Actor: actor.ToPublic(),
 						Pulled: []events.ChangeField{{
 							Key:   "emotes",
 							Index: int32(ind),
-							Value: structures.ActiveEmote{
+							OldValue: structures.ActiveEmote{
 								ID:      tgt.ID,
 								Name:    tgt.Name,
 								ActorID: actor.ID,

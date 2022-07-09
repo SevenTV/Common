@@ -60,6 +60,8 @@ type ChangeMap struct {
 	ID primitive.ObjectID `json:"id"`
 	// The type of the object
 	Kind structures.ObjectKind `json:"kind"`
+	// The user who made changes to the object
+	Actor structures.PublicUser `json:"actor"`
 	// A list of added fields
 	Added []ChangeField `json:"added,omitempty"`
 	// A list of updated fields
@@ -89,7 +91,7 @@ type SessionMutation struct {
 }
 
 type SessionMutationEvent struct {
-	Action  structures.ListItemAction `json:"action"`
-	Type    EventType                 `json:"type"`
-	Targets []string                  `json:"targets"`
+	Action    structures.ListItemAction `json:"action"`
+	Type      EventType                 `json:"type"`
+	Condition map[string]string         `json:"condition"`
 }

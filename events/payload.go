@@ -28,8 +28,8 @@ type HeartbeatPayload struct {
 }
 
 type SubscribePayload struct {
-	Type    EventType `json:"type"`
-	Targets []string  `json:"targets"`
+	Type      EventType         `json:"type"`
+	Condition map[string]string `json:"condition"`
 }
 
 type UnsubscribePayload struct {
@@ -38,7 +38,10 @@ type UnsubscribePayload struct {
 
 type DispatchPayload struct {
 	Type EventType `json:"type"`
+	// Detailed changes to an object
 	Body ChangeMap `json:"body"`
+	// A map of conditions that must match subscriptions in order for this dispatch to be delivered
+	Condition map[string]string `json:"condition,omitempty"`
 }
 
 type SignalPayload struct {
