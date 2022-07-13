@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 // SetEmote: enable, edit or disable active emotes in the set
@@ -75,7 +76,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		}, aggregations.GetEmoteRelationshipOwner(aggregations.UserRelationshipOptions{Roles: true, Editors: true})...))
 		err = multierror.Append(err, cur.All(ctx, &targetEmotes)).ErrorOrNil()
 		if err != nil {
-			return err
+			return errors.ErrUnknownEmote()
 		}
 		for _, e := range targetEmotes {
 			for _, ver := range e.Versions {
@@ -322,12 +323,17 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		esb.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(&esb.EmoteSet); err != nil {
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		zap.S().Errorw("mongo, failed to write changes to emote set",
+			"emote_set_id", esb.EmoteSet.ID.Hex(),
+		)
+		return errors.ErrInternalServerError()
 	}
 
 	// Write audit log entry
 	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
-		return err
+		zap.S().Errorw("mongo, failed to write audit log entry for changes to emote set",
+			"emote_set_id", esb.EmoteSet.ID.Hex(),
+		)
 	}
 
 	esb.MarkAsTainted()

@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
@@ -169,13 +168,14 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			result := make(map[string]int, 1)
 			if err == nil {
 				cur.Next(ctx)
-				if err = multierror.Append(cur.Decode(&result), cur.Close(ctx)).ErrorOrNil(); err != nil {
+				if err = cur.Decode(&result); err != nil {
 					if err != io.EOF {
 						zap.S().Errorw("mongo, couldn't count",
 							"error", err,
 						)
 					}
 				}
+				_ = cur.Close(ctx)
 			}
 
 			// Return total count & cache

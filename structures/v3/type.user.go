@@ -318,6 +318,8 @@ type UserConnectionDataYoutube struct {
 	ID          string `json:"id" bson:"id"`
 	Title       string `json:"title" bson:"title"`
 	Description string `json:"description" bson:"description"`
+	ViewCount   int64  `json:"view_count" bson:"view_count"`
+	SubCount    int64  `json:"sub_count" bson:"sub_count"`
 }
 
 type UserEditor struct {
