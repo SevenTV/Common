@@ -21,39 +21,39 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 	// Check for actor's permission to do this
 	actor := opt.Actor
 	victim := &ub.User
-	if actor != nil && actor.ID != victim.ID {
-		ok := actor.HasPermission(structures.RolePermissionManageUsers)
-		for _, ed := range victim.Editors {
-			if ed.ID != actor.ID {
-				continue
-			}
-			// actor is editor
-			// actor has permission to modify victim's emotes
-			if ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
-				ok = true
-			}
-		}
-		if !ok {
-			return errors.ErrInsufficientPrivilege().SetDetail("You are not an editor of this user")
-		}
-	}
+	if !opt.SkipValidation {
+		if actor.ID != victim.ID { // actor is modfiying another user
+			notPrivileged := errors.ErrInsufficientPrivilege().SetDetail("You are not allowed to change the active Emote Set of this user")
 
-	// Validate that the emote set exists and can be enabled
-	if !opt.EmoteSetID.IsZero() {
-		set := &structures.EmoteSet{}
-		if err := m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-			"_id": opt.EmoteSetID,
-		}).Decode(set); err != nil {
-			if err == mongo.ErrNoDocuments {
-				return errors.ErrUnknownEmoteSet()
+			if !actor.HasPermission(structures.RolePermissionManageUsers) { // actor is not a moderator
+				ed, ok, _ := victim.GetEditor(actor.ID)
+				if !ok { // actor is not an editor of the victim
+					return notPrivileged
+				}
+
+				if !ed.HasPermission(structures.UserEditorPermissionManageEmoteSets) { // actor lacks the necessary permission
+					return notPrivileged
+				}
 			}
-			return errors.ErrInternalServerError().SetDetail(err.Error())
 		}
 
-		if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != actor.ID {
-			return errors.ErrInsufficientPrivilege().
-				SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
-				SetDetail("You do not own this emote set")
+		// Validate that the emote set exists and can be enabled
+		if !opt.EmoteSetID.IsZero() {
+			set := &structures.EmoteSet{}
+			if err := m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
+				"_id": opt.EmoteSetID,
+			}).Decode(set); err != nil {
+				if err == mongo.ErrNoDocuments {
+					return errors.ErrUnknownEmoteSet()
+				}
+				return errors.ErrInternalServerError().SetDetail(err.Error())
+			}
+
+			if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) && set.OwnerID != victim.ID {
+				return errors.ErrInsufficientPrivilege().
+					SetFields(errors.Fields{"owner_id": set.OwnerID.Hex()}).
+					SetDetail("You cannot assign another user's Emote Set to your channel")
+			}
 		}
 	}
 
@@ -86,8 +86,9 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 }
 
 type SetUserActiveEmoteSet struct {
-	EmoteSetID   primitive.ObjectID
-	Platform     structures.UserConnectionPlatform
-	Actor        *structures.User
-	ConnectionID string
+	EmoteSetID     primitive.ObjectID
+	Platform       structures.UserConnectionPlatform
+	Actor          *structures.User
+	ConnectionID   string
+	SkipValidation bool
 }

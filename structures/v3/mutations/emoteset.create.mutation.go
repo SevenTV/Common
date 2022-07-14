@@ -24,8 +24,33 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	}
 
 	// Check actor's permissions
-	if opt.Actor != nil && !opt.Actor.HasPermission(structures.RolePermissionEditEmoteSet) {
-		return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{"MISSING_PERMISSION": "EDIT_EMOTE_SET"})
+	actor := opt.Actor
+	if !opt.SkipValidation {
+		if actor == nil {
+			return errors.ErrUnauthorized()
+		}
+
+		if !actor.HasPermission(structures.RolePermissionCreateEmoteSet) {
+			return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{"MISSING_PERMISSION": "CREATE_EMOTE_SET"})
+		}
+
+		// The set being created has an owner different to the actor
+		// This requires permission
+		if actor.ID != esb.EmoteSet.OwnerID && !actor.HasPermission(structures.RolePermissionManageUsers) {
+			noPrivilege := errors.ErrInsufficientPrivilege().SetDetail("You are not allowed to create an Emote Set on behalf of this user")
+
+			if err := m.mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+				"_id": esb.EmoteSet.OwnerID,
+			}).Decode(&esb.EmoteSet.Owner); err != nil {
+				return errors.ErrUnknownUser()
+			}
+
+			ed, ok, _ := esb.EmoteSet.Owner.GetEditor(actor.ID)
+			if !ok || !ed.HasPermission(structures.UserEditorPermissionManageEmoteSets) {
+				return noPrivilege
+			}
+
+		}
 	}
 
 	// Create the emote set
