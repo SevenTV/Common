@@ -161,6 +161,10 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		wg.Add(1)
 		go func() { // Run a separate pipeline to return the total count that could be paginated
 			defer wg.Done()
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+
 			cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
 				pipeline,
 				mongo.Pipeline{
@@ -245,12 +249,14 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	if err != nil {
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	v := &aggregatedEmotesResult{}
 	cur.Next(ctx)
 	if err = cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return nil, 0, errors.ErrNoItems()
 		}
+
 		return nil, 0, err
 	}
 
@@ -265,6 +271,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		if e.ID.IsZero() {
 			continue
 		}
+
 		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
 			e.OwnerID = primitive.NilObjectID
 		} else {
