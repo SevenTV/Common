@@ -129,8 +129,12 @@ type UserDiscriminator uint8
 type UserConnectionList []UserConnection[bson.Raw]
 
 // Twitch returns the first Twitch user connection
-func (ucl UserConnectionList) Twitch() (UserConnection[UserConnectionDataTwitch], int, error) {
+func (ucl UserConnectionList) Twitch(filter ...string) (UserConnection[UserConnectionDataTwitch], int, error) {
 	for idx, v := range ucl {
+		if len(filter) > 0 && !utils.Contains(filter, v.ID) {
+			continue // does not pass filter
+		}
+
 		if v.Platform == UserConnectionPlatformTwitch {
 			conn, err := ConvertUserConnection[UserConnectionDataTwitch](v)
 			return conn, idx, err
