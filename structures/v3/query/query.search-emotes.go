@@ -155,7 +155,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	// Complete the pipeline
 	totalCount, countErr := q.redis.RawClient().Get(ctx, string(queryKey)).Int()
 	wg := sync.WaitGroup{}
-	defer wg.Wait() // wait for total count to finish
 
 	if countErr == redis.Nil {
 		wg.Add(1)
@@ -281,6 +280,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 		result = append(result, e)
 	}
+
+	// wait for total count to finish
+	wg.Wait()
 
 	return result, totalCount, nil
 }
