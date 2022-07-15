@@ -118,12 +118,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	items := []structures.Message[bson.Raw]{}
 
-	// Set limit?
-	limit := mongo.Pipeline{}
-	if opt.Limit != 0 {
-		limit = append(limit, bson.D{{Key: "$limit", Value: opt.Limit}})
-	}
-
 	// Create the pipeline
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, aggregations.Combine(
 		// Search message read states
@@ -131,7 +125,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 			{{Key: "$sort", Value: bson.M{"_id": -1}}},
 			{{Key: "$match", Value: filter}},
 		},
-		limit,
 		mongo.Pipeline{
 			{{
 				Key: "$lookup",
