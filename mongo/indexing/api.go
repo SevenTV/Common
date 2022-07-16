@@ -165,4 +165,13 @@ var DatabaseRefAPI = []collectionRef{
 			},
 		},
 	},
+
+	// Collection: Audit Logs
+	{
+		Name: string(mongo.CollectionNameAuditLogs),
+		Indexes: []mongo.IndexModel{
+			{Keys: bson.M{"target_id": -1}},
+			{Keys: bson.M{"actor_id": -1}},
+		},
+	},
 }
