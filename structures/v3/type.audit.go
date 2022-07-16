@@ -106,7 +106,7 @@ const (
 type AuditLogChangeSingleValue struct {
 	New      any   `json:"n" bson:"n"`
 	Old      any   `json:"o" bson:"o"`
-	Position int32 `json:"p,omitempty" bson:"p,omitempty"`
+	Position int32 `json:"p" bson:"p"`
 }
 
 type AuditLogChangeArrayChange struct {

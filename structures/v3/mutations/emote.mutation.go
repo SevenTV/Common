@@ -188,9 +188,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if oldVer == nil {
 				continue // cannot update version that didn't exist
 			}
+
+			o := make(map[string]any)
+			n := make(map[string]any)
 			c := structures.AuditLogChange{
 				Key:    "versions",
-				Format: structures.AuditLogChangeFormatArrayChange,
+				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 
 			// Update: listed
@@ -199,26 +202,37 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 					return errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify listed state of version %s", strconv.Itoa(i))
 				}
+
+				n["listed"] = ver.State.Listed
+				o["listed"] = oldVer.State.Listed
 				changeCount++
 			}
 			if ver.Name != "" && ver.Name != oldVer.Name {
 				if err := ver.Validator().Name(); err != nil {
 					return err
 				}
+
+				n["name"] = ver.Name
+				o["name"] = oldVer.Name
 				changeCount++
 			}
 			if ver.Description != "" && ver.Description != oldVer.Description {
 				if err := ver.Validator().Description(); err != nil {
 					return err
 				}
+
+				n["description"] = ver.Description
+				o["description"] = oldVer.Description
 				changeCount++
 			}
+
 			if changeCount > 0 {
 				c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
-					New:      ver,
-					Old:      oldVer,
+					New:      n,
+					Old:      o,
 					Position: int32(i),
 				})
+				log.AddChanges(&c)
 			}
 		}
 	}
