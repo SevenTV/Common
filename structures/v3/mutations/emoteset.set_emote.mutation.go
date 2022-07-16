@@ -91,19 +91,17 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	// The actor must have access to the emote set
 	if set.OwnerID != actor.ID && !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
 		if set.Privileged && !actor.HasPermission(structures.RolePermissionSuperAdministrator) {
-			return errors.ErrInsufficientPrivilege().SetDetail("emote set is privileged")
+			return errors.ErrInsufficientPrivilege().SetDetail("This set is privileged")
 		}
 		if set.Owner != nil {
-			for _, ed := range set.Owner.Editors {
-				if ed.ID != actor.ID {
-					continue
-				}
-				if !ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
-					return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
-						"MISSING_EDITOR_PERMISSION": "MODIFY_EMOTES",
-					})
-				}
-				break
+			ed, ok, _ := set.Owner.GetEditor(actor.ID)
+			if !ok {
+				return errors.ErrInsufficientPrivilege().SetDetail("You do not have permission to modify this emote set")
+			}
+			if !ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
+				return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+					"MISSING_EDITOR_PERMISSION": "MODIFY_EMOTES",
+				})
 			}
 		}
 	}
