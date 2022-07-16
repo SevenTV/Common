@@ -152,14 +152,19 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 	}
 
-	// Complete the pipeline
+	mtx := q.mtx("SearchEmotes")
+	mtx.Lock()
+
 	totalCount, countErr := q.redis.RawClient().Get(ctx, string(queryKey)).Int()
 	wg := sync.WaitGroup{}
 
 	if countErr == redis.Nil {
 		wg.Add(1)
 		go func() { // Run a separate pipeline to return the total count that could be paginated
-			defer wg.Done()
+			defer func() {
+				mtx.Unlock()
+				wg.Done()
+			}()
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 			defer cancel()
@@ -185,7 +190,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 			// Return total count & cache
 			totalCount = result["count"]
-			dur := utils.Ternary(query == "", time.Minute*10, time.Hour*1)
+			dur := utils.Ternary(query == "", time.Hour*4, time.Hour*2)
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
 				zap.S().Errorw("redis, failed to save total list count of emotes() gql query",
 					"error", err,
@@ -194,7 +199,10 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 				)
 			}
 		}()
+	} else {
+		mtx.Unlock()
 	}
+
 	// Paginate and fetch the relevant emotes
 	result := []structures.Emote{}
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
