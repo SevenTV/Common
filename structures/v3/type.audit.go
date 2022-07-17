@@ -71,7 +71,7 @@ func (alc *AuditLogChange) WriteSingleValues(old any, new any) *AuditLogChange {
 
 func (alc *AuditLogChange) WriteArrayAdded(values ...any) *AuditLogChange {
 	ac := &AuditLogChangeArrayChange{}
-	alc.Format = AuditLogChangeFormatSingleValue
+	alc.Format = AuditLogChangeFormatArrayChange
 
 	ac.Added = append(ac.Added, values...)
 	alc.Value, _ = bson.Marshal(ac)
