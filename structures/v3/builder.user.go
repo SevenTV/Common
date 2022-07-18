@@ -118,14 +118,17 @@ func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder
 	return ub
 }
 
-func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, visible bool) *UserBuilder {
-	for _, e := range ub.User.Editors {
-		if e.ID == id {
-			return ub // editor already added.
+func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, visible bool) (UserEditor, int, *UserBuilder) {
+	i := 0
+	ed := UserEditor{}
+
+	for i, ed = range ub.User.Editors {
+		if ed.ID == id {
+			return ed, i, ub // editor already added.
 		}
 	}
 
-	ed := UserEditor{
+	ed = UserEditor{
 		ID:          id,
 		Permissions: permissions,
 		Visible:     visible,
@@ -133,41 +136,46 @@ func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, 
 	}
 	ub.User.Editors = append(ub.User.Editors, ed)
 	ub.Update.AddToSet("editors", ed)
-	return ub
+	return ed, i + 1, ub
 }
 
-func (ub *UserBuilder) UpdateEditor(id ObjectID, permissions UserEditorPermission, visible bool) *UserBuilder {
-	ind := -1
-	for i, e := range ub.User.Editors {
-		if e.ID == id {
-			ind = i
+func (ub *UserBuilder) UpdateEditor(id ObjectID, permissions UserEditorPermission, visible bool) (UserEditor, int, *UserBuilder) {
+	i := 0
+	ed := UserEditor{}
+
+	for i, ed = range ub.User.Editors {
+		if ed.ID == id {
 			break
 		}
 	}
+	if ed.ID.IsZero() {
+		return ed, -1, ub
+	}
 
-	v := ub.User.Editors[ind]
+	v := ub.User.Editors[i]
 	v.Permissions = permissions
 	v.Visible = visible
-	ub.Update.Set(fmt.Sprintf("editors.%d", ind), v)
-	return ub
+	ub.Update.Set(fmt.Sprintf("editors.%d", i), v)
+	return ed, i, ub
 }
 
-func (ub *UserBuilder) RemoveEditor(id ObjectID) *UserBuilder {
-	ind := -1
-	for i := range ub.User.Editors {
+func (ub *UserBuilder) RemoveEditor(id ObjectID) (UserEditor, int, *UserBuilder) {
+	i := 0
+	ed := UserEditor{}
+
+	for i, ed = range ub.User.Editors {
 		if ub.User.Editors[i].ID != id {
 			continue
 		}
-		ind = i
 		break
 	}
-	if ind == -1 {
-		return ub // did not find index
+	if ed.ID.IsZero() {
+		return ed, -1, ub
 	}
 
-	copy(ub.User.Editors[ind:], ub.User.Editors[ind+1:])
+	copy(ub.User.Editors[i:], ub.User.Editors[i+1:])
 	ub.User.Editors[len(ub.User.Editors)-1] = UserEditor{}
 	ub.User.Editors = ub.User.Editors[:len(ub.User.Editors)-1]
 	ub.Update.Pull("editors", bson.M{"id": id})
-	return ub
+	return ed, i, ub
 }

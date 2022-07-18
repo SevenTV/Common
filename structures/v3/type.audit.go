@@ -39,13 +39,11 @@ const (
 
 	// Range: 30-69 (User)
 
-	AuditLogKindCreateUser       AuditLogKind = 30 // user was created
-	AuditLogKindDeleteUser       AuditLogKind = 31 // user was deleted
-	AuditLogKindBanUser          AuditLogKind = 32 // user was banned
-	AuditLogKindEditUser         AuditLogKind = 33 // user was edited
-	AuditLogKindUnban            AuditLogKind = 36 // user was unbanned
-	AuditLogKindAddUserEditor    AuditLogKind = 37 // editor added to user
-	AuditLogKindRemoveUserEditor AuditLogKind = 38 // editor removed from user
+	AuditLogKindCreateUser AuditLogKind = 30 // user was created
+	AuditLogKindDeleteUser AuditLogKind = 31 // user was deleted
+	AuditLogKindBanUser    AuditLogKind = 32 // user was banned
+	AuditLogKindEditUser   AuditLogKind = 33 // user was edited
+	AuditLogKindUnban      AuditLogKind = 36 // user was unbanned
 
 	// Range: 70-79 (Emote Set)
 

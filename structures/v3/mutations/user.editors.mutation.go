@@ -7,6 +7,8 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuilder, opt UserEditorsOptions) error {
@@ -40,21 +42,61 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 		}
 	}
 
+	c := &structures.AuditLogChange{
+		Format: structures.AuditLogChangeFormatArrayChange,
+		Key:    "editors",
+	}
+	log := structures.NewAuditLogBuilder(structures.AuditLog{}).
+		SetKind(structures.AuditLogKindEditUser).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindUser).
+		SetTargetID(target.ID).
+		AddChanges(c)
+
 	switch opt.Action {
 	// add editor
 	case structures.ListItemActionAdd:
-		ub.AddEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+		ed, _, _ := ub.User.GetEditor(editor.ID)
+		if !ed.ID.IsZero() {
+			return errors.ErrInvalidRequest().SetDetail("User is already an editor")
+		}
+
+		ed, _, _ = ub.AddEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+		c.WriteArrayAdded(ed)
 	case structures.ListItemActionUpdate:
-		ub.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+		oldEd, _, _ := ub.User.GetEditor(editor.ID)
+		if oldEd.ID.IsZero() {
+			return errors.ErrInvalidRequest().SetDetail("User is not an editor")
+		}
+
+		ed, i, _ := ub.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
+
+		c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
+			New:      ed,
+			Old:      oldEd,
+			Position: int32(i),
+		})
 	case structures.ListItemActionRemove:
-		ub.RemoveEditor(editor.ID)
+		ed, _, _ := ub.RemoveEditor(editor.ID)
+		if ed.ID.IsZero() {
+			return errors.ErrInvalidRequest().SetDetail("User is not an editor")
+		}
+
+		c.WriteArrayRemoved(ed)
 	}
 
 	// Write mutation
-	if _, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
+	if err := m.mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 		"_id": target.ID,
-	}, ub.Update); err != nil {
+	}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&ub.User); err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	// Write audit log entry
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+		zap.S().Errorw("mongo, failed to write audit log entry for editor changes to user",
+			"user_id", ub.User.ID.Hex(),
+		)
 	}
 
 	ub.MarkAsTainted()
