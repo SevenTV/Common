@@ -1,7 +1,10 @@
 package structures
 
 import (
+	"fmt"
+	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/seventv/common/utils"
@@ -88,6 +91,10 @@ type EmoteFile struct {
 	CacheControl string `json:"cache_control"`
 }
 
+func (ef EmoteFile) IsStatic() bool {
+	return strings.HasSuffix(ef.Name, fmt.Sprintf("_static%s", path.Ext(ef.Name)))
+}
+
 func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 	var count int32
 	for _, f := range ev.ImageFiles {
@@ -101,7 +108,7 @@ func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
 	files := []EmoteFile{}
 	for _, f := range ev.ImageFiles {
-		if omitStatic && (ev.Animated && f.FrameCount == 1) {
+		if omitStatic && f.IsStatic() {
 			continue
 		}
 		files = append(files, f)
