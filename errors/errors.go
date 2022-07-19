@@ -43,12 +43,13 @@ var (
 
 	// Client Type Errors
 
-	ErrInvalidRequest     apiErrorFn = DefineError(70410, "Invalid Request", 400)
-	ErrBadObjectID        apiErrorFn = DefineError(70411, "Bad Object ID", 400)
-	ErrBadInt             apiErrorFn = DefineError(70412, "Bad Int", 400)
-	ErrValidationRejected apiErrorFn = DefineError(70413, "Validation Rejected", 400)
-	ErrInternalField      apiErrorFn = DefineError(70414, "Internal Field", 400)
-	ErrEmptyField         apiErrorFn = DefineError(70415, "Empty Field", 400)
+	ErrInvalidRequest     apiErrorFn = DefineError(70410, "Invalid Request", 400)     // client sent an invalid request
+	ErrBadObjectID        apiErrorFn = DefineError(70411, "Bad Object ID", 400)       // object id is not valid
+	ErrBadInt             apiErrorFn = DefineError(70412, "Bad Int", 400)             // bad int value
+	ErrValidationRejected apiErrorFn = DefineError(70413, "Validation Rejected", 400) // validation failed
+	ErrInternalField      apiErrorFn = DefineError(70414, "Internal Field", 400)      // a client requested or tried to modify an internal field
+	ErrEmptyField         apiErrorFn = DefineError(70415, "Empty Field", 400)         // a required field is empty
+	ErrRateLimited        apiErrorFn = DefineError(70429, "Rate Limit Reached", 429)  // the client is being rate limited
 
 	// Other Client Errors
 
