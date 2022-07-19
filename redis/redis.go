@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
+	redis_sync "github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"go.uber.org/zap"
 )
 
@@ -70,6 +72,12 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		}
 	}()
 
+	if opt.EnableSync {
+		pool := redis_sync.NewPool(rc)
+
+		inst.sync = redsync.New(pool)
+	}
+
 	return inst, nil
 }
 
@@ -81,4 +89,6 @@ type SetupOptions struct {
 
 	Addresses []string
 	Sentinel  bool
+
+	EnableSync bool
 }

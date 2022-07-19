@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
 	"github.com/seventv/common/sync_map"
 	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
@@ -27,6 +28,7 @@ type Instance interface {
 	Pipeline(ctx context.Context) redis.Pipeliner
 	Subscribe(ctx context.Context, ch chan string, subscribeTo ...Key)
 	ComposeKey(svc string, args ...string) Key
+	Mutex(name Key, ex time.Duration) *redsync.Mutex
 	RawClient() *redis.Client
 }
 
@@ -35,6 +37,7 @@ type redisInst struct {
 	sub *redis.PubSub
 
 	subs sync_map.Map[Key, *subController]
+	sync *redsync.Redsync
 }
 
 type subController struct {

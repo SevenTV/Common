@@ -133,3 +133,13 @@ func (bm BanMap) KeySlice() []primitive.ObjectID {
 	}
 	return v
 }
+
+func (bm BanMap) Get(id primitive.ObjectID) structures.Ban {
+	return bm[id]
+}
+
+func (bm BanMap) Has(id primitive.ObjectID) bool {
+	_, ok := bm[id]
+
+	return ok
+}

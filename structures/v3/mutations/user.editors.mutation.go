@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const EDITORS_MOST_COUNT = 15
+
 func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuilder, opt UserEditorsOptions) error {
 	if ub == nil {
 		return errors.ErrInternalIncompleteMutation()
@@ -56,6 +58,10 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 	switch opt.Action {
 	// add editor
 	case structures.ListItemActionAdd:
+		if len(ub.User.Editors) >= EDITORS_MOST_COUNT {
+			return errors.ErrInvalidRequest().SetDetail("You have reached the maximum amount of editors allowed (%d)", EDITORS_MOST_COUNT)
+		}
+
 		ed, _, _ := ub.User.GetEditor(editor.ID)
 		if !ed.ID.IsZero() {
 			return errors.ErrInvalidRequest().SetDetail("User is already an editor")
