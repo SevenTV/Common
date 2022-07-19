@@ -108,6 +108,10 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		f["data.target_id"] = bson.M{"$in": opt.TargetIDs}
 	}
 
+	for k, v := range opt.Filter {
+		f[k] = v
+	}
+
 	return q.Messages(ctx, f, MessageQueryOptions{
 		Actor: actor,
 		Limit: 100,
