@@ -55,7 +55,8 @@ type User struct {
 }
 
 type UserState struct {
-	RolePosition int `json:"-" bson:"role_position"`
+	RolePosition    int    `json:"-" bson:"role_position"`
+	PendingAvatarID string `json:"-" bson:"pending_avatar_id,omitempty"`
 }
 
 // HasPermission checks relational roles against a permission bit

@@ -114,6 +114,11 @@ func (a *MockInstance) SetACL(ctx context.Context, opts *s3.PutObjectAclInput) e
 	return nil
 }
 
+// TODO
+func (a *MockInstance) CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error {
+	return nil
+}
+
 func (a *MockInstance) ComposeKey(s ...string) string {
 	return path.Join(s...)
 }

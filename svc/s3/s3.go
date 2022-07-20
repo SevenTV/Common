@@ -16,6 +16,7 @@ type Instance interface {
 	UploadFile(ctx context.Context, opts *s3manager.UploadInput) error
 	DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error
 	ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
+	CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error
 	SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error
 	ComposeKey(s ...string) string
 }
@@ -66,6 +67,12 @@ func (a *s3Inst) DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.
 
 func (a *s3Inst) SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error {
 	_, err := a.uploader.S3.PutObjectAclWithContext(ctx, opts)
+
+	return err
+}
+
+func (a *s3Inst) CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error {
+	_, err := a.uploader.S3.CopyObject(opts)
 
 	return err
 }
