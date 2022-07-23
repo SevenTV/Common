@@ -60,7 +60,7 @@ var DatabaseRefAPI = []collectionRef{
 						BSONType: TList{BSONTypeObject},
 						Properties: map[string]*jsonSchema{
 							"id":        {BSONType: TList{BSONTypeString}},
-							"platform":  {BSONType: TList{BSONTypeString}, Enum: []string{"TWITCH", "YOUTUBE"}},
+							"platform":  {BSONType: TList{BSONTypeString}, Enum: []string{"TWITCH", "YOUTUBE", "DISCORD"}},
 							"linked_at": {BSONType: TList{BSONTypeDate}},
 						},
 					}},
