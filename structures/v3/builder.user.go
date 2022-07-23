@@ -92,7 +92,7 @@ func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) *Us
 	// Find connection
 	var conn UserConnection[bson.Raw]
 	for _, c := range ub.User.Connections {
-		if c.Platform != p {
+		if p != "" && c.Platform != p {
 			continue
 		}
 		if filterID != "" && c.ID != filterID {
@@ -116,6 +116,29 @@ func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder
 	ub.Update = ub.Update.AddToSet("connections", conn)
 
 	return ub
+}
+
+func (ub *UserBuilder) RemoveConnection(id string) (*UserBuilder, int) {
+	ind := -1
+	for i := range ub.User.Connections {
+		if ub.User.Connections[i].ID == "" {
+			continue
+		}
+		if ub.User.Connections[i].ID != id {
+			continue
+		}
+		ind = i
+		break
+	}
+	if ind == -1 {
+		return ub, ind // did not find index
+	}
+
+	copy(ub.User.Connections[ind:], ub.User.Connections[ind+1:])
+	ub.User.Connections = ub.User.Connections[:len(ub.User.Connections)-1]
+	ub.Update.Pull("connections", bson.M{"id": id})
+
+	return ub, ind
 }
 
 func (ub *UserBuilder) AddEditor(id ObjectID, permissions UserEditorPermission, visible bool) (UserEditor, int, *UserBuilder) {

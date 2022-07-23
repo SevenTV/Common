@@ -169,6 +169,16 @@ func (ucl UserConnectionList) Discord(filter ...string) (UserConnection[UserConn
 	return UserConnection[UserConnectionDataDiscord]{}, -1, fmt.Errorf("could not find any discord connections")
 }
 
+func (ucl UserConnectionList) Get(id string) (UserConnection[bson.Raw], int) {
+	for idx, v := range ucl {
+		if v.ID == id {
+			return v, idx
+		}
+	}
+
+	return UserConnection[bson.Raw]{}, -1
+}
+
 // UserConnectionPlatform Represents a platform that the app supports
 type UserConnectionPlatform string
 
