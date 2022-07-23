@@ -155,12 +155,23 @@ func (ucl UserConnectionList) YouTube() (UserConnection[UserConnectionDataYoutub
 	return UserConnection[UserConnectionDataYoutube]{}, -1, fmt.Errorf("could not find any youtube connections")
 }
 
+func (ucl UserConnectionList) Discord() (UserConnection[UserConnectionDataDiscord], int, error) {
+	for idx, v := range ucl {
+		if v.Platform == UserConnectionPlatformDiscord {
+			conn, err := ConvertUserConnection[UserConnectionDataDiscord](v)
+			return conn, idx, err
+		}
+	}
+	return UserConnection[UserConnectionDataDiscord]{}, -1, fmt.Errorf("could not find any discord connections")
+}
+
 // UserConnectionPlatform Represents a platform that the app supports
 type UserConnectionPlatform string
 
 var (
 	UserConnectionPlatformTwitch  UserConnectionPlatform = "TWITCH"
 	UserConnectionPlatformYouTube UserConnectionPlatform = "YOUTUBE"
+	UserConnectionPlatformDiscord UserConnectionPlatform = "DISCORD"
 )
 
 type UserType string
@@ -172,7 +183,7 @@ var (
 )
 
 type UserConnectionData interface {
-	bson.Raw | UserConnectionDataTwitch | UserConnectionDataYoutube
+	bson.Raw | UserConnectionDataTwitch | UserConnectionDataYoutube | UserConnectionDataDiscord
 }
 
 // UserConnection: Represents an external connection to a platform for a user
@@ -325,6 +336,24 @@ type UserConnectionDataYoutube struct {
 	Description string `json:"description" bson:"description"`
 	ViewCount   int64  `json:"view_count" bson:"view_count"`
 	SubCount    int64  `json:"sub_count" bson:"sub_count"`
+}
+
+type UserConnectionDataDiscord struct {
+	ID            string `json:"id" bson:"id"`
+	Username      string `json:"username" bson:"username"`
+	Discriminator string `json:"discriminator" bson:"discriminator"`
+	Avatar        string `json:"avatar" bson:"avatar"`
+	Bot           bool   `json:"bot" bson:"bot"`
+	System        bool   `json:"system" bson:"system"`
+	MFAEnabled    bool   `json:"mfa_enabled" bson:"mfa_enabled"`
+	Banner        string `json:"banner" bson:"banner,omitempty"`
+	AccentColor   int64  `json:"accent_color" bson:"accent_color,omitempty"`
+	Locale        string `json:"locale" bson:"locale,omitempty"`
+	Verified      bool   `json:"verified" bson:"verified"`
+	Email         string `json:"email" bson:"email,omitempty"`
+	Flags         int64  `json:"flags" bson:"flags"`
+	PremiumType   uint32 `json:"premium_type" bson:"premium_type"`
+	PublicFlags   uint32 `json:"public_flags" bson:"public_flags"`
 }
 
 type UserEditor struct {

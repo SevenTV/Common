@@ -147,6 +147,13 @@ func PrependSlice[T any](s []T, v T) []T {
 	return s
 }
 
+func SliceRemove[T any](s []T, i int) []T {
+	copy(s[i:], s[i+1:])
+	s = s[:len(s)-1]
+
+	return s
+}
+
 func IsPointer(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
 }

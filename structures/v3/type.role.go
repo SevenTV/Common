@@ -21,6 +21,9 @@ type Role struct {
 	Default bool `json:"default" bson:"default,omitempty"`
 	// whether or not the role
 	Invisible bool `json:"invisible" bson:"invisible,omitempty"`
+
+	// the id of the linked role on discord
+	DiscordID uint64 `json:"discord_id,omitempty" bson:"discord_id,omitempty"`
 }
 
 // HasPermissionBit: Check for specific bit in the role's allowed permissions
@@ -69,6 +72,7 @@ const (
 )
 
 // Administration
+
 // Range: 1 << 54 - 1 << 63
 const (
 	RolePermissionSuperAdministrator RolePermission = 1 << 62 // 4611686018427387904 - (Admin) GRANTS EVERY PERMISSION /!\
