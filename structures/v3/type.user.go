@@ -155,8 +155,12 @@ func (ucl UserConnectionList) YouTube() (UserConnection[UserConnectionDataYoutub
 	return UserConnection[UserConnectionDataYoutube]{}, -1, fmt.Errorf("could not find any youtube connections")
 }
 
-func (ucl UserConnectionList) Discord() (UserConnection[UserConnectionDataDiscord], int, error) {
+func (ucl UserConnectionList) Discord(filter ...string) (UserConnection[UserConnectionDataDiscord], int, error) {
 	for idx, v := range ucl {
+		if len(filter) > 0 && !utils.Contains(filter, v.ID) {
+			continue // does not pass filter
+		}
+
 		if v.Platform == UserConnectionPlatformDiscord {
 			conn, err := ConvertUserConnection[UserConnectionDataDiscord](v)
 			return conn, idx, err
@@ -194,7 +198,7 @@ type UserConnection[D UserConnectionData] struct {
 	// the time at which this connection was linked
 	LinkedAt time.Time `json:"linked_at" bson:"linked_at"`
 	// the maximum amount of emotes this connection may have have enabled, counting the total from active sets
-	EmoteSlots int32 `json:"emote_slots,omitempty" bson:"emote_slots,omitempty"`
+	EmoteSlots int32 `json:"emote_slots" bson:"emote_slots"`
 	// emote sets bound to this connection / channel
 	EmoteSetID ObjectID `json:"emote_set_id,omitempty" bson:"emote_set_id,omitempty"`
 	// third-party connection data

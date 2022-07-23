@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func SignJWT(secret string, claim jwt.Claims) (string, error) {
@@ -27,9 +28,10 @@ type JWTClaimUser struct {
 }
 
 type JWTClaimOAuth2CSRF struct {
-	State       string    `json:"s"`
-	CreatedAt   time.Time `json:"at"`
-	OldRedirect bool      `json:"old,omitempty"`
+	State       string             `json:"s"`
+	CreatedAt   time.Time          `json:"at"`
+	Bind        primitive.ObjectID `json:"bind"`
+	OldRedirect bool               `json:"old,omitempty"`
 
 	jwt.RegisteredClaims
 }
