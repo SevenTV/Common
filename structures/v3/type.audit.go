@@ -18,7 +18,7 @@ type AuditLog struct {
 	Reason string         `json:"reason,omitempty" bson:"reason,omitempty"`
 }
 
-type AuditLogKind int8
+type AuditLogKind uint8
 
 const (
 	// Range: 1-19 (Emote)
@@ -43,13 +43,17 @@ const (
 	AuditLogKindDeleteUser AuditLogKind = 31 // user was deleted
 	AuditLogKindBanUser    AuditLogKind = 32 // user was banned
 	AuditLogKindEditUser   AuditLogKind = 33 // user was edited
-	AuditLogKindUnban      AuditLogKind = 36 // user was unbanned
+	AuditLogKindUnbanUser  AuditLogKind = 36 // user was unbanned
 
 	// Range: 70-79 (Emote Set)
 
 	AuditLogKindCreateEmoteSet AuditLogKind = 70 // emote set was created
 	AuditLogKindUpdateEmoteSet AuditLogKind = 71 // emote set was updated
 	AuditLogKindDeleteEmoteSet AuditLogKind = 72 // emote set was deleted
+
+	// Range: 80-89 (Report)
+	AuditLogKindCreateReport AuditLogKind = 80
+	AuditLogKindUpdateReport AuditLogKind = 81
 )
 
 type AuditLogChange struct {

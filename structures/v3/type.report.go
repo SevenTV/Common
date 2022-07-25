@@ -7,7 +7,8 @@ import (
 )
 
 type Report struct {
-	ID primitive.ObjectID `json:"id" bson:"_id"`
+	ID     primitive.ObjectID `json:"id" bson:"_id"`
+	CaseID string             `json:"case_id" bson:"case_id"`
 	// The type of the target
 	TargetKind ObjectKind `json:"target_kind" bson:"target_kind"`
 	// The ID of the target
@@ -24,6 +25,10 @@ type Report struct {
 	Status ReportStatus `json:"status" bson:"status"`
 	// The date on which the report was created
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	// The date on which the report was closed
+	ClosedAt *time.Time `json:"closed_at,omitempty" bson:"closed_at,omitempty"`
+	// The date on which the report was last updated
+	LastUpdatedAt time.Time `json:"last_updated_at" bson:"last_updated_at"`
 	// The IDs of users assigned to this report
 	AssigneeIDs []primitive.ObjectID `json:"assignee_ids" bson:"assignee_ids"`
 	// Notes (moderator comments)

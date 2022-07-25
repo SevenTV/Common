@@ -3,6 +3,7 @@ package structures
 import (
 	"time"
 
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -52,6 +53,18 @@ func (rb *ReportBuilder) SetBody(body string) *ReportBuilder {
 func (rb *ReportBuilder) SetCreatedAt(t time.Time) *ReportBuilder {
 	rb.Report.CreatedAt = t
 	rb.Update.Set("created_at", t)
+	return rb
+}
+
+func (rb *ReportBuilder) SetClosedAt(t time.Time) *ReportBuilder {
+	rb.Report.ClosedAt = &t
+	rb.Update.Set("closed_at", utils.Ternary(t.IsZero(), nil, &t))
+	return rb
+}
+
+func (rb *ReportBuilder) SetLastUpdatedAt(t time.Time) *ReportBuilder {
+	rb.Report.LastUpdatedAt = t
+	rb.Update.Set("last_updated_at", t)
 	return rb
 }
 
