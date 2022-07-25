@@ -110,6 +110,27 @@ type Object interface {
 	AuditLog | Ban | Cosmetic[bson.Raw] | Emote | EmoteSet | Entitlement[bson.Raw] | Message[bson.Raw] | Report | Role | User
 }
 
+func (k ObjectKind) String() string {
+	switch k {
+	case ObjectKindUser:
+		return "USER"
+	case ObjectKindEmote:
+		return "EMOTE"
+	case ObjectKindEmoteSet:
+		return "EMOTE_SET"
+	case ObjectKindRole:
+		return "ROLE"
+	case ObjectKindEntitlement:
+		return "ENTITLEMENT"
+	case ObjectKindBan:
+		return "BAN"
+	case ObjectKindMessage:
+		return "MESSAGE"
+	default:
+		return ""
+	}
+}
+
 func (k ObjectKind) CollectionName() string {
 	switch k {
 	case ObjectKindUser:

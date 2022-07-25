@@ -13,7 +13,7 @@ type Report struct {
 	// The ID of the target
 	TargetID primitive.ObjectID `json:"target_id" bson:"target_id"`
 	// The ID of the user who created the report
-	ReporterID primitive.ObjectID `json:"reporter_id" bson:"reporter_id"`
+	ActorID primitive.ObjectID `json:"actor_id" bson:"actor_id"`
 	// The report subject (i.e "Stolen Emote")
 	Subject string `json:"subject" bson:"subject"`
 	// The report body (a user-generated text field with details)
@@ -32,7 +32,7 @@ type Report struct {
 	// Relational
 
 	Target    *User  `json:"target" bson:"target,skip,omitempty"`
-	Reporter  *User  `json:"reporter" bson:"reporter,skip,omitempty"`
+	Actor     *User  `json:"reporter" bson:"actor,skip,omitempty"`
 	Assignees []User `json:"assignees" bson:"assignees,skip,omitempty"`
 }
 

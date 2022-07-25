@@ -32,8 +32,8 @@ func (rb *ReportBuilder) SetTargetID(id primitive.ObjectID) *ReportBuilder {
 }
 
 func (rb *ReportBuilder) SetReporterID(id primitive.ObjectID) *ReportBuilder {
-	rb.Report.ReporterID = id
-	rb.Update.Set("reporter_id", id)
+	rb.Report.ActorID = id
+	rb.Update.Set("actor_id", id)
 	return rb
 }
 

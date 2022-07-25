@@ -52,7 +52,7 @@ const ()
 // User / Misc / Special
 // Range: 1 << 13 - 1 << 1 << 29
 const (
-	RolePermissionReportCreate RolePermission = 1 << 13 // 8192 - Allows creating reports
+	RolePermissionCreateReport RolePermission = 1 << 13 // 8192 - Allows creating reports
 	RolePermissionSendMessages RolePermission = 1 << 14 // 16384 - Allows sending messages (i.e comments or user inboxs)
 
 	RolePermissionFeatureZeroWidthEmoteType      RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
@@ -85,7 +85,7 @@ const (
 // All permissions
 const (
 	RolePermissionAll = RolePermissionCreateEmote | RolePermissionEditEmote | RolePermissionEditEmoteSet |
-		RolePermissionReportCreate | RolePermissionFeatureZeroWidthEmoteType | RolePermissionFeatureProfilePictureAnimation |
+		RolePermissionCreateReport | RolePermissionFeatureZeroWidthEmoteType | RolePermissionFeatureProfilePictureAnimation |
 		RolePermissionManageBans | RolePermissionManageRoles | RolePermissionManageReports |
 		RolePermissionEditAnyEmote | RolePermissionEditAnyEmoteSet | RolePermissionSuperAdministrator |
 		RolePermissionManageNews | RolePermissionManageStack | RolePermissionManageCosmetics
