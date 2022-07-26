@@ -1,7 +1,6 @@
 package structures
 
 import (
-	"fmt"
 	"regexp"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -82,14 +81,6 @@ func (u UpdateMap) Clear() {
 		delete(u, k)
 	}
 }
-
-var (
-	ErrUnknownEmote          error = fmt.Errorf("unknown emote")
-	ErrUnknownUser           error = fmt.Errorf("unknown user")
-	ErrInsufficientPrivilege error = fmt.Errorf("insufficient privilege")
-	ErrInternalError         error = fmt.Errorf("internal error occured")
-	ErrIncompleteMutation    error = fmt.Errorf("the mutation struct was not set up properly")
-)
 
 type ObjectID = primitive.ObjectID
 

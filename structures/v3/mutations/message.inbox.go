@@ -21,7 +21,7 @@ func (m *Mutate) SendInboxMessage(ctx context.Context, mb *structures.MessageBui
 	// Check actor permissions
 	actor := opt.Actor
 	if actor == nil || actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionSendMessages) {
-		return structures.ErrInsufficientPrivilege
+		return errors.ErrInsufficientPrivilege()
 	}
 
 	// Find recipients

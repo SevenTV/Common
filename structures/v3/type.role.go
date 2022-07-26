@@ -94,6 +94,8 @@ const (
 type RoleBuilder struct {
 	Update UpdateMap
 	Role   Role
+
+	initial Role
 }
 
 // NewRoleBuilder: create a new role builder
@@ -101,7 +103,14 @@ func NewRoleBuilder(role Role) *RoleBuilder {
 	return &RoleBuilder{
 		Update: UpdateMap{},
 		Role:   role,
+
+		initial: role,
 	}
+}
+
+// Initial returns a pointer to the value first passed to this Builder
+func (eb *RoleBuilder) Initial() Role {
+	return eb.initial
 }
 
 func (rb *RoleBuilder) SetName(name string) *RoleBuilder {

@@ -17,7 +17,7 @@ import (
 
 func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt CreateBanOptions) error {
 	if bb == nil {
-		return structures.ErrIncompleteMutation
+		return errors.ErrInternalIncompleteMutation()
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
 	}
@@ -110,7 +110,7 @@ type CreateBanOptions struct {
 
 func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt EditBanOptions) error {
 	if bb == nil || bb.Ban.ID.IsZero() {
-		return structures.ErrIncompleteMutation
+		return errors.ErrInternalIncompleteMutation()
 	} else if bb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
 	}

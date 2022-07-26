@@ -13,7 +13,7 @@ import (
 // SetRole: add or remove a role for the user
 func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt SetUserRoleOptions) error {
 	if ub == nil {
-		return structures.ErrIncompleteMutation
+		return errors.ErrInternalIncompleteMutation()
 	} else if ub.IsTainted() {
 		return errors.ErrMutateTaintedObject()
 	}
@@ -22,14 +22,16 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 	actor := opt.Actor
 	if actor != nil {
 		if !actor.HasPermission(structures.RolePermissionManageRoles) {
-			return structures.ErrInsufficientPrivilege
+			return errors.ErrInsufficientPrivilege()
 		}
+
 		if len(actor.Roles) == 0 {
-			return structures.ErrInsufficientPrivilege
+			return errors.ErrInsufficientPrivilege()
 		}
-		highestRole := actor.Roles[0]
+
+		highestRole := actor.GetHighestRole()
 		if opt.Role.Position >= highestRole.Position {
-			return structures.ErrInsufficientPrivilege
+			return errors.ErrInsufficientPrivilege()
 		}
 	}
 

@@ -22,7 +22,7 @@ const EMOTE_CLAIMANTS_MOST = 10
 // To account for editor permissions, the "editor_of" relation should be included in the actor's data
 func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt EmoteEditOptions) error {
 	if eb == nil {
-		return structures.ErrIncompleteMutation
+		return errors.ErrInternalIncompleteMutation()
 	} else if eb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
 	}
@@ -38,7 +38,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 		// User is not privileged
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			if emote.OwnerID.IsZero() { // Deny when emote has no owner
-				return structures.ErrInsufficientPrivilege
+				return errors.ErrInsufficientPrivilege()
 			}
 
 			// Check if actor is editor of the emote owner
@@ -55,7 +55,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				}
 			}
 			if emote.OwnerID != actor.ID && !isPermittedEditor { // Deny when not the owner or editor of the owner of the emote
-				return structures.ErrInsufficientPrivilege
+				return errors.ErrInsufficientPrivilege()
 			}
 		}
 	} else if !opt.SkipValidation {
