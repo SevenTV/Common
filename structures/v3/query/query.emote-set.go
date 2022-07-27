@@ -45,7 +45,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			Key: "$set",
 			Value: bson.M{
 				"all_users": bson.M{
-					"$setUnion": bson.A{"$sets.owner_id", "$sets.emotes.actor_id", "$sets.emotes.owner_id"},
+					"$setUnion": bson.A{"$sets.owner_id", "$sets.emotes.actor_id", "$emotes.owner_id"},
 				},
 			},
 		}},
@@ -103,17 +103,14 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 
 	qb := &QueryBinder{ctx, q}
-	userMap, err := qb.MapUsers(v.Users)
+	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
 	if err != nil {
 		return qr.setError(err)
 	}
-	eOwnerMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
-	if err != nil {
-		return qr.setError(err)
-	}
+
 	emoteMap := make(map[primitive.ObjectID]structures.Emote)
 	for _, emote := range v.Emotes {
-		owner := eOwnerMap[emote.OwnerID]
+		owner := userMap[emote.OwnerID]
 		if !owner.ID.IsZero() {
 			emote.Owner = &owner
 		}
