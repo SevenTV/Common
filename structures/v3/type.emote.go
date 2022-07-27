@@ -108,6 +108,9 @@ func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
 	files := []EmoteFile{}
 	for _, f := range ev.ImageFiles {
+		if contentType != "" && f.ContentType != contentType {
+			continue
+		}
 		if omitStatic && f.IsStatic() {
 			continue
 		}
