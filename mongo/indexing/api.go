@@ -15,6 +15,7 @@ var DatabaseRefAPI = []collectionRef{
 		Indexes: []mongo.IndexModel{
 			{Keys: bson.M{"username": 1}, Options: options.Index().SetUnique(true)},
 			{Keys: bson.M{"connections.id": 1}},
+			{Keys: bson.M{"connections.data.login": 1}},
 			{Keys: bson.M{"connections.emote_set_id": 1}},
 			{Keys: bson.M{"state.role_position": -1}},
 			{Keys: bson.M{"editors.id": -1}},
