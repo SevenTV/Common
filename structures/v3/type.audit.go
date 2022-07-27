@@ -30,6 +30,7 @@ const (
 	AuditLogKindMergeEmote      AuditLogKind = 5 // emote was merged
 	AuditLogKindUndoDeleteEmote AuditLogKind = 6 // deleted emote was restored
 	AuditLogKindEnableEmote     AuditLogKind = 7 // emote was enabled
+	AuditLogKindProcessEmote    AuditLogKind = 8 // a new processing job was ran for this emote
 
 	// Range: 20-29 (Access)
 
