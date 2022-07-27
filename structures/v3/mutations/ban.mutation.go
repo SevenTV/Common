@@ -30,7 +30,7 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 	actorID := primitive.NilObjectID
 	actor := opt.Actor
 	victim := opt.Victim
-	if actor != nil {
+	if !opt.SkipValidation {
 		actorID = actor.ID
 		if victim.ID == actor.ID {
 			return errors.ErrDontBeSilly()
@@ -106,6 +106,7 @@ type CreateBanOptions struct {
 	Actor          *structures.User
 	AnonymousActor bool
 	Victim         *structures.User
+	SkipValidation bool
 }
 
 func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt EditBanOptions) error {
@@ -116,7 +117,7 @@ func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt Edi
 	}
 
 	actor := opt.Actor
-	if actor != nil {
+	if !opt.SkipValidation {
 		if !actor.HasPermission(structures.RolePermissionManageBans) {
 			return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
 				"MISSING_PERMISSION": "MANAGE_BANS",
@@ -133,5 +134,6 @@ func (m *Mutate) EditBan(ctx context.Context, bb *structures.BanBuilder, opt Edi
 }
 
 type EditBanOptions struct {
-	Actor *structures.User
+	Actor          *structures.User
+	SkipValidation bool
 }

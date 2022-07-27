@@ -26,6 +26,7 @@ var (
 	ErrUnauthorized          apiErrorFn = DefineError(70401, "Sign-In Required", 401)       // client is not authenticated
 	ErrInsufficientPrivilege apiErrorFn = DefineError(70403, "Insufficient Privilege", 403) // client lacks privilege
 	ErrDontBeSilly           apiErrorFn = DefineError(70470, "Don't Be Silly", 403)         // client is trying to do something stupid
+	ErrBanned                apiErrorFn = DefineError(70433, "You Are Banned", 403)         // client is banned
 
 	// Client Not Found
 
