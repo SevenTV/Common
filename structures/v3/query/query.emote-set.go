@@ -39,7 +39,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			Key: "$set",
 			Value: bson.M{
 				"all_users": bson.M{
-					"$setUnion": bson.A{bson.A{"$owner_id"}, "$set.emotes.actor_id", "$ext_emotes.owner_id"},
+					"$setUnion": bson.A{bson.A{"$set.owner_id"}, "$set.emotes.actor_id", "$ext_emotes.owner_id"},
 				},
 			},
 		}},
