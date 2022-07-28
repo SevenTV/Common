@@ -14,38 +14,32 @@ import (
 func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[structures.EmoteSet] {
 	qr := &QueryResult[structures.EmoteSet]{}
 	items := []structures.EmoteSet{}
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, mongo.Pipeline{
 		{{Key: "$match", Value: filter}},
 		{{
 			Key: "$group",
 			Value: bson.M{
-				"_id":  nil,
-				"sets": bson.M{"$push": "$$ROOT"},
-			},
-		}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameUsers,
-				LocalField:   "sets.owner_id",
-				ForeignField: "_id",
-				As:           "set_owners",
+				"_id": "$_id",
+				"set": bson.M{
+					"$first": "$$ROOT",
+				},
 			},
 		}},
 		{{
 			Key: "$lookup",
 			Value: mongo.Lookup{
 				From:         mongo.CollectionNameEmotes,
-				LocalField:   "sets.emotes.id",
+				LocalField:   "set.emotes.id",
 				ForeignField: "versions.id",
-				As:           "emotes",
+				As:           "ext_emotes",
 			},
 		}},
 		{{
 			Key: "$set",
 			Value: bson.M{
 				"all_users": bson.M{
-					"$setUnion": bson.A{"$sets.owner_id", "$sets.emotes.actor_id", "$emotes.owner_id"},
+					"$setUnion": bson.A{bson.A{"$owner_id"}, "$set.emotes.actor_id", "$ext_emotes.owner_id"},
 				},
 			},
 		}},
@@ -94,42 +88,39 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 		roleMap[role.ID] = role
 	}
 
-	if ok := cur.Next(ctx); !ok {
-		return qr.setItems(items) // nothing found!
-	}
-	v := &aggregatedEmoteSets{}
-	if err = cur.Decode(v); err != nil {
-		return qr.setItems(items).setError(err)
-	}
+	for cur.Next(ctx) {
+		v := &aggregatedEmoteSets{}
+		if err = cur.Decode(v); err != nil {
+			return qr.setItems(items).setError(err)
+		}
 
-	qb := &QueryBinder{ctx, q}
-	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
-	if err != nil {
-		return qr.setError(err)
-	}
+		qb := &QueryBinder{ctx, q}
+		userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+		if err != nil {
+			return qr.setError(err)
+		}
 
-	emoteMap := make(map[primitive.ObjectID]structures.Emote)
-	for _, emote := range v.Emotes {
-		owner := userMap[emote.OwnerID]
+		emoteMap := make(map[primitive.ObjectID]structures.Emote)
+		for _, emote := range v.Emotes {
+			owner := userMap[emote.OwnerID]
+			if !owner.ID.IsZero() {
+				emote.Owner = &owner
+			}
+			for _, ver := range emote.Versions {
+				emote.ID = ver.ID
+				emoteMap[ver.ID] = emote
+			}
+		}
+
+		owner := userMap[v.Set.OwnerID]
 		if !owner.ID.IsZero() {
-			emote.Owner = &owner
+			v.Set.Owner = &owner
 		}
-		for _, ver := range emote.Versions {
-			emote.ID = ver.ID
-			emoteMap[ver.ID] = emote
-		}
-	}
-
-	for _, set := range v.Sets {
-		owner := userMap[set.OwnerID]
-		if !owner.ID.IsZero() {
-			set.Owner = &owner
-		}
-		for indEmotes, ae := range set.Emotes {
+		for indEmotes, ae := range v.Set.Emotes {
 			if emote, ok := emoteMap[ae.ID]; !ok {
-				set.Emotes[indEmotes].Emote = &structures.DeletedEmote
+				v.Set.Emotes[indEmotes].Emote = &structures.DeletedEmote
 			} else {
-				set.Emotes[indEmotes].Emote = &emote
+				v.Set.Emotes[indEmotes].Emote = &emote
 			}
 
 			// Apply actor user to active emote data?
@@ -138,18 +129,18 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			}
 
 			if actor, ok := userMap[ae.ActorID]; ok {
-				set.Emotes[indEmotes].Actor = &actor
+				v.Set.Emotes[indEmotes].Actor = &actor
 			}
 		}
-		items = append(items, set)
+		items = append(items, v.Set)
 	}
 
 	return qr.setItems(items)
 }
 
 type aggregatedEmoteSets struct {
-	Sets             []structures.EmoteSet              `bson:"sets"`
-	Emotes           []structures.Emote                 `bson:"emotes"`
+	Set              structures.EmoteSet                `bson:"set"`
+	Emotes           []structures.Emote                 `bson:"ext_emotes"`
 	Users            []structures.User                  `bson:"users"`
 	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }
