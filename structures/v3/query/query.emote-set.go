@@ -53,6 +53,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}, options.Find().SetProjection(bson.M{
 		"owner_id":                          1,
 		"name":                              1,
+		"flags":                             1,
 		"versions.id":                       1,
 		"versions.state":                    1,
 		"versions.image_files.name":         1,
