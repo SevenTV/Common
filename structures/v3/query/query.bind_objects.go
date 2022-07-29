@@ -19,8 +19,13 @@ func (q *Query) NewBinder(ctx context.Context) *QueryBinder {
 
 func (qb *QueryBinder) MapUsers(users []structures.User, roleEnts ...structures.Entitlement[bson.Raw]) (map[primitive.ObjectID]structures.User, error) {
 	m := make(map[primitive.ObjectID]structures.User)
+	entOW := len(roleEnts) > 0
 	for _, v := range users {
 		m[v.ID] = v
+
+		if !entOW {
+			roleEnts = append(roleEnts, v.Entitlements...)
+		}
 	}
 
 	m2 := make(map[primitive.ObjectID][]primitive.ObjectID)
