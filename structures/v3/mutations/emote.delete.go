@@ -109,6 +109,23 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		return errors.ErrInternalServerError()
 	}
 
+	// Write audit log
+	alb := structures.NewAuditLogBuilder(structures.AuditLog{
+		Changes: []*structures.AuditLogChange{},
+		Reason:  opt.Reason,
+	}).
+		SetKind(structures.AuditLogKindDeleteEmote).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmote).
+		SetTargetID(eb.Emote.ID)
+
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {
+		zap.S().Errorw("mongo, failed to write audit log during emote deletion",
+			"emote_id", eb.Emote.ID,
+			"error", err,
+		)
+	}
+
 	return nil
 }
 

@@ -49,7 +49,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 
 	// Fetch emotes
 	cur, err = q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, bson.M{
-		"_id": bson.M{"$in": emoteIDs.Values()},
+		"versions.id": bson.M{"$in": emoteIDs.Values()},
 	}, options.Find().SetProjection(bson.M{
 		"owner_id":                          1,
 		"name":                              1,
