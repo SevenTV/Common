@@ -76,6 +76,16 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		if err == redis.Nil { // query if not cached
 			count, _ = q.mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, match)
 			_ = q.redis.SetEX(ctx, k, count, time.Hour*6)
+
+			// Update the emote document
+			_, _ = q.mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
+				"versions.id": emoteID,
+			}, bson.M{
+				"$set": bson.M{
+					"versions.$.state.channel_count":          count,
+					"versions.$.state.channel_count_check_at": time.Now(),
+				},
+			})
 		}
 	}()
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
