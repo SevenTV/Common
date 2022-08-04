@@ -152,6 +152,7 @@ var DatabaseRefAPI = []collectionRef{
 		Name: string(mongo.CollectionNameMessagesRead),
 		Indexes: []mongo.IndexModel{
 			{Keys: bson.M{"message_id": -1}},
+			{Keys: bson.M{"recipient_id": -1}},
 		},
 	},
 	// Collection: Messages
