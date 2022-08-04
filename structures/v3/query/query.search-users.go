@@ -42,7 +42,7 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 			filter["$expr"] = bson.M{
 				"$gt": bson.A{
 					bson.M{"$indexOfCP": bson.A{
-						bson.M{"$toLower": "$username"},
+						"$username",
 						strings.ToLower(opt.Query),
 					}},
 					-1,
@@ -144,13 +144,7 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 			_ = cur.Close(ctx)
 		}
 		totalCount = result["count"]
-		if err = q.redis.SetEX(ctx, queryKey, totalCount, time.Minute*1); err != nil {
-			zap.S().Errorw("redis, failed to save total list count of \"Search Users\" query",
-				"error", err,
-				"key", queryKey,
-				"count", totalCount,
-			)
-		}
+		_ = q.redis.SetEX(ctx, queryKey, totalCount, time.Hour)
 	}
 
 	// Get roles
