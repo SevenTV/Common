@@ -158,6 +158,14 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			c.WriteSingleValues(init.OwnerID, emote.OwnerID)
 			log.AddChanges(&c)
 		}
+
+		if utils.DifferentArray(init.Tags, emote.Tags) {
+			eb.SetTags(emote.Tags, true)
+			c := structures.NewAuditChange("tags").
+				WriteSingleValues(init.Tags, emote.Tags)
+			log.AddChanges(c)
+		}
+
 		if init.Flags != emote.Flags {
 			f := emote.Flags
 
