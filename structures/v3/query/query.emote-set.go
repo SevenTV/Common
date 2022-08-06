@@ -150,7 +150,9 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 			set.Owner = &owner
 		}
 		for indEmotes, ae := range set.Emotes {
-			if emote, ok := emoteMap[ae.ID]; !ok {
+			emote, ok := emoteMap[ae.ID]
+
+			if !ok {
 				set.Emotes[indEmotes].Emote = &structures.DeletedEmote
 			} else {
 				set.Emotes[indEmotes].Emote = &emote

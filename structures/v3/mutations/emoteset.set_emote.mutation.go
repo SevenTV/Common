@@ -168,6 +168,11 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 			}
 
+			// Check zero-width permission
+			if tgt.emote.Flags&structures.EmoteFlagsZeroWidth != 0 && !actor.HasPermission(structures.RolePermissionFeatureZeroWidthEmoteType) {
+				return errors.ErrInsufficientPrivilege().SetDetail("You must be a subscriber to use zero-width emotes")
+			}
+
 			// Verify that the set has available slots
 			if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
 				if len(set.Emotes) >= int(set.Capacity) {
