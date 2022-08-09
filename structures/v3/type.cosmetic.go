@@ -77,6 +77,7 @@ const (
 
 type CosmeticDataBadge struct {
 	ID      primitive.ObjectID `json:"id" bson:"-"`
+	Tag     string             `json:"tag" bson:"tag"`
 	Tooltip string             `json:"tooltip" bson:"tooltip"`
 	Misc    bool               `json:"misc,omitempty" bson:"misc"`
 }
