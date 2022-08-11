@@ -33,14 +33,15 @@ var (
 	ErrUnknownEmote          apiErrorFn = DefineError(70440, "Unknown Emote", 404)           // can't find emote object
 	ErrUnknownEmoteSet       apiErrorFn = DefineError(70441, "Unknown Emote Set", 404)       // can't find emote set object
 	ErrUnknownUser           apiErrorFn = DefineError(70442, "Unknown User", 404)            // can't find user object
-	ErrUnknownUserConnection apiErrorFn = DefineError(70442, "Unknown User Connection", 404) // can't find user connection object
-	ErrUnknownRole           apiErrorFn = DefineError(70443, "Unknown Role", 404)            // can't find role object
-	ErrUnknownReport         apiErrorFn = DefineError(70444, "Unknown Report", 404)          // can't find report object
-	ErrUnknownMessage        apiErrorFn = DefineError(70445, "Unknown Message", 404)         // can't find message object
-	ErrUnknownBan            apiErrorFn = DefineError(70446, "Unknown Ban", 404)             // can't find ban object
-	ErrUnknownRoute          apiErrorFn = DefineError(70447, "Unknown Route", 404)           // the requested api endpoint doesn't exist
-	ErrUnknownSession        apiErrorFn = DefineError(70448, "Unknown Session", 404)         // can't find requested session (used by event api)
-	ErrNoItems               apiErrorFn = DefineError(70449, "No Items Found", 404)          // search returned nothing
+	ErrUnknownUserConnection apiErrorFn = DefineError(70443, "Unknown User Connection", 404) // can't find user connection object
+	ErrUnknownRole           apiErrorFn = DefineError(70444, "Unknown Role", 404)            // can't find role object
+	ErrUnknownReport         apiErrorFn = DefineError(70445, "Unknown Report", 404)          // can't find report object
+	ErrUnknownMessage        apiErrorFn = DefineError(70446, "Unknown Message", 404)         // can't find message object
+	ErrUnknownBan            apiErrorFn = DefineError(70447, "Unknown Ban", 404)             // can't find ban object
+	ErrUnknownSession        apiErrorFn = DefineError(70449, "Unknown Session", 404)         // can't find requested session (used by event api)
+	ErrUnknownCosmetic       apiErrorFn = DefineError(70450, "Unknown Cosmetic", 404)        // can't find cosmetic object
+	ErrUnknownRoute          apiErrorFn = DefineError(70498, "Unknown Route", 404)           // the requested api endpoint doesn't exist
+	ErrNoItems               apiErrorFn = DefineError(70499, "No Items Found", 404)          // search returned nothing
 
 	// Client Type Errors
 

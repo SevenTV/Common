@@ -55,10 +55,11 @@ type SetupOptions struct {
 }
 
 type (
-	Pipeline       = mongo.Pipeline
-	WriteModel     = mongo.WriteModel
-	InsertOneModel = mongo.InsertOneModel
-	UpdateOneModel = mongo.UpdateOneModel
-	DeleteOneModel = mongo.DeleteOneModel
-	IndexModel     = mongo.IndexModel
+	Pipeline        = mongo.Pipeline
+	WriteModel      = mongo.WriteModel
+	InsertOneModel  = mongo.InsertOneModel
+	UpdateOneModel  = mongo.UpdateOneModel
+	DeleteOneModel  = mongo.DeleteOneModel
+	UpdateManyModel = mongo.UpdateManyModel
+	IndexModel      = mongo.IndexModel
 )
