@@ -75,6 +75,10 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 			return errors.ErrInvalidRequest().SetDetail("User is not an editor")
 		}
 
+		if oldEd.Permissions == opt.EditorPermissions && oldEd.Visible == opt.EditorVisible {
+			return nil // no change
+		}
+
 		ed, i, _ := ub.UpdateEditor(editor.ID, opt.EditorPermissions, opt.EditorVisible)
 
 		c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
