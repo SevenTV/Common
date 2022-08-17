@@ -9,6 +9,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -82,12 +83,16 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		return v
 	}
 
+	versionIDs := make([]primitive.ObjectID, len(eb.Emote.Versions))
+
 	// Mark the emote as deleted
 	if opt.VersionID.IsZero() {
-		for _, ver := range eb.Emote.Versions {
+		for i, ver := range eb.Emote.Versions {
 			ver.State.Lifecycle = structures.EmoteLifecycleDeleted
 			ver = privatize(ver)
 			eb.UpdateVersion(ver.ID, ver)
+
+			versionIDs[i] = ver.ID
 		}
 	} else {
 		ver, _ := eb.Emote.GetVersion(opt.VersionID)
@@ -107,6 +112,16 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 			"error", err,
 		)
 		return errors.ErrInternalServerError()
+	}
+
+	// Remove any mod requests for the emote
+	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
+		"kind":             structures.MessageKindModRequest,
+		"data.target_kind": structures.ObjectKindEmote,
+		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
+	})
+	if err != nil {
+		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
 	}
 
 	// Write audit log
