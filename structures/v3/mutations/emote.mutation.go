@@ -195,10 +195,17 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			c.WriteSingleValues(init.Flags, emote.Flags)
 			log.AddChanges(&c)
 		}
+
 		// Change versions
+		oldVersions := eb.InitialVersions()
+		oldVersionMap := make(map[primitive.ObjectID]structures.EmoteVersion)
+		for _, v := range oldVersions {
+			oldVersionMap[v.ID] = v
+		}
+
 		for i, ver := range emote.Versions {
-			oldVer := eb.InitialVersions()[i]
-			if oldVer == nil || ver.ID != oldVer.ID {
+			oldVer := oldVersionMap[ver.ID]
+			if oldVer.ID.IsZero() {
 				continue // cannot update version that didn't exist
 			}
 

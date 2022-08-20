@@ -45,10 +45,10 @@ func (eb *EmoteBuilder) MarkAsTainted() {
 	eb.tainted = true
 }
 
-func (eb *EmoteBuilder) InitialVersions() []*EmoteVersion {
-	a := make([]*EmoteVersion, len(eb.initialVersions))
+func (eb *EmoteBuilder) InitialVersions() []EmoteVersion {
+	a := make([]EmoteVersion, len(eb.initialVersions))
 	for i, v := range eb.initialVersions {
-		a[i] = &v
+		a[i] = v
 	}
 	return a
 }
