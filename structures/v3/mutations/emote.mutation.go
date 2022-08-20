@@ -265,13 +265,15 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 		}
 
 		// Write audit log entry
-		go func() {
-			if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
-				zap.S().Errorw("failed to write audit log",
-					"error", err,
-				)
-			}
-		}()
+		if len(log.AuditLog.Changes) > 0 {
+			go func() {
+				if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+					zap.S().Errorw("failed to write audit log",
+						"error", err,
+					)
+				}
+			}()
+		}
 	}
 
 	eb.MarkAsTainted()
