@@ -204,7 +204,7 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 				Key: "$set",
 				Value: bson.M{
 					"all_users": bson.M{
-						"$setUnion": bson.A{"$sets.owner_id", "$sets.emotes.actor_id", "$sets.emotes.owner_id"},
+						"$setUnion": bson.A{"$sets.owner_id", "$sets.emotes.owner_id"},
 					},
 				},
 			}},
