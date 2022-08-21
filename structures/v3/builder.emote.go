@@ -47,9 +47,8 @@ func (eb *EmoteBuilder) MarkAsTainted() {
 
 func (eb *EmoteBuilder) InitialVersions() []EmoteVersion {
 	a := make([]EmoteVersion, len(eb.initialVersions))
-	for i, v := range eb.initialVersions {
-		a[i] = v
-	}
+	copy(a, eb.initialVersions)
+
 	return a
 }
 

@@ -114,7 +114,7 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 
 	return q.Messages(ctx, f, MessageQueryOptions{
 		Actor: actor,
-		Limit: 100,
+		Limit: opt.Limit,
 	})
 }
 
@@ -175,6 +175,7 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 					return m
 				}(),
 			}},
+			{{Key: "$limit", Value: opt.Limit}},
 			{{
 				Key:   "$unset",
 				Value: bson.A{"read_states"},
@@ -263,6 +264,7 @@ type ModRequestMessagesQueryOptions struct {
 	Targets             map[structures.ObjectKind]bool
 	TargetIDs           []primitive.ObjectID
 	Filter              bson.M
+	Limit               int
 	SkipPermissionCheck bool
 }
 
