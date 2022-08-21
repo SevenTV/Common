@@ -114,16 +114,36 @@ type MessageDataEmoteComment struct {
 }
 
 type MessageDataInbox struct {
-	Subject      string            `json:"subject" bson:"subject"`                               // the message's subject
-	Content      string            `json:"content" bson:"content"`                               // the content of the message
-	Important    bool              `json:"important,omitempty" bson:"important,omitempty"`       // whether or not the message is important
-	Starred      bool              `json:"starred,omitempty" bson:"starred,omitempty"`           // whether or not the message is started
-	Pinned       bool              `json:"pinned,omitempty" bson:"pinned,omitempty"`             // whether or not the message is pinned
-	Locked       bool              `json:"locked,omitempty" bson:"locked,omitempty"`             // whether or not replies can be added to this message
-	Locale       bool              `json:"locale,omitempty" bson:"locale,omitempty"`             // whether or not this message can use locale strings
-	System       bool              `json:"system,omitempty" bson:"system,omitempty"`             // whether or not the message is a system message
-	Placeholders map[string]string `json:"placeholders,omitempty" bson:"placeholders,omitempty"` // placeholders for localization
+	Subject      string             `json:"subject" bson:"subject"`                               // the message's subject
+	Components   []MessageComponent `json:"components" bson:"components"`                         // the message's components
+	Content      string             `json:"content" bson:"content"`                               // the content of the message
+	Important    bool               `json:"important,omitempty" bson:"important,omitempty"`       // whether or not the message is important
+	Starred      bool               `json:"starred,omitempty" bson:"starred,omitempty"`           // whether or not the message is started
+	Pinned       bool               `json:"pinned,omitempty" bson:"pinned,omitempty"`             // whether or not the message is pinned
+	Locked       bool               `json:"locked,omitempty" bson:"locked,omitempty"`             // whether or not replies can be added to this message
+	Locale       bool               `json:"locale,omitempty" bson:"locale,omitempty"`             // whether or not this message can use locale strings
+	System       bool               `json:"system,omitempty" bson:"system,omitempty"`             // whether or not the message is a system message
+	Placeholders map[string]string  `json:"placeholders,omitempty" bson:"placeholders,omitempty"` // placeholders for localization
 }
+
+type MessageComponent struct {
+	Type    MessageComponentType `json:"type" bson:"type"`                           // the type of component
+	Heading uint8                `json:"heading,omitempty" bson:"heading,omitempty"` // component heading level
+	Weight  uint8                `json:"weight,omitempty" bson:"weight,omitempty"`   // component font weight (1-9)
+	Color   utils.Color          `json:"color" bson:"color"`                         // text color (ineffective on some types)
+	Locale  bool                 `json:"locale" bson:"locale"`                       // whether or not the content of this component is a locale string
+	Content string               `json:"content" bson:"content"`                     // the content of the component
+}
+
+type MessageComponentType string
+
+const (
+	MessageComponentTypeImage    MessageComponentType = "image"
+	MessageComponentTypeLink     MessageComponentType = "link"
+	MessageComponentTypeText     MessageComponentType = "text"
+	MessageComponentTypeMention  MessageComponentType = "mention"
+	MessageComponentTypeInteract MessageComponentType = "interact"
+)
 
 type MessageDataPlaceholder struct {
 	Key   string `json:"key" bson:"key"`
@@ -133,6 +153,8 @@ type MessageDataPlaceholder struct {
 type MessageDataModRequest struct {
 	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
 	TargetID   primitive.ObjectID `json:"target_id" bson:"target_id"`
+
+	Target bson.Raw `json:"target" bson:"target,omitempty"`
 }
 
 // MessageRead read/unread state for a message
