@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -70,6 +71,9 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 		SetTargetKind(structures.ObjectKindEmote).
 		SetTargetID(emote.ID)
 
+	// Record field changes to emit an event about this mutation
+	changeFields := []events.ChangeField{}
+
 	if !opt.SkipValidation {
 		init := eb.Initial()
 		validator := eb.Emote.Validator()
@@ -78,12 +82,19 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			if err := validator.Name(); err != nil {
 				return err
 			}
+
 			c := structures.AuditLogChange{
 				Key:    "name",
 				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 			c.WriteSingleValues(init.Name, emote.Name)
 			log.AddChanges(&c)
+
+			changeFields = append(changeFields, events.ChangeField{
+				Key:      "name",
+				OldValue: init.Name,
+				Value:    emote.Name,
+			})
 		}
 		if init.OwnerID != emote.OwnerID {
 			// Verify that the new emote exists
@@ -148,15 +159,21 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				}
 				// At this point the actor has successfully claimed ownership of the emote and we clear the list of claimants
 				eb.Update.Set("state.claimants", []primitive.ObjectID{})
-			}
 
-			// Write as audit change
-			c := structures.AuditLogChange{
-				Key:    "owner_id",
-				Format: structures.AuditLogChangeFormatSingleValue,
+				// Write as audit change
+				c := structures.AuditLogChange{
+					Key:    "owner_id",
+					Format: structures.AuditLogChangeFormatSingleValue,
+				}
+				c.WriteSingleValues(init.OwnerID, emote.OwnerID)
+				log.AddChanges(&c)
+
+				changeFields = append(changeFields, events.ChangeField{
+					Key:      "owner_id",
+					OldValue: init.OwnerID,
+					Value:    emote.OwnerID,
+				})
 			}
-			c.WriteSingleValues(init.OwnerID, emote.OwnerID)
-			log.AddChanges(&c)
 		}
 
 		if utils.DifferentArray(init.Tags, emote.Tags) {
@@ -169,6 +186,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 
 			c.WriteSingleValues(init.Tags, emote.Tags)
 			log.AddChanges(&c)
+
+			changeFields = append(changeFields, events.ChangeField{
+				Key:      "tags",
+				OldValue: init.Tags,
+				Value:    emote.Tags,
+			})
 		}
 
 		if init.Flags != emote.Flags {
@@ -194,6 +217,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			}
 			c.WriteSingleValues(init.Flags, emote.Flags)
 			log.AddChanges(&c)
+
+			changeFields = append(changeFields, events.ChangeField{
+				Key:      "flags",
+				OldValue: init.Flags,
+				Value:    emote.Flags,
+			})
 		}
 
 		// Change versions
@@ -216,6 +245,8 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				Format: structures.AuditLogChangeFormatSingleValue,
 			}
 
+			localChangeFields := []events.ChangeField{}
+
 			// Update: listed
 			changeCount := 0
 			if ver.State.Listed != oldVer.State.Listed {
@@ -226,6 +257,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				n["listed"] = ver.State.Listed
 				o["listed"] = oldVer.State.Listed
 				changeCount++
+
+				localChangeFields = append(localChangeFields, events.ChangeField{
+					Key:      "listed",
+					OldValue: oldVer.State.Listed,
+					Value:    ver.State.Listed,
+				})
 			}
 			if ver.Name != "" && ver.Name != oldVer.Name {
 				if err := ver.Validator().Name(); err != nil {
@@ -235,6 +272,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				n["name"] = ver.Name
 				o["name"] = oldVer.Name
 				changeCount++
+
+				localChangeFields = append(localChangeFields, events.ChangeField{
+					Key:      "name",
+					OldValue: oldVer.Name,
+					Value:    ver.Name,
+				})
 			}
 			if ver.Description != "" && ver.Description != oldVer.Description {
 				if err := ver.Validator().Description(); err != nil {
@@ -244,6 +287,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				n["description"] = ver.Description
 				o["description"] = oldVer.Description
 				changeCount++
+
+				localChangeFields = append(localChangeFields, events.ChangeField{
+					Key:      "description",
+					OldValue: oldVer.Description,
+					Value:    ver.Description,
+				})
 			}
 
 			if changeCount > 0 {
@@ -253,6 +302,14 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					Position: int32(i),
 				})
 				log.AddChanges(&c)
+
+				// Nested field changes
+				changeFields = append(changeFields, events.ChangeField{
+					Key:    "versions",
+					Nested: true,
+					Index:  utils.PointerOf(int32(i)),
+					Value:  localChangeFields,
+				})
 			}
 		}
 	}
@@ -280,6 +337,24 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					)
 				}
 			}()
+		}
+
+		// Emit to the Event API
+		for _, ver := range emote.Versions {
+			go func(ver structures.EmoteVersion) {
+				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+					Type: events.EventTypeUpdateEmote,
+					Condition: map[string]string{
+						"object_id": ver.ID.Hex(),
+					},
+					Body: events.ChangeMap{
+						ID:      ver.ID,
+						Kind:    structures.ObjectKindEmote,
+						Actor:   actor.ToPublic(),
+						Updated: changeFields,
+					},
+				}).ToRaw())
+			}(ver)
 		}
 	}
 

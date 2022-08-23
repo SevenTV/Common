@@ -99,7 +99,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				return errors.ErrInsufficientPrivilege().SetDetail("You do not have permission to modify this emote set")
 			}
 			if !ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
-				return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+				return errors.ErrInsufficientPrivilege().SetDetail("You do not have permission to change content in this emote set").SetFields(errors.Fields{
 					"MISSING_EDITOR_PERMISSION": "MODIFY_EMOTES",
 				})
 			}
@@ -217,7 +217,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Actor: actor.ToPublic(),
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
-						Index: int32(len(esb.EmoteSet.Emotes)),
+						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes))),
 						Value: structures.ActiveEmote{
 							ID:        tgt.ID,
 							Name:      tgt.Name,
@@ -274,7 +274,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 							Actor: actor.ToPublic(),
 							Updated: []events.ChangeField{{
 								Key:      "emotes",
-								Index:    int32(ind),
+								Index:    utils.PointerOf(int32(ind)),
 								OldValue: ae.ToPublic(structures.PublicEmote{}),
 								Value: structures.ActiveEmote{
 									ID:        tgt.ID,
@@ -303,7 +303,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						Actor: actor.ToPublic(),
 						Pulled: []events.ChangeField{{
 							Key:   "emotes",
-							Index: int32(ind),
+							Index: utils.PointerOf(int32(ind)),
 							OldValue: structures.ActiveEmote{
 								ID:      tgt.ID,
 								Name:    tgt.Name,
