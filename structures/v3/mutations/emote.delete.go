@@ -49,19 +49,23 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 				return errors.ErrInsufficientPrivilege()
 			}
 		}
+
+		if opt.Undo && !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+			return errors.ErrInsufficientPrivilege().SetDetail("You cannot reinstate an emote after it has been deleted")
+		}
 	} else if !opt.SkipValidation {
 		// if validation is not skipped then an Actor is mandatory
 		return errors.ErrUnauthorized()
 	}
 
-	privatize := func(v structures.EmoteVersion) structures.EmoteVersion {
+	setACL := func(v structures.EmoteVersion, acl string) structures.EmoteVersion {
 		wg := sync.WaitGroup{}
 		wg.Add(len(v.ImageFiles))
 		for i, f := range v.ImageFiles {
 			// Set object ACL
 			go func(f structures.EmoteFile) {
 				if err := m.s3.SetACL(ctx, &s3.PutObjectAclInput{
-					ACL:    aws.String("private"),
+					ACL:    aws.String(acl),
 					Bucket: &f.Bucket,
 					Key:    &f.Key,
 				}); err != nil {
@@ -86,10 +90,13 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 	versionIDs := make([]primitive.ObjectID, len(eb.Emote.Versions))
 
 	// Mark the emote as deleted
+	acl := utils.Ternary(opt.Undo, "public-read", "private")
+	lifecycle := utils.Ternary(opt.Undo, structures.EmoteLifecycleLive, structures.EmoteLifecycleDeleted)
+
 	if opt.VersionID.IsZero() {
 		for i, ver := range eb.Emote.Versions {
-			ver.State.Lifecycle = structures.EmoteLifecycleDeleted
-			ver = privatize(ver)
+			ver.State.Lifecycle = lifecycle
+			ver = setACL(ver, acl)
 			eb.UpdateVersion(ver.ID, ver)
 
 			versionIDs[i] = ver.ID
@@ -99,8 +106,8 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		if ver.ID.IsZero() {
 			return errors.ErrUnknownEmote().SetDetail("Specified version does not exist")
 		}
-		ver.State.Lifecycle = structures.EmoteLifecycleDeleted
-		ver = privatize(ver)
+		ver.State.Lifecycle = lifecycle
+		ver = setACL(ver, acl)
 		eb.UpdateVersion(ver.ID, ver)
 	}
 
@@ -115,13 +122,15 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 	}
 
 	// Remove any mod requests for the emote
-	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
-		"kind":             structures.MessageKindModRequest,
-		"data.target_kind": structures.ObjectKindEmote,
-		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
-	})
-	if err != nil {
-		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+	if !opt.Undo {
+		_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
+			"kind":             structures.MessageKindModRequest,
+			"data.target_kind": structures.ObjectKindEmote,
+			"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
+		})
+		if err != nil {
+			zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+		}
 	}
 
 	// Write audit log
@@ -129,7 +138,7 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		Changes: []*structures.AuditLogChange{},
 		Reason:  opt.Reason,
 	}).
-		SetKind(structures.AuditLogKindDeleteEmote).
+		SetKind(utils.Ternary(opt.Undo, structures.AuditLogKindUndoDeleteEmote, structures.AuditLogKindDeleteEmote)).
 		SetActor(actor.ID).
 		SetTargetKind(structures.ObjectKindEmote).
 		SetTargetID(eb.Emote.ID)
@@ -146,6 +155,8 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 type DeleteEmoteOptions struct {
 	Actor *structures.User
+	// If true, this is a un-delete operation
+	Undo bool
 	// If specified, only this version will be deleted
 	//
 	// by default, all versions will be deleted
