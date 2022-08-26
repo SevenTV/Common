@@ -81,7 +81,6 @@ var DatabaseRefAPI = []collectionRef{
 			},
 			{Keys: bson.D{
 				{Key: "name", Value: "text"},
-				{Key: "tags", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
 			{Keys: bson.M{"versions.state.channel_count": -1}},
 		},
