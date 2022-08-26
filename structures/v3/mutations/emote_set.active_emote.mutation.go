@@ -258,7 +258,12 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 							Flags:     tgt.Flags,
 							Timestamp: ae.Timestamp,
 						},
-						Old:      ae,
+						Old: structures.ActiveEmote{
+							ID:        ae.ID,
+							Name:      ae.Name,
+							Flags:     ae.Flags,
+							Timestamp: ae.Timestamp,
+						},
 						Position: int32(ind),
 					})
 					esb.UpdateActiveEmote(tgt.ID, tgt.Name)
