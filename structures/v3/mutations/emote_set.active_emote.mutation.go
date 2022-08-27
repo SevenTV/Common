@@ -132,7 +132,9 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		}
 		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name)
 		tgt.emote.Name = tgt.Name
-		if err := tgt.emote.Validator().Name(); err != nil {
+
+		// Reject bad name if the action isn't REMOVE
+		if err := tgt.emote.Validator().Name(); err != nil && tgt.Action != structures.ListItemActionRemove {
 			return err
 		}
 
