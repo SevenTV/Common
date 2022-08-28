@@ -14,20 +14,23 @@ type PublicEmote struct {
 	Name      string             `json:"name"`
 	Flags     EmoteFlag          `json:"flags"`
 	Tags      []string           `json:"tags"`
-	Images    []string           `json:"images"`
+	Images    []PublicImage      `json:"images"`
 	CreatedAt time.Time          `json:"created_at"`
 }
 
 func (e *Emote) ToPublic(cdnBase string) PublicEmote {
 	version := e.GetLatestVersion(true)
-	images := []string{}
+	images := []PublicImage{}
 
 	for _, file := range version.ImageFiles {
 		if version.Animated && file.FrameCount == 1 {
 			continue
 		}
 
-		images = append(images, fmt.Sprintf("//%s/%s", cdnBase, file.Key))
+		f := file.ToPublic()
+		f.URL = fmt.Sprintf("//%s/%s", cdnBase, file.Key)
+
+		images = append(images, f)
 	}
 
 	return PublicEmote{
@@ -41,7 +44,7 @@ func (e *Emote) ToPublic(cdnBase string) PublicEmote {
 	}
 }
 
-type PublicEmoteFile struct {
+type PublicImage struct {
 	Name       string            `json:"name"`
 	Format     PublicEmoteFormat `json:"format"`
 	Width      int32             `json:"width"`
@@ -51,13 +54,13 @@ type PublicEmoteFile struct {
 	Size       int64             `json:"size"`
 }
 
-func (ef EmoteFile) ToPublic() PublicEmoteFile {
+func (ef EmoteFile) ToPublic() PublicImage {
 	var format PublicEmoteFormat
 	if s := strings.Split(ef.ContentType, "image/"); len(s) == 2 {
 		format = PublicEmoteFormat(strings.ToUpper(s[1]))
 	}
 
-	return PublicEmoteFile{
+	return PublicImage{
 		Name:       ef.Name,
 		Format:     format,
 		Width:      ef.Width,
