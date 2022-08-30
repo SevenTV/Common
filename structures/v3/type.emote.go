@@ -185,6 +185,10 @@ func (e Emote) GetLatestVersion(onlyListed bool) EmoteVersion {
 	return ver
 }
 
+func (e Emote) WebURL(origin string) string {
+	return fmt.Sprintf("%s/emotes/%s", origin, e.ID.Hex())
+}
+
 func (ev EmoteVersion) IsUnavailable() bool {
 	return ev.State.Lifecycle == EmoteLifecycleDeleted || ev.State.Lifecycle == EmoteLifecycleDisabled || ev.State.Lifecycle == EmoteLifecycleFailed
 }
