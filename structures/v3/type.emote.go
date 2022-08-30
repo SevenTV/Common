@@ -128,6 +128,8 @@ type EmoteVersionState struct {
 	// The current life cycle of the emote
 	// indicating whether it's processing, live, deleted, etc.
 	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
+	// An error message linked to a failure in the emote's processing stage
+	Error string `json:"error,omitempty" bson:"error,omitempty"`
 	// Whether or not the emote is listed
 	Listed bool `json:"listed" bson:"listed"`
 	// The ranked position for the amount of channels this emote is added on to.

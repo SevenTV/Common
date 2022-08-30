@@ -41,7 +41,21 @@ type DispatchPayload struct {
 	// Detailed changes to an object
 	Body ChangeMap `json:"body"`
 	// A map of conditions that must match subscriptions in order for this dispatch to be delivered
-	Condition map[string]string `json:"condition,omitempty"`
+	Condition EventCondition `json:"condition,omitempty"`
+}
+
+type EventCondition map[string]string
+
+func (evc EventCondition) SetObjectID(id primitive.ObjectID) EventCondition {
+	evc["object_id"] = id.Hex()
+
+	return evc
+}
+
+func (evc EventCondition) Set(key string, value string) EventCondition {
+	evc[key] = value
+
+	return evc
 }
 
 type SignalPayload struct {

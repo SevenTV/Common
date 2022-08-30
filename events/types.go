@@ -77,12 +77,22 @@ type ChangeMap struct {
 }
 
 type ChangeField struct {
-	Key      string `json:"key"`
-	Index    *int32 `json:"index"`
-	Nested   bool   `json:"nested,omitempty"`
-	OldValue any    `json:"old_value,omitempty"`
-	Value    any    `json:"value"`
+	Key      string          `json:"key"`
+	Index    *int32          `json:"index"`
+	Nested   bool            `json:"nested,omitempty"`
+	Type     ChangeFieldType `json:"type"`
+	OldValue any             `json:"old_value,omitempty"`
+	Value    any             `json:"value"`
 }
+
+type ChangeFieldType string
+
+const (
+	ChangeFieldTypeString ChangeFieldType = "string"
+	ChangeFieldTypeNumber ChangeFieldType = "number"
+	ChangeFieldTypeBool   ChangeFieldType = "bool"
+	ChangeFieldTypeObject ChangeFieldType = "object"
+)
 
 type SessionMutation struct {
 	RequestID string                 `json:"request_id"`
