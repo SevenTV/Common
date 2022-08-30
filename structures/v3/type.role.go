@@ -12,7 +12,7 @@ type Role struct {
 	// the role's privilege position
 	Position int32 `json:"position" bson:"position"`
 	// the role's display color
-	Color int32 `json:"color" bson:"color"`
+	Color utils.Color `json:"color" bson:"color"`
 	// the role's allowed permission bits
 	Allowed RolePermission `json:"allowed" bson:"allowed"`
 	// the role's denied permission bits
@@ -125,7 +125,7 @@ func (rb *RoleBuilder) SetPosition(pos int32) *RoleBuilder {
 	return rb
 }
 
-func (rb *RoleBuilder) SetColor(color int32) *RoleBuilder {
+func (rb *RoleBuilder) SetColor(color utils.Color) *RoleBuilder {
 	rb.Role.Color = color
 	rb.Update.Set("color", color)
 	return rb
