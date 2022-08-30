@@ -125,6 +125,10 @@ func (u *User) GetEditor(id primitive.ObjectID) (UserEditor, bool, int) {
 	return UserEditor{}, false, -1
 }
 
+func (e User) WebURL(origin string) string {
+	return fmt.Sprintf("%s/users/%s", origin, e.ID.Hex())
+}
+
 type UserDiscriminator uint8
 
 type UserConnectionList []UserConnection[bson.Raw]
