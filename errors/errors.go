@@ -58,7 +58,7 @@ var (
 	ErrEmoteNotEnabled                apiErrorFn = DefineError(704610, "Emote Not Enabled", 400)             // client wants to disable an emote which was not enabled to begin with
 	ErrEmoteAlreadyEnabled            apiErrorFn = DefineError(704611, "Emote Already Enabled", 400)         // client wants to enable an emote which is already added
 	ErrEmoteNameConflict              apiErrorFn = DefineError(704612, "Emote Name Conflict", 400)           // client wants to enable an emote but its name conflict with another
-	ErrEmoteNameInvalid               apiErrorFn = DefineError(704613, "Bad Emote Name", 400)                // client sent an emote name that did not pass validation
+	ErrNameInvalid                    apiErrorFn = DefineError(704613, "Bad Name", 400)                      // client sent an object name that did not pass validation
 	ErrEmoteVersionNameInvalid        apiErrorFn = DefineError(704614, "Bad Emote Version Name", 400)        // client sent an emote version name that did not pass validation
 	ErrEmoteVersionDescriptionInvalid apiErrorFn = DefineError(704615, "Bad Emote Version Description", 400) // client sent an emote version description that did not pass validation
 	ErrNoSpaceAvailable               apiErrorFn = DefineError(704620, "No Space Available", 403)            // the target object is full

@@ -14,7 +14,7 @@ func (x EmoteValidator) Name() error {
 	if RegExpEmoteName.MatchString(x.v.Name) {
 		return nil
 	}
-	return errors.ErrEmoteNameInvalid()
+	return errors.ErrNameInvalid()
 }
 
 type EmoteVersionValidator struct {
