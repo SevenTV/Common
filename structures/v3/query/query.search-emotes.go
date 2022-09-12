@@ -129,6 +129,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 		// Add tag search
 		if filter.IgnoreTags == nil || !*filter.IgnoreTags {
+			qVal := query
+			if len(qVal) > 0 && qVal[0] == '#' {
+				qVal = qVal[1:]
+			}
+
 			or = append(or, bson.M{
 				"$expr": bson.M{
 					"$gt": bson.A{
@@ -136,7 +141,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 							"input":        "$tags",
 							"initialValue": " ",
 							"in":           bson.M{"$concat": bson.A{"$$value", "$$this"}},
-						}}, strings.ToLower(query)}},
+						}}, strings.ToLower(qVal)}},
 						-1,
 					},
 				},
