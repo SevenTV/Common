@@ -76,7 +76,7 @@ const (
 // Range: 1 << 54 - 1 << 63
 const (
 	RolePermissionSuperAdministrator RolePermission = 1 << 62 // 4611686018427387904 - (Admin) GRANTS EVERY PERMISSION /!\
-	RolePermissionManageNews         RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows creating and editing news
+	RolePermissionManageContent      RolePermission = 1 << 54 // 18014398509481984 - (Admin) Allows managing featured content or publish items of significance
 	RolePermissionManageStack        RolePermission = 1 << 55 // 36028797018963968 - (Admin) Allows managing the application stack
 	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
 	RolePermissionRunJobs            RolePermission = 1 << 57 // 144115188075855872 - (Admin) Allows firing processing jobs
@@ -88,7 +88,7 @@ const (
 		RolePermissionCreateReport | RolePermissionFeatureZeroWidthEmoteType | RolePermissionFeatureProfilePictureAnimation |
 		RolePermissionManageBans | RolePermissionManageRoles | RolePermissionManageReports |
 		RolePermissionEditAnyEmote | RolePermissionEditAnyEmoteSet | RolePermissionSuperAdministrator |
-		RolePermissionManageNews | RolePermissionManageStack | RolePermissionManageCosmetics
+		RolePermissionManageContent | RolePermissionManageStack | RolePermissionManageCosmetics
 )
 
 type RoleBuilder struct {
