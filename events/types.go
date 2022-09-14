@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -61,7 +62,7 @@ type ChangeMap struct {
 	// The type of the object
 	Kind structures.ObjectKind `json:"kind"`
 	// The user who made changes to the object
-	Actor structures.PublicUser `json:"actor"`
+	Actor model.UserModel `json:"actor"`
 	// A list of added fields
 	Added []ChangeField `json:"added,omitempty"`
 	// A list of updated fields
