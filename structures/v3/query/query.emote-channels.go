@@ -94,8 +94,11 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			Value: match,
 		}},
 		{{
-			Key:   "$sort",
-			Value: bson.D{{Key: "state.role_position", Value: -1}},
+			Key: "$sort",
+			Value: bson.D{
+				{Key: "state.role_position", Value: -1},
+				{Key: "connections.data.view_count", Value: -1},
+			},
 		}},
 		{{Key: "$skip", Value: (page - 1) * limit}},
 		{{
