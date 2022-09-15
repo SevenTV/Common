@@ -114,6 +114,7 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 
 	return q.Messages(ctx, f, MessageQueryOptions{
 		Actor: actor,
+		Sort:  opt.Sort,
 		Limit: opt.Limit,
 	})
 }
@@ -122,11 +123,15 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	items := []structures.Message[bson.Raw]{}
 
+	if opt.Sort == nil {
+		opt.Sort = bson.M{"_id": -1}
+	}
+
 	// Create the pipeline
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, aggregations.Combine(
 		// Search message read states
 		mongo.Pipeline{
-			{{Key: "$sort", Value: bson.M{"_id": -1}}},
+			{{Key: "$sort", Value: opt.Sort}},
 			{{Key: "$match", Value: filter}},
 		},
 		mongo.Pipeline{
@@ -248,6 +253,8 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		items = append(items, msg)
 	}
 
+	qr.setTotal(v.Count)
+
 	return qr.setItems(items)
 }
 
@@ -264,6 +271,7 @@ type ModRequestMessagesQueryOptions struct {
 	Targets             map[structures.ObjectKind]bool
 	TargetIDs           []primitive.ObjectID
 	Filter              bson.M
+	Sort                bson.M
 	Limit               int
 	SkipPermissionCheck bool
 }
@@ -273,9 +281,11 @@ type MessageQueryOptions struct {
 	Limit            int
 	ReturnUnread     bool
 	FilterRecipients []primitive.ObjectID
+	Sort             bson.M
 }
 
 type aggregatedMessagesResult struct {
+	Count            int64                              `bson:"count"`
 	Messages         []structures.Message[bson.Raw]     `bson:"messages"`
 	Authors          []structures.User                  `bson:"authors"`
 	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`

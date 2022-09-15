@@ -91,6 +91,7 @@ func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{},
 
 type QueryResult[T QueriableType] struct {
 	items []T
+	total int64
 	err   error
 }
 
@@ -100,6 +101,11 @@ type QueriableType interface {
 
 func (qr *QueryResult[T]) setItems(items []T) *QueryResult[T] {
 	qr.items = items
+	return qr
+}
+
+func (qr *QueryResult[T]) setTotal(total int64) *QueryResult[T] {
+	qr.total = total
 	return qr
 }
 
@@ -153,6 +159,10 @@ func (qr *QueryResult[T]) Last() (T, error) {
 
 func (qr *QueryResult[T]) Items() ([]T, error) {
 	return qr.items, qr.err
+}
+
+func (qr *QueryResult[T]) Total() int64 {
+	return qr.total
 }
 
 func (qr *QueryResult[T]) Empty() bool {
