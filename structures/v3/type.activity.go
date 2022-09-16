@@ -10,10 +10,10 @@ type Activity struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 	State     ActivityState      `json:"state" bson:"state"`
-	Type      ActivityType       `json:"type" bson:"type"`
-	Name      ActivityName       `json:"name" bson:"name"`
+	Type      ActivityType       `json:"type" bson:"type,omitempty"`
+	Name      ActivityName       `json:"name" bson:"name,omitempty"`
 	Status    ActivityStatus     `json:"status" bson:"status"`
-	Object    *ActivityObject    `json:"object" bson:"object"`
+	Object    *ActivityObject    `json:"object" bson:"object,omitempty"`
 }
 
 type ActivityState struct {

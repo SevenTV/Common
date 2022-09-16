@@ -40,6 +40,10 @@ const (
 	EventTypeAddUserConnection    EventType = "user.add_connection"
 	EventTypeUpdateUserConnection EventType = "user.update_connection"
 	EventTypeDeleteUserConnection EventType = "user.delete_connection"
+
+	// Activity
+
+	EventTypeUpdateActivity EventType = "activity.emit"
 )
 
 func (et EventType) Split() []string {
