@@ -19,6 +19,7 @@ var DatabaseRefAPI = []collectionRef{
 			{Keys: bson.M{"connections.emote_set_id": 1}},
 			{Keys: bson.M{"state.role_position": -1}},
 			{Keys: bson.M{"editors.id": -1}},
+			{Keys: bson.M{"role_ids": -1}},
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
