@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -40,9 +41,16 @@ const (
 )
 
 type collectionRef struct {
-	Name      string
-	Validator *jsonSchema
-	Indexes   []mongo.IndexModel
+	Name       string
+	TimeSeries *collectionTimeSeries
+	Validator  *jsonSchema
+	Indexes    []mongo.IndexModel
+}
+type collectionTimeSeries struct {
+	TimeField          string
+	MetaField          string
+	Granularity        string
+	ExpireAfterSeconds int
 }
 
 type jsonSchema struct {
@@ -87,30 +95,67 @@ func CollSync(inst mongo.Instance, colls []collectionRef) error {
 	ctx, done := context.WithCancel(context.Background())
 	defer done()
 
+	existingColls, err := inst.RawDatabase().ListCollectionNames(ctx, bson.M{})
+	if err != nil {
+		zap.S().Errorw("mongo, failed to list collections", "error", err)
+	}
+
 	for _, col := range colls {
 		// Set up indexes
-		ind, err := inst.Collection(mongo.CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
-		if err != nil {
-			zap.S().Errorw("mongo, failed to set up indexes",
-				"collection", col.Name,
-				"error", err,
-			)
-		} else if len(ind) > 0 {
-			zap.S().Infow("Indexes ensured",
-				"collection", col.Name,
-				"indexes", strings.Join(ind, ", "),
-			)
+		if len(col.Indexes) > 0 {
+			ind, err := inst.Collection(mongo.CollectionName(col.Name)).Indexes().CreateMany(ctx, col.Indexes)
+			if err != nil {
+				zap.S().Errorw("mongo, failed to set up indexes",
+					"collection", col.Name,
+					"error", err,
+				)
+			} else {
+				zap.S().Infow("Indexes ensured",
+					"collection", col.Name,
+					"indexes", strings.Join(ind, ", "),
+				)
+			}
 		}
 
 		// Update schemas
 		if col.Validator != nil {
-			if err = inst.RawDatabase().RunCommand(ctx, bson.D{
+			if err := inst.RawDatabase().RunCommand(ctx, bson.D{
 				{Key: "collMod", Value: col.Name},
 				{Key: "validator", Value: bson.M{"$jsonSchema": col.Validator}},
 				{Key: "validationAction", Value: "error"},
 				{Key: "validationLevel", Value: "strict"},
 			}).Err(); err != nil {
 				zap.S().Errorw("mongo, failed to update collection validator",
+					"collection", col.Name,
+					"error", err,
+				)
+			}
+		}
+
+		if col.TimeSeries != nil {
+			cmds := bson.D{}
+
+			ts := bson.M{}
+
+			if !utils.Contains(existingColls, col.Name) {
+				cmds = append(cmds, bson.E{Key: "create", Value: col.Name})
+
+				ts["timeField"] = col.TimeSeries.TimeField
+				ts["metaField"] = col.TimeSeries.MetaField
+			} else {
+				cmds = append(cmds, bson.E{Key: "collMod", Value: col.Name})
+			}
+
+			if col.TimeSeries.ExpireAfterSeconds > 0 {
+				cmds = append(cmds, bson.E{Key: "expireAfterSeconds", Value: col.TimeSeries.ExpireAfterSeconds})
+			}
+
+			ts["granularity"] = col.TimeSeries.Granularity
+
+			cmds = append(cmds, bson.E{Key: "timeseries", Value: ts})
+
+			if err := inst.RawDatabase().RunCommand(ctx, cmds).Err(); err != nil {
+				zap.S().Errorw("mongo, failed to create time series collection",
 					"collection", col.Name,
 					"error", err,
 				)

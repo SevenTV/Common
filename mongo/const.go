@@ -4,6 +4,7 @@ type CollectionName string
 
 var (
 	CollectionNameSystem       CollectionName = "system"
+	CollectionNameActivities   CollectionName = "activities"
 	CollectionNameAuditLogs    CollectionName = "audit_logs"
 	CollectionNameEmotes       CollectionName = "emotes"
 	CollectionNameEmoteSets    CollectionName = "emote_sets"

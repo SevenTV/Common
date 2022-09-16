@@ -175,4 +175,14 @@ var DatabaseRefAPI = []collectionRef{
 			{Keys: bson.M{"actor_id": -1}},
 		},
 	},
+
+	{
+		Name: string(mongo.CollectionNameActivities),
+		TimeSeries: &collectionTimeSeries{
+			TimeField:          "timestamp",
+			MetaField:          "state",
+			Granularity:        "seconds",
+			ExpireAfterSeconds: 10, // int((time.Hour * 24 * 30).Seconds()),
+		},
+	},
 }
