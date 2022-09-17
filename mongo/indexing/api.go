@@ -181,7 +181,7 @@ var DatabaseRefAPI = []collectionRef{
 		Name: string(mongo.CollectionNameActivities),
 		TimeSeries: &collectionTimeSeries{
 			TimeField:          "timestamp",
-			MetaField:          "state",
+			MetaField:          "metadata",
 			Granularity:        "seconds",
 			ExpireAfterSeconds: 10, // int((time.Hour * 24 * 30).Seconds()),
 		},

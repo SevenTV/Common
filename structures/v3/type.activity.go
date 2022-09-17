@@ -9,16 +9,19 @@ import (
 type Activity struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
-	State     ActivityState      `json:"state" bson:"state"`
-	Type      ActivityType       `json:"type" bson:"type,omitempty"`
-	Name      ActivityName       `json:"name" bson:"name,omitempty"`
-	Status    ActivityStatus     `json:"status" bson:"status"`
-	Object    *ActivityObject    `json:"object" bson:"object,omitempty"`
+	Metadata  ActivityState      `json:"metadata" bson:"metadata"`
+	Values    ActivityValues     `json:"values" bson:"values"`
 }
 
 type ActivityState struct {
-	UserID   primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Timespan ActivityTimespan   `json:"timespan" bson:"timespan"`
+	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
+}
+
+type ActivityValues struct {
+	Type   ActivityType    `json:"type" bson:"type,omitempty"`
+	Name   ActivityName    `json:"name" bson:"name,omitempty"`
+	Status ActivityStatus  `json:"status" bson:"status"`
+	Object *ActivityObject `json:"object" bson:"object,omitempty"`
 }
 
 type ActivityObject struct {
@@ -48,8 +51,3 @@ const (
 	ActivityStatusDnd
 	ActivityStatusOnline
 )
-
-type ActivityTimespan struct {
-	Start time.Time  `json:"start" bson:"start"`
-	End   *time.Time `json:"end" bson:"end"`
-}
