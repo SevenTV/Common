@@ -56,9 +56,11 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 		"flags":                             1,
 		"versions.id":                       1,
 		"versions.state":                    1,
+		"versions.animated":                 1,
 		"versions.image_files.name":         1,
 		"versions.image_files.width":        1,
 		"versions.image_files.height":       1,
+		"versions.image_files.size":         1,
 		"versions.image_files.key":          1,
 		"versions.image_files.content_type": 1,
 	}))
