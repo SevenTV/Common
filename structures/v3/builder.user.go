@@ -82,7 +82,7 @@ func (ub *UserBuilder) SetAvatarID(url string) *UserBuilder {
 	return ub
 }
 
-func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) *UserConnectionBuilder[bson.Raw] {
+func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) (*UserConnectionBuilder[bson.Raw], int) {
 	// Filter by ID?
 	filterID := ""
 	if len(id) > 0 {
@@ -91,7 +91,9 @@ func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) *Us
 
 	// Find connection
 	var conn UserConnection[bson.Raw]
-	for _, c := range ub.User.Connections {
+
+	ind := -1
+	for i, c := range ub.User.Connections {
 		if p != "" && c.Platform != p {
 			continue
 		}
@@ -99,10 +101,11 @@ func (ub *UserBuilder) GetConnection(p UserConnectionPlatform, id ...string) *Us
 			continue
 		}
 		conn = c
+		ind = i
 		break
 	}
 
-	return NewUserConnectionBuilder(conn)
+	return NewUserConnectionBuilder(conn), ind
 }
 
 func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder {
