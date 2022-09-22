@@ -52,7 +52,7 @@ var (
 	ErrInternalField      apiErrorFn = DefineError(70414, "Internal Field", 400)      // a client requested or tried to modify an internal field
 	ErrEmptyField         apiErrorFn = DefineError(70415, "Empty Field", 400)         // a required field is empty
 	ErrRateLimited        apiErrorFn = DefineError(70429, "Rate Limit Reached", 429)  // the client is being rate limited
-	ErrNothingHappened    apiErrorFn = DefineError(70445, "Nothing Happened", 400)    // the client tried to do something that didn't change anything
+	ErrNothingHappened    apiErrorFn = DefineError(70489, "Nothing Happened", 400)    // the client tried to do something that didn't change anything
 
 	// Other Client Errors
 
