@@ -33,13 +33,10 @@ const (
 
 	// User
 
-	EventTypeAnyUser              EventType = "user.*"
-	EventTypeCreateUser           EventType = "user.create"
-	EventTypeUpdateUser           EventType = "user.update"
-	EventTypeDeleteUser           EventType = "user.delete"
-	EventTypeAddUserConnection    EventType = "user.add_connection"
-	EventTypeUpdateUserConnection EventType = "user.update_connection"
-	EventTypeDeleteUserConnection EventType = "user.delete_connection"
+	EventTypeAnyUser    EventType = "user.*"
+	EventTypeCreateUser EventType = "user.create"
+	EventTypeUpdateUser EventType = "user.update"
+	EventTypeDeleteUser EventType = "user.delete"
 )
 
 func (et EventType) Split() []string {

@@ -62,7 +62,8 @@ var (
 	ErrEmoteVersionNameInvalid        apiErrorFn = DefineError(704614, "Bad Emote Version Name", 400)        // client sent an emote version name that did not pass validation
 	ErrEmoteVersionDescriptionInvalid apiErrorFn = DefineError(704615, "Bad Emote Version Description", 400) // client sent an emote version description that did not pass validation
 	ErrNoSpaceAvailable               apiErrorFn = DefineError(704620, "No Space Available", 403)            // the target object is full
-	ErrMissingRequiredField           apiErrorFn = DefineError(704680, "Missing Field", 400)
+	ErrMissingRequiredField           apiErrorFn = DefineError(704680, "Missing Field", 400)                 // a required field is missing
+	ErrNothingHappened                apiErrorFn = DefineError(704689, "Nothing Happened", 400)              // the client tried to do something that didn't change anything
 
 	// Server Errors
 
