@@ -149,8 +149,12 @@ func (ucl UserConnectionList) Twitch(filter ...string) (UserConnection[UserConne
 }
 
 // YouTube returns the first YouTube user connection
-func (ucl UserConnectionList) YouTube() (UserConnection[UserConnectionDataYoutube], int, error) {
+func (ucl UserConnectionList) YouTube(filter ...string) (UserConnection[UserConnectionDataYoutube], int, error) {
 	for idx, v := range ucl {
+		if len(filter) > 0 && !utils.Contains(filter, v.ID) {
+			continue // does not pass filter
+		}
+
 		if v.Platform == UserConnectionPlatformYouTube {
 			conn, err := ConvertUserConnection[UserConnectionDataYoutube](v)
 			return conn, idx, err
@@ -217,6 +221,9 @@ type UserConnection[D UserConnectionData] struct {
 	EmoteSetID ObjectID `json:"emote_set_id,omitempty" bson:"emote_set_id,omitempty"`
 	// third-party connection data
 	Data D `json:"data" bson:"data"`
+	// a list of different possible connection data objects
+	// the user must choose one to confirm the connection
+	ChoiceData []bson.Raw `json:"choice_data,omitempty" bson:"choice_data,omitempty"`
 	// a full oauth2 token grant
 	Grant *UserConnectionGrant `json:"-" bson:"grant,omitempty"`
 
@@ -235,6 +242,7 @@ func (u UserConnection[D]) ToRaw() UserConnection[bson.Raw] {
 			EmoteSlots: u.EmoteSlots,
 			EmoteSetID: u.EmoteSetID,
 			Data:       x,
+			ChoiceData: u.ChoiceData,
 			Grant:      u.Grant,
 			EmoteSet:   u.EmoteSet,
 		}
@@ -248,6 +256,7 @@ func (u UserConnection[D]) ToRaw() UserConnection[bson.Raw] {
 		EmoteSlots: u.EmoteSlots,
 		EmoteSetID: u.EmoteSetID,
 		Data:       raw,
+		ChoiceData: u.ChoiceData,
 		Grant:      u.Grant,
 		EmoteSet:   u.EmoteSet,
 	}
@@ -349,11 +358,12 @@ type UserConnectionDataTwitch struct {
 }
 
 type UserConnectionDataYoutube struct {
-	ID          string `json:"id" bson:"id"`
-	Title       string `json:"title" bson:"title"`
-	Description string `json:"description" bson:"description"`
-	ViewCount   int64  `json:"view_count" bson:"view_count"`
-	SubCount    int64  `json:"sub_count" bson:"sub_count"`
+	ID              string `json:"id" bson:"id"`
+	Title           string `json:"title" bson:"title"`
+	Description     string `json:"description" bson:"description"`
+	ViewCount       int64  `json:"view_count" bson:"view_count"`
+	SubCount        int64  `json:"sub_count" bson:"sub_count"`
+	ProfileImageURL string `json:"profile_image_url" bson:"profile_image_url"`
 }
 
 type UserConnectionDataDiscord struct {
