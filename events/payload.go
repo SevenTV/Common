@@ -33,7 +33,8 @@ type SubscribePayload struct {
 }
 
 type UnsubscribePayload struct {
-	Type EventType `json:"type"`
+	Type      EventType         `json:"type"`
+	Condition map[string]string `json:"condition"`
 }
 
 type DispatchPayload struct {
