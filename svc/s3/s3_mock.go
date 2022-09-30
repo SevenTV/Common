@@ -11,7 +11,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/seventv/common/sync_map"
 )
 
@@ -55,7 +54,7 @@ func (a *MockInstance) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, 
 	return resp, nil
 }
 
-func (a *MockInstance) UploadFile(ctx context.Context, opts *s3manager.UploadInput) error {
+func (a *MockInstance) UploadFile(ctx context.Context, opts *s3.PutObjectInput) error {
 	if !a.connected {
 		return http.ErrHandlerTimeout
 	}
@@ -83,7 +82,7 @@ func (a *MockInstance) UploadFile(ctx context.Context, opts *s3manager.UploadInp
 	return nil
 }
 
-func (a *MockInstance) DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error {
+func (a *MockInstance) DownloadFile(ctx context.Context, output io.Writer, opts *s3.GetObjectInput) error {
 	if !a.connected {
 		return http.ErrHandlerTimeout
 	}
@@ -99,7 +98,7 @@ func (a *MockInstance) DownloadFile(ctx context.Context, output io.WriterAt, opt
 	bucket := *opts.Bucket
 	if files, ok := a.files.Load(bucket); ok {
 		if data, ok := files.Load(*opts.Key); ok {
-			_, err := output.WriteAt(data, 0)
+			_, err := output.Write(data)
 			return err
 		} else {
 			return errors.New(s3.ErrCodeNoSuchKey)

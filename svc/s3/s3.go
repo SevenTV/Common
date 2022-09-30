@@ -9,12 +9,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type Instance interface {
-	UploadFile(ctx context.Context, opts *s3manager.UploadInput) error
-	DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error
+	UploadFile(ctx context.Context, opts *s3.PutObjectInput) error
+	DownloadFile(ctx context.Context, output io.Writer, opts *s3.GetObjectInput) error
 	ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 	CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error
 	SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error
@@ -22,11 +21,9 @@ type Instance interface {
 }
 
 type s3Inst struct {
-	session    *session.Session
-	downloader *s3manager.Downloader
-	uploader   *s3manager.Uploader
-	s3         *s3.S3
-	ns         string
+	session *session.Session
+	s3      *s3.S3
+	ns      string
 }
 
 func New(ctx context.Context, o Options) (Instance, error) {
@@ -41,11 +38,9 @@ func New(ctx context.Context, o Options) (Instance, error) {
 	}
 
 	return &s3Inst{
-		session:    s,
-		downloader: s3manager.NewDownloader(s),
-		uploader:   s3manager.NewUploader(s),
-		s3:         s3.New(s),
-		ns:         o.Namespace,
+		session: s,
+		s3:      s3.New(s),
+		ns:      o.Namespace,
 	}, nil
 }
 
@@ -53,26 +48,32 @@ func (a *s3Inst) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 	return a.s3.ListBucketsWithContext(ctx, &s3.ListBucketsInput{})
 }
 
-func (a *s3Inst) UploadFile(ctx context.Context, opts *s3manager.UploadInput) error {
-	_, err := a.uploader.UploadWithContext(ctx, opts)
+func (a *s3Inst) UploadFile(ctx context.Context, opts *s3.PutObjectInput) error {
+	_, err := a.s3.PutObjectWithContext(ctx, opts)
 
 	return err
 }
 
-func (a *s3Inst) DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error {
-	_, err := a.downloader.DownloadWithContext(ctx, output, opts)
+func (a *s3Inst) DownloadFile(ctx context.Context, output io.Writer, opts *s3.GetObjectInput) error {
+	resp, err := a.s3.GetObject(opts)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	io.Copy(output, resp.Body)
 
 	return err
 }
 
 func (a *s3Inst) SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error {
-	_, err := a.uploader.S3.PutObjectAclWithContext(ctx, opts)
+	_, err := a.s3.PutObjectAclWithContext(ctx, opts)
 
 	return err
 }
 
 func (a *s3Inst) CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error {
-	_, err := a.uploader.S3.CopyObject(opts)
+	_, err := a.s3.CopyObject(opts)
 
 	return err
 }
