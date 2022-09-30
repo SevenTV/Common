@@ -61,9 +61,10 @@ type UserState struct {
 }
 
 type UserAvatar struct {
-	ID         primitive.ObjectID `json:"id" bson:"id"`
-	InputFile  ImageFile          `json:"input_file" bson:"input_file"`
-	ImageFiles []ImageFile        `json:"image_files" bson:"image_files"`
+	ID         primitive.ObjectID  `json:"id" bson:"id"`
+	InputFile  ImageFile           `json:"input_file" bson:"input_file"`
+	ImageFiles []ImageFile         `json:"image_files" bson:"image_files"`
+	PendingID  *primitive.ObjectID `json:"pending_id,omitempty" bson:"pending_id,omitempty"`
 }
 
 // HasPermission checks relational roles against a permission bit
