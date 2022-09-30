@@ -29,6 +29,8 @@ type User struct {
 	Editors []UserEditor `json:"editors" bson:"editors"`
 	// the user's avatar URL
 	AvatarID string `json:"avatar_id" bson:"avatar_id"`
+	// the user's avatar
+	Avatar *UserAvatar `json:"avatar" bson:"avatar"`
 	// the user's biography
 	Biography string `json:"biography" bson:"biography"`
 	// token version. When this value changes all existing auth tokens are invalidated
@@ -55,8 +57,14 @@ type User struct {
 }
 
 type UserState struct {
-	RolePosition    int    `json:"-" bson:"role_position"`
-	PendingAvatarID string `json:"-" bson:"pending_avatar_id,omitempty"`
+	RolePosition int `json:"-" bson:"role_position"`
+}
+
+type UserAvatar struct {
+	ID         primitive.ObjectID  `json:"id" bson:"id"`
+	InputFile  ImageFile           `json:"input_file" bson:"input_file"`
+	ImageFiles []ImageFile         `json:"image_files" bson:"image_files"`
+	PendingID  *primitive.ObjectID `json:"pending_id,omitempty" bson:"pending_id,omitempty"`
 }
 
 // HasPermission checks relational roles against a permission bit

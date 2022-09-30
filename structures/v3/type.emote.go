@@ -77,7 +77,7 @@ func (e EmoteFlag) String() string {
 	return ""
 }
 
-type EmoteFile struct {
+type ImageFile struct {
 	Name         string `json:"name" bson:"name"`                         // The name of the file
 	Width        int32  `json:"width" bson:"width,omitempty"`             // The pixel width of the emote
 	Height       int32  `json:"height" bson:"height,omitempty"`           // The pixel height of the emote
@@ -91,7 +91,7 @@ type EmoteFile struct {
 	CacheControl string `json:"cache_control"`
 }
 
-func (ef EmoteFile) IsStatic() bool {
+func (ef ImageFile) IsStatic() bool {
 	return strings.HasSuffix(ef.Name, fmt.Sprintf("_static%s", path.Ext(ef.Name)))
 }
 
@@ -105,8 +105,8 @@ func (ev EmoteVersion) CountFiles(contentType string, omitStatic bool) int32 {
 	return count
 }
 
-func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []EmoteFile {
-	files := []EmoteFile{}
+func (ev EmoteVersion) GetFiles(contentType string, omitStatic bool) []ImageFile {
+	files := []ImageFile{}
 	for _, f := range ev.ImageFiles {
 		if contentType != "" && f.ContentType != contentType {
 			continue
@@ -149,9 +149,9 @@ type EmoteVersion struct {
 	Animated    bool               `json:"animated" bson:"animated"`
 	State       EmoteVersionState  `json:"state" bson:"state"`
 
-	InputFile   EmoteFile   `json:"input_file" bson:"input_file"`
-	ImageFiles  []EmoteFile `json:"image_files" bson:"image_files"`
-	ArchiveFile EmoteFile   `json:"archive_file" bson:"archive_file"`
+	InputFile   ImageFile   `json:"input_file" bson:"input_file"`
+	ImageFiles  []ImageFile `json:"image_files" bson:"image_files"`
+	ArchiveFile ImageFile   `json:"archive_file" bson:"archive_file"`
 
 	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
 	StartedAt   time.Time `json:"started_at" bson:"started_at"`

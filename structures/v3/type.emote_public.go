@@ -54,7 +54,7 @@ type PublicImage struct {
 	Size       int64             `json:"size"`
 }
 
-func (ef EmoteFile) ToPublic() PublicImage {
+func (ef ImageFile) ToPublic() PublicImage {
 	var format PublicEmoteFormat
 	if s := strings.Split(ef.ContentType, "image/"); len(s) == 2 {
 		format = PublicEmoteFormat(strings.ToUpper(s[1]))
