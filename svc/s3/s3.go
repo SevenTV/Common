@@ -14,6 +14,7 @@ import (
 type Instance interface {
 	UploadFile(ctx context.Context, opts *s3.PutObjectInput) error
 	DownloadFile(ctx context.Context, output io.Writer, opts *s3.GetObjectInput) error
+	DeleteFile(ctx context.Context, opts *s3.DeleteObjectInput) error
 	ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 	CopyFile(ctx context.Context, opts *s3.CopyObjectInput) error
 	SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error
@@ -50,6 +51,12 @@ func (a *s3Inst) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 
 func (a *s3Inst) UploadFile(ctx context.Context, opts *s3.PutObjectInput) error {
 	_, err := a.s3.PutObjectWithContext(ctx, opts)
+
+	return err
+}
+
+func (a *s3Inst) DeleteFile(ctx context.Context, opts *s3.DeleteObjectInput) error {
+	_, err := a.s3.DeleteObjectWithContext(ctx, opts)
 
 	return err
 }

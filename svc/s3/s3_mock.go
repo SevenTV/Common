@@ -107,6 +107,29 @@ func (a *MockInstance) DownloadFile(ctx context.Context, output io.Writer, opts 
 	}
 }
 
+func (a *MockInstance) DeleteFile(ctx context.Context, opts *s3.DeleteObjectInput) error {
+	if !a.connected {
+		return http.ErrHandlerTimeout
+	}
+
+	if opts.Bucket == nil {
+		return errors.New(s3.ErrCodeNoSuchBucket)
+	}
+
+	if opts.Key == nil {
+		return errors.New(s3.ErrCodeNoSuchKey)
+	}
+
+	bucket := *opts.Bucket
+	if files, ok := a.files.Load(bucket); ok {
+		files.Delete(*opts.Key)
+	} else {
+		return errors.New(s3.ErrCodeNoSuchBucket)
+	}
+
+	return nil
+}
+
 // TODO
 func (a *MockInstance) SetACL(ctx context.Context, opts *s3.PutObjectAclInput) error {
 	return nil
