@@ -1,6 +1,4 @@
 lint:
-	staticcheck ./...
-	go vet ./...
 	golangci-lint run
 	yarn prettier --write .
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path"
 	"time"
@@ -59,7 +58,7 @@ func (a *MockInstance) UploadFile(ctx context.Context, opts *s3.PutObjectInput) 
 		return http.ErrHandlerTimeout
 	}
 
-	data, err := ioutil.ReadAll(opts.Body)
+	data, err := io.ReadAll(opts.Body)
 	if err != nil {
 		return err
 	}

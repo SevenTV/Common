@@ -61,7 +61,7 @@ func (a *s3Inst) DownloadFile(ctx context.Context, output io.Writer, opts *s3.Ge
 	}
 
 	defer resp.Body.Close()
-	io.Copy(output, resp.Body)
+	_, err = io.Copy(output, resp.Body)
 
 	return err
 }
