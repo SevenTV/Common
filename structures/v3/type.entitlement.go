@@ -93,8 +93,8 @@ type EntitlementDataBaseSelectable struct {
 
 // EntitledSubscription Subscription binding in an Entitlement
 type EntitlementDataSubscription struct {
-	// The ID of the subscription
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+	Interval     int    `json:"interval" bson:"interval"`
+	IntervalUnit string `json:"interval_unit" bson:"interval_unit"`
 }
 
 // EntitledBadge Badge binding in an Entitlement
