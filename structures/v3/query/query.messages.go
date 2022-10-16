@@ -121,7 +121,6 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 
 func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
 	qr := &QueryResult[structures.Message[bson.Raw]]{}
-	items := []structures.Message[bson.Raw]{}
 
 	if opt.Sort == nil {
 		opt.Sort = bson.M{"_id": -1}
@@ -194,38 +193,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 					},
 				},
 			}},
-			{{ // Collect message author users
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameUsers,
-					LocalField:   "messages.author_id",
-					ForeignField: "_id",
-					As:           "authors",
-				},
-			}},
-			{{
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameEntitlements,
-					LocalField:   "authors._id",
-					ForeignField: "user_id",
-					As:           "role_entitlements",
-				},
-			}},
-			{{
-				Key: "$set",
-				Value: bson.M{
-					"role_entitlements": bson.M{
-						"$filter": bson.M{
-							"input": "$role_entitlements",
-							"as":    "ent",
-							"cond": bson.M{
-								"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
-							},
-						},
-					},
-				},
-			}},
 		},
 	))
 	if err != nil {
@@ -241,21 +208,9 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
-	qb := &QueryBinder{ctx, q}
-	userMap, err := qb.MapUsers(v.Authors, v.RoleEntitlements...)
-	if err != nil {
-		return qr.setError(err)
-	}
-
-	for _, msg := range v.Messages {
-		author := userMap[msg.AuthorID]
-		msg.Author = &author
-		items = append(items, msg)
-	}
-
 	qr.setTotal(v.Count)
 
-	return qr.setItems(items)
+	return qr.setItems(v.Messages)
 }
 
 type InboxMessagesQueryOptions struct {
