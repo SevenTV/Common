@@ -49,11 +49,11 @@ const (
 )
 
 type ActiveEmote struct {
-	ID        primitive.ObjectID `json:"id" bson:"id"`
-	Name      string             `json:"name" bson:"name"`
-	Flags     ActiveEmoteFlag    `json:"flags" bson:"flags"`
-	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
-	ActorID   primitive.ObjectID `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
+	ID        primitive.ObjectID        `json:"id" bson:"id"`
+	Name      string                    `json:"name" bson:"name"`
+	Flags     BitField[ActiveEmoteFlag] `json:"flags" bson:"flags"`
+	Timestamp time.Time                 `json:"timestamp" bson:"timestamp"`
+	ActorID   primitive.ObjectID        `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
 
 	// Relational
 

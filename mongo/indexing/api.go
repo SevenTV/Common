@@ -91,7 +91,7 @@ var DatabaseRefAPI = []collectionRef{
 			Properties: map[string]*jsonSchema{
 				"owner_id": {BSONType: TList{BSONTypeObjectId}},
 				"name":     {BSONType: TList{BSONTypeString}, MinLength: utils.PointerOf(int64(1))},
-				"flags":    {BSONType: TList{BSONTypeInt32}},
+				"flags":    {BSONType: TList{BSONTypeInt32, BSONTypeInt64}},
 				"tags":     {BSONType: TList{BSONTypeArray}},
 				"versions": {
 					BSONType: TList{BSONTypeArray},

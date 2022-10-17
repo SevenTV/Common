@@ -14,12 +14,12 @@ import (
 var emoteTagRegex = regexp.MustCompile(`^[0-9a-z]{3,30}$`)
 
 type Emote struct {
-	ID      ObjectID   `json:"id" bson:"_id"`
-	OwnerID ObjectID   `json:"owner_id" bson:"owner_id"`
-	Name    string     `json:"name" bson:"name"`
-	Flags   EmoteFlag  `json:"flags" bson:"flags"`
-	Tags    []string   `json:"tags" bson:"tags"`
-	State   EmoteState `json:"state" bson:"state"`
+	ID      ObjectID            `json:"id" bson:"_id"`
+	OwnerID ObjectID            `json:"owner_id" bson:"owner_id"`
+	Name    string              `json:"name" bson:"name"`
+	Flags   BitField[EmoteFlag] `json:"flags" bson:"flags"`
+	Tags    []string            `json:"tags" bson:"tags"`
+	State   EmoteState          `json:"state" bson:"state"`
 
 	// Versioning
 

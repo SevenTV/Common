@@ -65,7 +65,7 @@ func (eb *EmoteBuilder) SetOwnerID(id primitive.ObjectID) *EmoteBuilder {
 	return eb
 }
 
-func (eb *EmoteBuilder) SetFlags(sum EmoteFlag) *EmoteBuilder {
+func (eb *EmoteBuilder) SetFlags(sum BitField[EmoteFlag]) *EmoteBuilder {
 	eb.Emote.Flags = sum
 	eb.Update.Set("flags", sum)
 	return eb

@@ -150,3 +150,21 @@ const (
 	ListItemActionUpdate ListItemAction = "UPDATE"
 	ListItemActionRemove ListItemAction = "REMOVE"
 )
+
+type BitField[T ~int64 | ~int32] int64
+
+func (b BitField[T]) Has(flag T) bool {
+	return int64(b)&int64(flag) != 0
+}
+
+func (b BitField[T]) Set(flag T) BitField[T] {
+	return BitField[T](int64(b) | int64(flag))
+}
+
+func (b BitField[T]) Unset(flag T) BitField[T] {
+	return BitField[T](int64(b) &^ int64(flag))
+}
+
+func (b BitField[T]) Value() T {
+	return T(b)
+}
