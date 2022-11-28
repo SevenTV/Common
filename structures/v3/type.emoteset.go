@@ -38,7 +38,7 @@ type EmoteSet struct {
 
 type EmoteSetOrigin struct {
 	// The ID of the referenced emote set
-	ID primitive.ObjectID `json:"id" bson:"_id"`
+	ID primitive.ObjectID `json:"id" bson:"id"`
 	// The weight of this set for serving emotes with names
 	Weight int32 `json:"weight" bson:"weight"`
 	// Slicing of active emotes inside the origin set
