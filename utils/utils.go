@@ -24,12 +24,10 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-//
 // Util - Ternary:
 // A golang equivalent to JS Ternary Operator
 //
 // It takes a condition, and returns a result depending on the outcome
-//
 func Ternary[T any](condition bool, whenTrue T, whenFalse T) T {
 	if condition {
 		return whenTrue
@@ -38,9 +36,7 @@ func Ternary[T any](condition bool, whenTrue T, whenFalse T) T {
 	return whenFalse
 }
 
-//
 // Util - Is Power Of Two
-//
 func IsPowerOfTwo(n int64) bool {
 	return (n != 0) && ((n & (n - 1)) == 0)
 }
@@ -152,6 +148,16 @@ func SliceRemove[T any](s []T, i int) []T {
 	s = s[:len(s)-1]
 
 	return s
+}
+
+func Map[A any, T any](a []A, fn func(x A) T) []T {
+	items := make([]T, len(a))
+
+	for i, v := range a {
+		items[i] = fn(v)
+	}
+
+	return items
 }
 
 func IsPointer(v interface{}) bool {
