@@ -66,8 +66,9 @@ type ActiveEmote struct {
 
 	// Relational
 
-	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
-	Actor *User  `json:"actor" bson:"actor,omitempty,skip"`
+	Origin EmoteSetOrigin `json:"-" bson:"-"`
+	Emote  *Emote         `json:"emote" bson:"emote,omitempty,skip"`
+	Actor  *User          `json:"actor" bson:"actor,omitempty,skip"`
 }
 
 type ActiveEmoteFlag int32
