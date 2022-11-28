@@ -63,6 +63,12 @@ func (esb *EmoteSetBuilder) SetPrivileged(b bool) *EmoteSetBuilder {
 	return esb
 }
 
+func (esb *EmoteSetBuilder) SetOrigins(origins []EmoteSetOrigin) *EmoteSetBuilder {
+	esb.EmoteSet.Origins = origins
+	esb.Update.Set("origins", origins)
+	return esb
+}
+
 func (esb *EmoteSetBuilder) AddOrigin(id ObjectID, weight int32) *EmoteSetBuilder {
 	v := EmoteSetOrigin{
 		ID:     id,
