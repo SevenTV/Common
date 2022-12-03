@@ -70,6 +70,14 @@ var DatabaseRefAPI = []collectionRef{
 		},
 	},
 
+	{
+		Name: string(mongo.CollectionNameUserPresences),
+		Indexes: []mongo.IndexModel{
+			{Keys: bson.M{"actor_id": 1}},
+			{Keys: bson.M{"ttl": 1}, Options: options.Index().SetExpireAfterSeconds(0)},
+		},
+	},
+
 	// Collection: Emotes
 	{
 		Name: "emotes",
