@@ -11,6 +11,8 @@ import (
 type UserPresence[T UserPresenceData] struct {
 	ID     primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
+	// IP is the IP address of the client who initiated this presence
+	IP string `json:"ip" bson:"ip"`
 	// Authentic is whether or not this presence was authenticated; confirmed that the actor issued this presence
 	//
 	// If false, such a presence cannot be trusted as truth of a user's location.
@@ -58,7 +60,6 @@ type UserPresenceDataChannel struct {
 type UserPresenceLocationDataWebPage struct {
 	URL       string `json:"url" bson:"url"`
 	UserAgent string `json:"user_agent" bson:"user_agent"`
-	IP        []byte `json:"ip" bson:"ip"`
 }
 
 func (up UserPresence[T]) ToRaw() UserPresence[bson.Raw] {
