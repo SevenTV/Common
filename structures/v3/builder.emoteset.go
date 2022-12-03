@@ -63,9 +63,42 @@ func (esb *EmoteSetBuilder) SetPrivileged(b bool) *EmoteSetBuilder {
 	return esb
 }
 
-func (esb *EmoteSetBuilder) SetParentID(id *ObjectID) *EmoteSetBuilder {
-	esb.EmoteSet.ParentID = id
-	esb.Update.Set("parent_id", id)
+func (esb *EmoteSetBuilder) SetOrigins(origins []EmoteSetOrigin) *EmoteSetBuilder {
+	esb.EmoteSet.Origins = origins
+	esb.Update.Set("origins", origins)
+	return esb
+}
+
+func (esb *EmoteSetBuilder) AddOrigin(id ObjectID, weight int32) *EmoteSetBuilder {
+	v := EmoteSetOrigin{
+		ID:     id,
+		Weight: weight,
+	}
+
+	esb.EmoteSet.Origins = append(esb.EmoteSet.Origins, v)
+	esb.Update.Push("origins", v)
+	return esb
+}
+
+func (esb *EmoteSetBuilder) RemoveOrigin(id ObjectID) *EmoteSetBuilder {
+	ind := -1
+	for i := range esb.EmoteSet.Origins {
+		if esb.EmoteSet.Origins[i].ID.IsZero() {
+			continue
+		}
+		if esb.EmoteSet.Origins[i].ID != id {
+			continue
+		}
+		ind = i
+		break
+	}
+	if ind == -1 {
+		return esb // did not find index
+	}
+
+	copy(esb.EmoteSet.Origins[ind:], esb.EmoteSet.Origins[ind+1:])
+	esb.EmoteSet.Origins = esb.EmoteSet.Origins[:len(esb.EmoteSet.Origins)-1]
+	esb.Update.Pull("origins", bson.M{"id": id})
 	return esb
 }
 

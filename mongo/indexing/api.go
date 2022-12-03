@@ -82,6 +82,7 @@ var DatabaseRefAPI = []collectionRef{
 			{Keys: bson.D{
 				{Key: "name", Value: "text"},
 			}, Options: options.Index().SetTextVersion(3)},
+			{Keys: bson.M{"tags": 1}},
 			{Keys: bson.M{"versions.state.channel_count": -1}},
 		},
 		Validator: &jsonSchema{
@@ -135,6 +136,7 @@ var DatabaseRefAPI = []collectionRef{
 			{Keys: bson.M{"emotes.id": -1}},
 			{Keys: bson.M{"emotes.name": -1}},
 			{Keys: bson.M{"owner_id": -1}},
+			{Keys: bson.M{"origins.id": -1}},
 		},
 	},
 

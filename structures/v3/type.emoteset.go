@@ -18,11 +18,13 @@ type EmoteSet struct {
 	Privileged bool `json:"privilleged" bson:"privileged"`
 	// The emotes assigned to this set
 	Emotes []ActiveEmote `json:"emotes" bson:"emotes"`
-	// The maximum amount of emotes this set is allowed to contain
+	// The set's emote capacity (slots), the maximum amount of emotes it can hold
 	Capacity int32 `json:"capacity" bson:"capacity"`
-	// The ID of the parent set. If defined, this set is treated as a child set
-	// and its emotes are derived from the parent
-	ParentID *ObjectID `json:"parent_id" bson:"parent_id"`
+	// The set's emote capacity using the quota system
+	// Experimental - replaces slot capacity
+	QuotaCapacity float64 `json:"capacity_experimental,omitempty" bson:"capacity_experimental,omitempty"`
+	// Other emote sets that this set is based upon
+	Origins []EmoteSetOrigin `json:"origins,omitempty" bson:"origins,omitempty"`
 	// The ID of the user who owns this emote set
 	OwnerID ObjectID `json:"owner_id" bson:"owner_id"`
 
@@ -34,13 +36,20 @@ type EmoteSet struct {
 	Owner *User `json:"owner,omitempty" bson:"owner_user,skip,omitempty"`
 }
 
+type EmoteSetOrigin struct {
+	// The ID of the referenced emote set
+	ID primitive.ObjectID `json:"id" bson:"id"`
+	// The weight of this set for serving emotes with names
+	Weight int32 `json:"weight" bson:"weight"`
+	// Slicing of active emotes inside the origin set
+	Slices []uint32 `json:"slices" bson:"slices"`
+}
+
 type EmoteSetCondition struct {
-	// If true, this emote set may be assigned to users and used globally
-	//
-	// - This is affected by the channels property
-	Bindable bool `json:"bindable" bson:"bindable"`
+	// If true, this emote set may be entitled on to a user and used globally
+	Entitlable bool `json:"entitlable,omitempty" bson:"entitlable,omitempty"`
 	// A list of channel IDs (user connections) where this set is allowed to be used. If empty it is unrestricted
-	Channels []string `json:"channels"`
+	Channels []string `json:"channels,omitempty" bson:"channels,omitempty"`
 }
 
 const (
@@ -57,8 +66,9 @@ type ActiveEmote struct {
 
 	// Relational
 
-	Emote *Emote `json:"emote" bson:"emote,omitempty,skip"`
-	Actor *User  `json:"actor" bson:"actor,omitempty,skip"`
+	Origin EmoteSetOrigin `json:"-" bson:"-"`
+	Emote  *Emote         `json:"emote" bson:"emote,omitempty,skip"`
+	Actor  *User          `json:"actor" bson:"actor,omitempty,skip"`
 }
 
 type ActiveEmoteFlag int32

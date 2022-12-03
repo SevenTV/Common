@@ -30,6 +30,16 @@ func (u UpdateMap) Set(key string, value UpdateValue) UpdateMap {
 	return u
 }
 
+func (u UpdateMap) Has(operator, key string) bool {
+	if m, ok := u[operator]; ok {
+		if _, ok := m.(bson.M)[key]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (u UpdateMap) AddToSet(key string, value UpdateValue) UpdateMap {
 	if _, ok := u["$addToSet"]; !ok {
 		u["$addToSet"] = bson.M{

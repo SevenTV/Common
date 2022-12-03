@@ -41,6 +41,9 @@ type User struct {
 	BlockedUserIDs []ObjectID `json:"blocked_user_ids,omitempty" bson:"blocked_user_ids,omitempty"`
 	// persisted non-structural data that can be used internally for querying
 	State UserState `json:"-" bson:"state"`
+	// Special treatments attributed to the user;
+	// This is used to run experiments
+	Treatments []string `json:"treatments" bson:"treatments"`
 
 	// Relational
 
