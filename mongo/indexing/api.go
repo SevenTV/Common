@@ -76,8 +76,7 @@ var DatabaseRefAPI = []collectionRef{
 		Indexes: []mongo.IndexModel{
 			{Keys: bson.M{"owner_id": -1}},
 			{
-				Keys:    bson.D{{Key: "versions.id", Value: -1}},
-				Options: options.Index().SetUnique(true),
+				Keys: bson.D{{Key: "versions.id", Value: -1}},
 			},
 			{Keys: bson.D{
 				{Key: "name", Value: "text"},
