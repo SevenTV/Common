@@ -82,13 +82,13 @@ const (
 
 type EntitlementDataBase struct {
 	// The ID of the subscription
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+	RefID primitive.ObjectID `json:"-" bson:"ref"`
 }
 
 type EntitlementDataBaseSelectable struct {
 	// The ID of the subscription
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
-	Selected        bool               `json:"selected" bson:"selected"`
+	RefID    primitive.ObjectID `json:"-" bson:"ref"`
+	Selected bool               `json:"selected" bson:"selected"`
 }
 
 // EntitledSubscription Subscription binding in an Entitlement
@@ -99,26 +99,27 @@ type EntitlementDataSubscription struct {
 
 // EntitledBadge Badge binding in an Entitlement
 type EntitlementDataBadge struct {
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
-	// DEPRECATED: use Entitlement.Condition
-	RoleBinding *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
-	Selected    bool                `json:"selected,omitempty" bson:"selected,omitempty"`
+	RefID     primitive.ObjectID           `json:"-" bson:"ref"`
+	RefObject *Cosmetic[CosmeticDataBadge] `json:"ref_object" bson:"ref_object,skip,omitempty"`
+	Selected  bool                         `json:"selected,omitempty" bson:"selected,omitempty"`
 }
 
 type EntitlementDataPaint struct {
-	ObjectReference primitive.ObjectID  `json:"-" bson:"ref"`
-	RoleBinding     *primitive.ObjectID `json:"role_binding,omitempty" bson:"role_binding,omitempty"`
-	Selected        bool                `json:"selected,omitempty" bson:"selected,omitempty"`
+	RefID     primitive.ObjectID           `json:"-" bson:"ref"`
+	RefObject *Cosmetic[CosmeticDataPaint] `json:"ref_object" bson:"ref_object,skip,omitempty"`
+	Selected  bool                         `json:"selected,omitempty" bson:"selected,omitempty"`
 }
 
 // EntitledRole Role binding in an Entitlement
 type EntitlementDataRole struct {
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+	RefID     primitive.ObjectID `json:"-" bson:"ref"`
+	RefObject *Role              `json:"ref_object" bson:"ref_object,skip,omitempty"`
 }
 
 // EntitledEmoteSet Emote Set binding in an Entitlement
 type EntitlementDataEmoteSet struct {
-	ObjectReference primitive.ObjectID `json:"-" bson:"ref"`
+	RefID     primitive.ObjectID `json:"-" bson:"ref"`
+	RefObject *EmoteSet          `json:"ref_object" bson:"ref_object,skip,omitempty"`
 }
 
 type EntitlementCondition struct {
