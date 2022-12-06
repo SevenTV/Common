@@ -161,7 +161,7 @@ func Map[A any, T any](a []A, fn func(x A) T) []T {
 }
 
 func Filter[T any](a []T, fn func(x T) bool) []T {
-	items := make([]T, 0)
+	items := make([]T, len(a))
 
 	pos := 0
 
