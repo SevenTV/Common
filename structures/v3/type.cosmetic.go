@@ -87,7 +87,7 @@ type CosmeticDataPaint struct {
 	// The function used to generate the paint (i.e gradients or an image)
 	Function CosmeticPaintFunction `json:"function" bson:"function"`
 	// The default color of the paint
-	Color *int32 `json:"color" bson:"color"`
+	Color *utils.Color `json:"color" bson:"color"`
 	// Gradient stops, a list of positions and colors
 	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
 	// Whether or not the gradient repeats outside its original area
@@ -111,15 +111,15 @@ const (
 )
 
 type CosmeticPaintGradientStop struct {
-	At    float64 `json:"at" bson:"at"`
-	Color int32   `json:"color" bson:"color"`
+	At    float64     `json:"at" bson:"at"`
+	Color utils.Color `json:"color" bson:"color"`
 }
 
 type CosmeticPaintDropShadow struct {
-	OffsetX float64 `json:"x_offset" bson:"x_offset"`
-	OffsetY float64 `json:"y_offset" bson:"y_offset"`
-	Radius  float64 `json:"radius" bson:"radius"`
-	Color   int32   `json:"color" bson:"color"`
+	OffsetX float64     `json:"x_offset" bson:"x_offset"`
+	OffsetY float64     `json:"y_offset" bson:"y_offset"`
+	Radius  float64     `json:"radius" bson:"radius"`
+	Color   utils.Color `json:"color" bson:"color"`
 }
 
 type CosmeticPaintAnimation struct {

@@ -142,10 +142,13 @@ func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteS
 			break
 		}
 	}
+	if ind == -1 {
+		return esb // did not find index
+	}
 
 	v := esb.EmoteSet.Emotes[ind]
 	v.Name = alias
-	esb.Update.Set(fmt.Sprintf("emotes.%d", ind), v)
+	esb.Update.Set(fmt.Sprintf("emotes.%d.name", ind), v.Name)
 	return esb
 }
 

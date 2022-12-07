@@ -160,6 +160,26 @@ func Map[A any, T any](a []A, fn func(x A) T) []T {
 	return items
 }
 
+func Filter[T any](a []T, fn func(x T) bool) []T {
+	items := make([]T, len(a))
+
+	pos := 0
+
+	for _, v := range a {
+		if ok := fn(v); ok {
+			items[pos] = v
+
+			pos++
+		}
+	}
+
+	if pos > len(items) {
+		items = items[:pos]
+	}
+
+	return items
+}
+
 func IsPointer(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
 }

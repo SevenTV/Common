@@ -29,6 +29,10 @@ func (c Color) ParseRGB(r, g, b, a uint8) Color {
 	return c.SetRed(r).SetGreen(g).SetBlue(b).SetAlpha(a)
 }
 
+func (c Color) Sum() int32 {
+	return int32(c)
+}
+
 // SetRed sets the red channel of the color
 func (c Color) SetRed(v uint8) Color {
 	return c | (Color(v) << 24)
