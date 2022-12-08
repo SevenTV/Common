@@ -43,6 +43,10 @@ type EmoteSetOrigin struct {
 	Weight int32 `json:"weight" bson:"weight"`
 	// Slicing of active emotes inside the origin set
 	Slices []uint32 `json:"slices" bson:"slices"`
+
+	// Relational
+
+	Set *EmoteSet
 }
 
 type EmoteSetCondition struct {
