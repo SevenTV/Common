@@ -129,6 +129,22 @@ type EntitlementCondition struct {
 	MaxDate  time.Time            `json:"max_date,omitempty" bson:"max_date,omitempty"`
 }
 
+func (e EntitlementCondition) IsMet(roleIDs utils.Set[primitive.ObjectID]) bool {
+	for _, roleID := range e.AllRoles {
+		if !roleIDs.Has(roleID) {
+			return false
+		}
+	}
+
+	for _, roleID := range e.AnyRoles {
+		if roleIDs.Has(roleID) {
+			return true
+		}
+	}
+
+	return len(e.AnyRoles) == 0
+}
+
 type EntitlementApp struct {
 	Name  string         `json:"name"`
 	State map[string]any `json:"state"`
