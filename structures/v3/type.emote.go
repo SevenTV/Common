@@ -29,8 +29,9 @@ type Emote struct {
 
 	// Relational
 
-	Owner    *User  `json:"owner" bson:"owner_user,skip,omitempty"`
-	Channels []User `json:"channels" bson:"channels,skip,omitempty"`
+	Owner      *User         `json:"owner" bson:"owner_user,skip,omitempty"`
+	Channels   []User        `json:"channels" bson:"channels,skip,omitempty"`
+	VersionRef *EmoteVersion `json:"version_ref" bson:"version_ref,skip,omitempty"`
 }
 
 type EmoteLifecycle int32
