@@ -16,6 +16,17 @@ var DeletedUser = User{
 	Connections:   UserConnectionList{},
 }
 
+var SystemUser = User{
+	ID:            [12]byte{96, 58, 221, 0, 209, 207, 107, 48, 44, 192, 226, 142},
+	UserType:      UserTypeSystem,
+	Username:      "*system",
+	DisplayName:   "*System",
+	Discriminator: "0001",
+	RoleIDs:       []primitive.ObjectID{},
+	Editors:       []UserEditor{},
+	Connections:   UserConnectionList{},
+}
+
 var DeletedEmote = Emote{
 	ID:          primitive.NilObjectID,
 	OwnerID:     DeletedUser.ID,

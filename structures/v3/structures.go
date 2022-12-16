@@ -105,6 +105,8 @@ const (
 	ObjectKindBan         ObjectKind = 6
 	ObjectKindMessage     ObjectKind = 7
 	ObjectKindReport      ObjectKind = 8
+	ObjectKindPresence    ObjectKind = 9
+	ObjectKindCosmetic    ObjectKind = 10
 )
 
 type Object interface {
@@ -127,6 +129,12 @@ func (k ObjectKind) String() string {
 		return "BAN"
 	case ObjectKindMessage:
 		return "MESSAGE"
+	case ObjectKindReport:
+		return "REPORT"
+	case ObjectKindPresence:
+		return "PRESENCE"
+	case ObjectKindCosmetic:
+		return "COSMETIC"
 	default:
 		return ""
 	}
