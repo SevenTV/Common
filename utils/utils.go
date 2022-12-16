@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"math/big"
 	"reflect"
 	"time"
@@ -231,4 +232,15 @@ func DestructureMap[K comparable, V any](mp map[K]V) ([]K, []V) {
 
 func ToAny(i any) any {
 	return i
+}
+
+// ToJSON converts a struct to JSON, but instead of throwing an error will simply set
+// the resulting JSON to an empty object if failed.
+func ToJSON[T any](d T) []byte {
+	b, _ := json.Marshal(d)
+	if len(b) == 0 {
+		return []byte("{}")
+	}
+
+	return b
 }
