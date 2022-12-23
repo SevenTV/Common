@@ -28,8 +28,9 @@ type Message[D MessageData] struct {
 
 	// Relational
 
-	Author *User `json:"author,omitempty" bson:"author,skip,omitempty"`
-	Read   bool  `json:"read,omitempty" bson:"read,omitempty"`
+	Author    *User     `json:"author,omitempty" bson:"author,omitempty"`
+	Timestamp time.Time `json:"timestamp,omitempty" bson:"timestamp,omitempty"`
+	Read      bool      `json:"read,omitempty" bson:"read,omitempty"`
 }
 
 func (m Message[D]) ToRaw() Message[bson.Raw] {
@@ -166,4 +167,8 @@ type MessageRead struct {
 	RecipientID primitive.ObjectID `json:"recipient_id,omitempty" bson:"recipient_id,omitempty"`
 	Read        bool               `json:"read" bson:"read"`
 	ReadAt      time.Time          `json:"read_at,omitempty" bson:"read_at,omitempty"`
+
+	// Relational
+
+	Message *Message[bson.Raw] `json:"message,omitempty" bson:"message,skip,omitempty"`
 }
