@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -148,7 +149,9 @@ func (esb *EmoteSetBuilder) UpdateActiveEmote(id ObjectID, alias string) *EmoteS
 
 	v := esb.EmoteSet.Emotes[ind]
 	v.Name = alias
+	v.TimestampUpdate = utils.PointerOf(time.Now())
 	esb.Update.Set(fmt.Sprintf("emotes.%d.name", ind), v.Name)
+	esb.Update.Set(fmt.Sprintf("emotes.%d.timestamp_update", ind), time.Now())
 	return esb
 }
 

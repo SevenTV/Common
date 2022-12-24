@@ -12,9 +12,15 @@ type EmoteSet struct {
 	Name string `json:"name" bson:"name"`
 	// Search tags for the emote set
 	Tags []string `json:"tags" bson:"tags"`
+	// Bit flags for the emote set
+	Flags BitField[EmoteSetFlag] `json:"flags" bson:"flags"`
 	// Whether or not the emote set can be edited
+	//
+	// DEPRECATED - use Flags instead
 	Immutable bool `json:"immutable" bson:"immutable"`
 	// If true, the set is "privileged" and can only be modified by its owner or a super administrator, regardless of the "Edit Any Emote Set" permission
+	//
+	// DEPRECATED - use Flags instead
 	Privileged bool `json:"privilleged" bson:"privileged"`
 	// The emotes assigned to this set
 	Emotes []ActiveEmote `json:"emotes" bson:"emotes"`
@@ -35,6 +41,22 @@ type EmoteSet struct {
 
 	Owner *User `json:"owner,omitempty" bson:"owner_user,skip,omitempty"`
 }
+
+type EmoteSetFlag int32
+
+const (
+	// 1 - Set is immutable, meaning it cannot be modified
+	EmoteSetFlagImmutable EmoteSetFlag = 1 << 0
+	// 2 - Set is privileged, meaning it can only be modified by its owner
+	// or a super administrator, regardless of the "Edit Any Emote Set" permission
+	EmoteSetFlagPrivileged EmoteSetFlag = 1 << 1
+	// 4 - Set can be personally entitled to a user, meaning its content can be used globally
+	// but may require additional review by content moderators
+	EmoteSetFlagPersonal EmoteSetFlag = 1 << 2
+	// 8 - Set is distributed via a purchase, meaning its content must be approved
+	// for commercial use by rightsholders
+	EmoteSetFlagCommercial EmoteSetFlag = 1 << 3
+)
 
 type EmoteSetOrigin struct {
 	// The ID of the referenced emote set
@@ -62,11 +84,12 @@ const (
 )
 
 type ActiveEmote struct {
-	ID        primitive.ObjectID        `json:"id" bson:"id"`
-	Name      string                    `json:"name" bson:"name"`
-	Flags     BitField[ActiveEmoteFlag] `json:"flags" bson:"flags"`
-	Timestamp time.Time                 `json:"timestamp" bson:"timestamp"`
-	ActorID   primitive.ObjectID        `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
+	ID              primitive.ObjectID        `json:"id" bson:"id"`
+	Name            string                    `json:"name" bson:"name"`
+	Flags           BitField[ActiveEmoteFlag] `json:"flags" bson:"flags"`
+	Timestamp       time.Time                 `json:"timestamp" bson:"timestamp"`
+	TimestampUpdate *time.Time                `json:"timestamp_update,omitempty" bson:"timestamp_update,omitempty"`
+	ActorID         primitive.ObjectID        `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
 
 	// Relational
 
@@ -79,6 +102,7 @@ type ActiveEmoteFlag int32
 
 const (
 	ActiveEmoteFlagZeroWidth                ActiveEmoteFlag = 1 << 0  // 1 - Emote is zero-width
+	ActiveEmoteFlagPending                  ActiveEmoteFlag = 1 << 8  // 256 - Emote is pending review
 	ActiveEmoteFlagOverrideTwitchGlobal     ActiveEmoteFlag = 1 << 16 // 65536 - Overrides Twitch Global emotes with the same name
 	ActiveEmoteFlagOverrideTwitchSubscriber ActiveEmoteFlag = 1 << 17 // 131072 - Overrides Twitch Subscriber emotes with the same name
 	ActiveEmoteFlagOverrideBetterTTV        ActiveEmoteFlag = 1 << 18 // 262144 - Overrides BetterTTV emotes with the same name

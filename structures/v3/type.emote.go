@@ -48,9 +48,11 @@ const (
 type EmoteFlag int32
 
 const (
-	EmoteFlagsPrivate   EmoteFlag = 1 << 0 // The emote is private and can only be accessed by its owner, editors and moderators
-	EmoteFlagsAuthentic EmoteFlag = 1 << 1 // The emote was verified to be an original creation by the uploader
-	EmoteFlagsZeroWidth EmoteFlag = 1 << 8 // The emote is recommended to be enabled as Zero-Width
+	EmoteFlagsPrivate             EmoteFlag = 1 << 0  // The emote is private and can only be accessed by its owner, editors and moderators
+	EmoteFlagsAuthentic           EmoteFlag = 1 << 1  // The emote was verified to be an original creation by the uploader
+	EmoteFlagsZeroWidth           EmoteFlag = 1 << 8  // The emote is recommended to be enabled as Zero-Width
+	EmoteFlagsPersonalUse         EmoteFlag = 1 << 9  // The emote is permitted in personal sets
+	EmoteFlagsPersonalUseRejected EmoteFlag = 1 << 10 // The emote is explicitly not permitted in personal sets and cannot be requested again
 
 	// Content Flags
 
