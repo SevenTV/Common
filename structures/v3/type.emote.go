@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -48,11 +47,9 @@ const (
 type EmoteFlag int32
 
 const (
-	EmoteFlagsPrivate             EmoteFlag = 1 << 0  // The emote is private and can only be accessed by its owner, editors and moderators
-	EmoteFlagsAuthentic           EmoteFlag = 1 << 1  // The emote was verified to be an original creation by the uploader
-	EmoteFlagsZeroWidth           EmoteFlag = 1 << 8  // The emote is recommended to be enabled as Zero-Width
-	EmoteFlagsPersonalUse         EmoteFlag = 1 << 9  // The emote is permitted in personal sets
-	EmoteFlagsPersonalUseRejected EmoteFlag = 1 << 10 // The emote is explicitly not permitted in personal sets and cannot be requested again
+	EmoteFlagsPrivate   EmoteFlag = 1 << 0 // The emote is private and can only be accessed by its owner, editors and moderators
+	EmoteFlagsAuthentic EmoteFlag = 1 << 1 // The emote was verified to be an original creation by the uploader
+	EmoteFlagsZeroWidth EmoteFlag = 1 << 8 // The emote is recommended to be enabled as Zero-Width
 
 	// Content Flags
 
@@ -135,6 +132,8 @@ type EmoteVersionState struct {
 	Error string `json:"error,omitempty" bson:"error,omitempty"`
 	// Whether or not the emote is listed
 	Listed bool `json:"listed" bson:"listed"`
+	// Whether or not the emote is validated for personal use
+	AllowPersonal *bool `json:"allow_personal" bson:"allow_personal"`
 	// The ranked position for the amount of channels this emote is added on to.
 	// This value is to be determined with an external cron job
 	ChannelCountRank int32 `json:"-" bson:"channel_count_rank"`
@@ -159,10 +158,6 @@ type EmoteVersion struct {
 	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
 	StartedAt   time.Time `json:"started_at" bson:"started_at"`
 	CompletedAt time.Time `json:"completed_at" bson:"completed_at"`
-}
-
-func (e Emote) HasFlag(flag EmoteFlag) bool {
-	return utils.BitField.HasBits(int64(e.Flags), int64(flag))
 }
 
 func (e Emote) GetVersion(id ObjectID) (EmoteVersion, int) {
