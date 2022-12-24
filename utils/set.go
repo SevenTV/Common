@@ -25,8 +25,11 @@ func (s Set[T]) Delete(val T) {
 func (s Set[T]) Values() []T {
 	vals := make([]T, len(s))
 
+	pos := 0
 	for val := range s {
-		vals = append(vals, val)
+		vals[pos] = val
+
+		pos++
 	}
 
 	return vals
