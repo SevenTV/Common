@@ -20,6 +20,10 @@ type UserPresence[T UserPresenceData] struct {
 	// to allow a client to announce a user as active in a chat room, but not require
 	// a full authentication flow to attain this functionality.
 	Authentic bool `json:"authentic" bson:"authentic"`
+	// Known is whether or not the data in this presence is known
+	//
+	// If false, it means the data passed wasn't validated to match a real location.
+	Known bool `json:"known" bson:"known"`
 	// Timestamp is the time at which this presence was issued
 	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 	// TTL is how long this presence is valid for, before it expires
@@ -53,8 +57,8 @@ type UserPresenceData interface {
 }
 
 type UserPresenceDataChannel struct {
-	HostID       primitive.ObjectID `json:"host_id" bson:"host_id"`
-	ConnectionID string             `json:"connection_id" bson:"connection_id"`
+	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
+	ID       string                 `json:"id" bson:"id"`
 }
 
 type UserPresenceLocationDataWebPage struct {
