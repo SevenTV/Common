@@ -29,8 +29,9 @@ type UserPresence[T UserPresenceData] struct {
 	// TTL is how long this presence is valid for, before it expires
 	TTL time.Time `json:"ttl" bson:"ttl"`
 	// Kind is the type of presence this is
-	Kind UserPresenceKind `json:"kind" bson:"kind"`
-	Data T                `json:"data" bson:"data"`
+	Kind         UserPresenceKind          `json:"kind" bson:"kind"`
+	Data         T                         `json:"data" bson:"data"`
+	Entitlements []UserPresenceEntitlement `json:"entitlements,omitempty" bson:"entitlements,omitempty"`
 }
 
 type UserPresenceKind uint8
@@ -59,6 +60,13 @@ type UserPresenceData interface {
 type UserPresenceDataChannel struct {
 	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
 	ID       string                 `json:"id" bson:"id"`
+}
+
+type UserPresenceEntitlement struct {
+	Kind         EntitlementKind    `json:"kind" bson:"kind"`
+	ID           primitive.ObjectID `json:"id" bson:"id"`
+	RefID        primitive.ObjectID `json:"ref" bson:"ref"`
+	DispatchHash uint32             `json:"dispatch_hash,omitempty" bson:"dispatch_hash,omitempty"`
 }
 
 type UserPresenceLocationDataWebPage struct {
