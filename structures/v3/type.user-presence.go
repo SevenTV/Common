@@ -58,8 +58,13 @@ type UserPresenceData interface {
 }
 
 type UserPresenceDataChannel struct {
-	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
-	ID       string                 `json:"id" bson:"id"`
+	Platform UserConnectionPlatform        `json:"platform" bson:"platform"`
+	ID       string                        `json:"id" bson:"id"`
+	Filter   UserPresenceDataChannelFilter `json:"filter" bson:"-"`
+}
+
+type UserPresenceDataChannelFilter struct {
+	Emotes []string `json:"emotes" bson:"-"`
 }
 
 type UserPresenceEntitlement struct {
