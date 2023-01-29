@@ -155,6 +155,7 @@ type MessageDataModRequest struct {
 	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
 	TargetID   primitive.ObjectID `json:"target_id" bson:"target_id"`
 	Wish       string             `json:"wish" bson:"wish"`
+	Priority   uint8              `json:"priority" bson:"priority,omitempty"`
 
 	Target bson.Raw `json:"target" bson:"target,omitempty"`
 }

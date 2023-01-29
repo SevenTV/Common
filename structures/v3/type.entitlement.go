@@ -127,6 +127,7 @@ type EntitlementCondition struct {
 	AllRoles []primitive.ObjectID `json:"all_roles,omitempty" bson:"all_roles,omitempty"`
 	MinDate  time.Time            `json:"min_date,omitempty" bson:"min_date,omitempty"`
 	MaxDate  time.Time            `json:"max_date,omitempty" bson:"max_date,omitempty"`
+	NoLegacy bool                 `json:"no_legacy,omitempty" bson:"no_legacy,omitempty"`
 }
 
 func (e EntitlementCondition) IsMet(roleIDs utils.Set[primitive.ObjectID]) bool {
