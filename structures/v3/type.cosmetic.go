@@ -73,6 +73,7 @@ type CosmeticKind string
 const (
 	CosmeticKindBadge        CosmeticKind = "BADGE"
 	CosmeticKindNametagPaint CosmeticKind = "PAINT"
+	CosmeticKindAvatar       CosmeticKind = "AVATAR"
 )
 
 type CosmeticDataBadge struct {

@@ -260,3 +260,27 @@ type UserConnectionDataDiscord struct {
 	PremiumType   uint32 `json:"premium_type" bson:"premium_type"`
 	PublicFlags   uint32 `json:"public_flags" bson:"public_flags"`
 }
+
+func (uc UserConnection[D]) Username() (string, string) {
+	var displayName string
+	var username string
+
+	switch uc.Platform {
+	case UserConnectionPlatformTwitch:
+		if con, err := ConvertUserConnection[UserConnectionDataTwitch](uc.ToRaw()); err == nil {
+			displayName = con.Data.DisplayName
+			username = con.Data.Login
+		}
+	case UserConnectionPlatformYouTube:
+		if con, err := ConvertUserConnection[UserConnectionDataYoutube](uc.ToRaw()); err == nil {
+			displayName = con.Data.Title
+			username = con.Data.ID
+		}
+	case UserConnectionPlatformDiscord:
+		if con, err := ConvertUserConnection[UserConnectionDataDiscord](uc.ToRaw()); err == nil {
+			displayName = con.Data.Username
+			username = con.Data.Username + "#" + con.Data.Discriminator
+		}
+	}
+	return username, displayName
+}
