@@ -174,11 +174,10 @@ func Filter[T any](a []T, fn func(x T) bool) []T {
 		}
 	}
 
-	if pos > len(items) {
-		items = items[:pos]
-	}
+	result := make([]T, pos)
+	copy(result, items[:pos])
 
-	return items
+	return result
 }
 
 func IsPointer(v interface{}) bool {
