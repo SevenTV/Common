@@ -73,6 +73,40 @@ var (
 	UserConnectionPlatformDiscord UserConnectionPlatform = "DISCORD"
 )
 
+func (ucp UserConnectionPlatform) Supported() bool {
+	switch ucp {
+	case UserConnectionPlatformTwitch, UserConnectionPlatformYouTube, UserConnectionPlatformDiscord:
+		return true
+	}
+	return false
+}
+
+func (ap UserConnectionPlatform) AuthorizeURL() string {
+	switch ap {
+	case UserConnectionPlatformTwitch:
+		return "https://id.twitch.tv/oauth2/authorize"
+	case UserConnectionPlatformYouTube:
+		return "https://accounts.google.com/o/oauth2/v2/auth"
+	case UserConnectionPlatformDiscord:
+		return "https://discord.com/api/oauth2/authorize"
+	}
+
+	return ""
+}
+
+func (ap UserConnectionPlatform) TokenURL() string {
+	switch ap {
+	case UserConnectionPlatformTwitch:
+		return "https://id.twitch.tv/oauth2/token"
+	case UserConnectionPlatformYouTube:
+		return "https://oauth2.googleapis.com/token"
+	case UserConnectionPlatformDiscord:
+		return "https://discord.com/api/v10/oauth2/token"
+	}
+
+	return ""
+}
+
 type UserType string
 
 var (
