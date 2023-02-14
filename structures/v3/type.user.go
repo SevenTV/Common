@@ -130,7 +130,7 @@ func (u *User) InferUsername() {
 		case UserConnectionPlatformDiscord:
 			con, _ := ConvertUserConnection[UserConnectionDataDiscord](connection)
 
-			full := con.Data.Username[:int(math.Min(22, float64(len(con.Data.Username))-1))] + "_" + con.Data.Discriminator
+			full := con.Data.Username[:int(math.Min(22, float64(len(con.Data.Username))))] + "_" + con.Data.Discriminator
 
 			s = strings.ToLower(full)
 			sd = full
@@ -141,12 +141,14 @@ func (u *User) InferUsername() {
 	u.DisplayName = UsernameRegex.ReplaceAllString(sd, "")
 }
 
-func (x *User) SetDiscriminator(discrim string) {
+func (u *User) SetDiscriminator(discrim string) {
 	if discrim == "" {
 		for i := 0; i < 4; i++ {
 			discrim += strconv.Itoa(rand.Intn(9))
 		}
 	}
+
+	u.Discriminator = discrim
 }
 
 func (u *User) SortRoles() {
