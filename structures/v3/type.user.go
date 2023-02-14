@@ -67,9 +67,10 @@ type User struct {
 }
 
 type UserState struct {
-	RolePosition int `json:"-" bson:"role_position"`
-	// ClientIP is the user's last known IP address
-	ClientIP string `json:"-" bson:"client_ip"`
+	RolePosition  int       `json:"-" bson:"role_position"`
+	ClientIP      string    `json:"-" bson:"client_ip"`
+	LastLoginDate time.Time `json:"-" bson:"last_login_at"`
+	LastVisitDate time.Time `json:"-" bson:"last_visit_at"`
 }
 
 type UserAvatar struct {
