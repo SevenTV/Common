@@ -218,20 +218,3 @@ const (
 	UserEditorPermissionManageEditors     UserEditorPermission = 1 << 6 // 64 - Allows adding or removing editors for the user
 	UserEditorPermissionViewMessages      UserEditorPermission = 1 << 7 // 128 - Allows viewing the user's private messages, such as inbox
 )
-
-func (x *User) UpdateConnectionData(id string, data []byte) bool {
-	ok := false
-
-	for i, c := range x.Connections {
-		if c.ID != id {
-			continue
-		}
-
-		x.Connections[i].Data = data
-
-		ok = true
-		break
-	}
-
-	return ok
-}

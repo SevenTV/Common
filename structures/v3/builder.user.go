@@ -121,6 +121,24 @@ func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder
 	return ub
 }
 
+func (ub *UserBuilder) UpdateConnection(id string, data []byte) bool {
+	ok := false
+
+	for i, c := range ub.User.Connections {
+		if c.ID != id {
+			continue
+		}
+
+		ub.User.Connections[i].Data = data
+		ub.Update.Set(fmt.Sprintf("connections.%d", i), data)
+
+		ok = true
+		break
+	}
+
+	return ok
+}
+
 func (ub *UserBuilder) RemoveConnection(id string) (*UserBuilder, int) {
 	ind := -1
 	for i := range ub.User.Connections {
