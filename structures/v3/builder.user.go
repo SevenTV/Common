@@ -121,7 +121,7 @@ func (ub *UserBuilder) AddConnection(conn UserConnection[bson.Raw]) *UserBuilder
 	return ub
 }
 
-func (ub *UserBuilder) UpdateConnection(id string, data []byte) bool {
+func (ub *UserBuilder) UpdateConnection(id string, data bson.Raw) bool {
 	ok := false
 
 	for i, c := range ub.User.Connections {
@@ -130,7 +130,7 @@ func (ub *UserBuilder) UpdateConnection(id string, data []byte) bool {
 		}
 
 		ub.User.Connections[i].Data = data
-		ub.Update.Set(fmt.Sprintf("connections.%d", i), data)
+		ub.Update.Set(fmt.Sprintf("connections.%d.data", i), data)
 
 		ok = true
 		break
