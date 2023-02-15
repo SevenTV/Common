@@ -152,10 +152,12 @@ type MessageDataPlaceholder struct {
 }
 
 type MessageDataModRequest struct {
-	TargetKind ObjectKind         `json:"target_kind" bson:"target_kind"`
-	TargetID   primitive.ObjectID `json:"target_id" bson:"target_id"`
-	Wish       string             `json:"wish" bson:"wish"`
-	Priority   uint8              `json:"priority" bson:"priority,omitempty"`
+	TargetKind       ObjectKind         `json:"target_kind" bson:"target_kind"`
+	TargetID         primitive.ObjectID `json:"target_id" bson:"target_id"`
+	Wish             string             `json:"wish" bson:"wish"`
+	Priority         uint8              `json:"priority" bson:"priority,omitempty"`
+	ActorCountryName string             `json:"actor_country_name,omitempty" bson:"actor_country_name,omitempty"`
+	ActorCountryCode string             `json:"actor_country_code,omitempty" bson:"actor_country_code,omitempty"`
 
 	Target bson.Raw `json:"target" bson:"target,omitempty"`
 }
