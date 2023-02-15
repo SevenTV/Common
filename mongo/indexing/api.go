@@ -95,6 +95,19 @@ var DatabaseRefAPI = []collectionRef{
 			}, Options: options.Index().SetTextVersion(3)},
 			{Keys: bson.M{"tags": 1}},
 			{Keys: bson.M{"versions.state.channel_count": -1}},
+			{
+				Keys: bson.M{"versions.state.listed": 1},
+				Options: options.Index().SetName("listed").SetPartialFilterExpression(bson.M{
+					"versions.state.listed": true,
+				}),
+			},
+			// lifecycle live
+			{
+				Keys: bson.M{"versions.state.lifecycle": -1},
+				Options: options.Index().SetName("lifecycle_live").SetPartialFilterExpression(bson.M{
+					"versions.state.lifecycle": structures.EmoteLifecycleLive,
+				}),
+			},
 		},
 		Validator: &jsonSchema{
 			BSONType: TList{BSONTypeObject},
