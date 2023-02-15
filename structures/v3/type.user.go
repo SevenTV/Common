@@ -2,13 +2,20 @@ package structures
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var UsernameRegex = regexp.MustCompile("[^a-zA-Z0-9_]+")
 
 // User A standard app user object
 type User struct {
@@ -60,7 +67,10 @@ type User struct {
 }
 
 type UserState struct {
-	RolePosition int `json:"-" bson:"role_position"`
+	RolePosition  int       `json:"-" bson:"role_position"`
+	ClientIP      string    `json:"-" bson:"client_ip"`
+	LastLoginDate time.Time `json:"-" bson:"last_login_at"`
+	LastVisitDate time.Time `json:"-" bson:"last_visit_at"`
 }
 
 type UserAvatar struct {
@@ -103,6 +113,42 @@ func (u *User) AddRoles(roles ...Role) {
 		}
 		u.Roles = append(u.Roles, r)
 	}
+}
+
+func (u *User) InferUsername() {
+	s := ""
+	sd := ""
+
+	for _, connection := range u.Connections {
+		switch connection.Platform {
+		case UserConnectionPlatformTwitch:
+			con, _ := ConvertUserConnection[UserConnectionDataTwitch](connection)
+
+			s = con.Data.Login
+			sd = con.Data.DisplayName
+		case UserConnectionPlatformYouTube:
+		case UserConnectionPlatformDiscord:
+			con, _ := ConvertUserConnection[UserConnectionDataDiscord](connection)
+
+			full := con.Data.Username[:int(math.Min(22, float64(len(con.Data.Username))))] + "_" + con.Data.Discriminator
+
+			s = strings.ToLower(full)
+			sd = full
+		}
+	}
+
+	u.Username = UsernameRegex.ReplaceAllString(s, "")
+	u.DisplayName = UsernameRegex.ReplaceAllString(sd, "")
+}
+
+func (u *User) SetDiscriminator(discrim string) {
+	if discrim == "" {
+		for i := 0; i < 4; i++ {
+			discrim += strconv.Itoa(rand.Intn(9))
+		}
+	}
+
+	u.Discriminator = discrim
 }
 
 func (u *User) SortRoles() {
@@ -172,3 +218,13 @@ const (
 	UserEditorPermissionManageEditors     UserEditorPermission = 1 << 6 // 64 - Allows adding or removing editors for the user
 	UserEditorPermissionViewMessages      UserEditorPermission = 1 << 7 // 128 - Allows viewing the user's private messages, such as inbox
 )
+
+func (x *User) UpdateConnectionData(id string, data []byte) {
+	for i, c := range x.Connections {
+		if c.ID != id {
+			continue
+		}
+
+		x.Connections[i].Data = data
+	}
+}
