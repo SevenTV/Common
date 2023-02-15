@@ -142,6 +142,7 @@ type EmoteVersionState struct {
 	ChannelCount int32 `json:"-" bson:"channel_count"`
 	// The time at which the ChannelCount value was last checked
 	ChannelCountCheckAt time.Time `json:"-" bson:"channel_count_check_at"`
+	Language            string    `json:"language,omitempty" bson:"language,omitempty"`
 }
 
 type EmoteVersion struct {
