@@ -130,6 +130,8 @@ type EmoteVersionState struct {
 	Lifecycle EmoteLifecycle `json:"lifecycle" bson:"lifecycle"`
 	// An error message linked to a failure in the emote's processing stage
 	Error string `json:"error,omitempty" bson:"error,omitempty"`
+	// ID of a replacing emote (used to redirect merges)
+	ReplaceID primitive.ObjectID `json:"replace_id,omitempty" bson:"replace_id,omitempty"`
 	// Whether or not the emote is listed
 	Listed bool `json:"listed" bson:"listed"`
 	// Whether or not the emote is validated for personal use

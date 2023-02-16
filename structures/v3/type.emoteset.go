@@ -89,6 +89,8 @@ type ActiveEmote struct {
 	Flags           BitField[ActiveEmoteFlag] `json:"flags" bson:"flags"`
 	Timestamp       time.Time                 `json:"timestamp" bson:"timestamp"`
 	TimestampUpdate *time.Time                `json:"timestamp_update,omitempty" bson:"timestamp_update,omitempty"`
+	MergedFromID    primitive.ObjectID        `json:"merged_from_id,omitempty" bson:"merged_from_id,omitempty"`
+	MergedAt        time.Time                 `json:"merged_at,omitempty" bson:"merged_at,omitempty"`
 	ActorID         primitive.ObjectID        `json:"actor_id,omitempty" bson:"actor_id,omitempty"`
 
 	// Relational
