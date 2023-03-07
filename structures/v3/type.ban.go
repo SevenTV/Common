@@ -41,6 +41,17 @@ const (
 	BanEffectBlockedIP BanEffect = 1 << 4
 )
 
+func (bef BanEffect) String() string {
+	var s string
+	for k, e := range BanEffectMap {
+		if bef.Has(e) {
+			s += k + "|"
+		}
+	}
+
+	return s
+}
+
 func (bef BanEffect) Has(eff BanEffect) bool {
 	return (bef & eff) == eff
 }
