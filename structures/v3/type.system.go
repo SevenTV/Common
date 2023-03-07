@@ -17,6 +17,28 @@ type SystemDefaultObject struct {
 }
 
 type SystemConfigExtension struct {
-	Version   string     `json:"version" bson:"version"`
-	Overrides []struct{} `json:"overrides" bson:"overrides"`
+	Version       string                        `json:"version" bson:"version"`
+	Overrides     []struct{}                    `json:"overrides" bson:"overrides"`
+	Compatibility []SystemConfigExtensionCompat `json:"compatibility" bson:"compatibility"`
 }
+
+type SystemConfigExtensionCompat struct {
+	ID     []string                           `json:"id" bson:"id"`
+	Issues []SystemConfigExtensionCompatIssue `json:"issues" bson:"issues"`
+}
+
+type SystemConfigExtensionCompatIssue struct {
+	Platforms []UserConnectionPlatform                 `json:"platform" bson:"platform"`
+	Severity  SystemConfigExtensionCompatIssueSeverity `json:"severity" bson:"severity"`
+	Message   string                                   `json:"message" bson:"message"`
+}
+
+type SystemConfigExtensionCompatIssueSeverity string
+
+const (
+	SystemConfigExtensionCompatIssueSeverityNote                   SystemConfigExtensionCompatIssueSeverity = "NOTE"
+	SystemConfigExtensionCompatIssueSeverityWarning                SystemConfigExtensionCompatIssueSeverity = "WARNING"
+	SystemConfigExtensionCompatIssueSeverityBadPerformance         SystemConfigExtensionCompatIssueSeverity = "BAD_PERFORMANCE"
+	SystemConfigExtensionCompatIssueSeverityClashing               SystemConfigExtensionCompatIssueSeverity = "CLASHING"
+	SystemConfigExtensionCompatIssueSeverityDuplicateFunctionality SystemConfigExtensionCompatIssueSeverity = "DUPLICATE_FUNCTIONALITY"
+)
