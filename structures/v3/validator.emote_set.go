@@ -10,7 +10,7 @@ type EmoteSetValidator struct {
 	v *EmoteSet
 }
 
-var RegExpEmoteSetName = regexp.MustCompile(`^[a-zA-Z0-9&'_-~# ]{1,40}$`)
+var RegExpEmoteSetName = regexp.MustCompile(`^[A-Za-zÀ-ÖØ-öø-įĴ-őŔ-žǍ-ǰǴ-ǵǸ-țȞ-ȟȤ-ȳɃɆ-ɏḀ-ẞƀ-ƓƗ-ƚƝ-ơƤ-ƥƫ-ưƲ-ƶẠ-ỿ0-9&'_-~# ]{1,40}$`)
 
 func (e *EmoteSet) Validator() EmoteSetValidator {
 	return EmoteSetValidator{e}
