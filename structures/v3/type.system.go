@@ -6,8 +6,8 @@ type System struct {
 	AdminUserID ObjectID `json:"admin_user_id" bson:"admin_user_id"`
 	EmoteSetID  ObjectID `json:"emote_set_id" bson:"emote_set_id"`
 	Config      struct {
-		Extension     SystemConfigExtension `json:"extension" bson:"extension"`
-		ExtensionBeta SystemConfigExtension `json:"extension_beta" bson:"extension_beta"`
+		Extension        SystemConfigExtension `json:"extension" bson:"extension"`
+		ExtensionNightly SystemConfigExtension `json:"extension_nightly" bson:"extension_nightly"`
 	} `json:"config" bson:"config"`
 }
 
