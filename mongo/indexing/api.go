@@ -74,9 +74,10 @@ var DatabaseRefAPI = []collectionRef{
 		Name: string(mongo.CollectionNameUserPresences),
 		Indexes: []mongo.IndexModel{
 			{Keys: bson.M{"actor_id": -1}},
+			{Keys: bson.M{"ip": -1}},
 			{Keys: bson.M{"ttl": -1}, Options: options.Index().SetExpireAfterSeconds(0)},
 			{
-				Keys:    bson.M{"data.host_id": -1},
+				Keys:    bson.M{"data.id": -1},
 				Options: options.Index().SetPartialFilterExpression(bson.M{"kind": structures.UserPresenceKindChannel}),
 			},
 		},
