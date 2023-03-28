@@ -71,6 +71,7 @@ var (
 	ErrMissingInternalDependency  apiErrorFn = DefineError(70510, "Missing Internal Dependency", 503)
 	ErrInternalIncompleteMutation apiErrorFn = DefineError(70560, "Incomplete Mutation (internal)", 500)
 	ErrMutateTaintedObject        apiErrorFn = DefineError(70570, "Tainted Object Mutation", 500) // mutation on a tainted (already mutated) Builder
+	ErrEndOfLife                  apiErrorFn = DefineError(70580, "End of Life", 410)             // the requested api endpoint left long ago
 )
 
 /*
