@@ -169,7 +169,7 @@ type CosmeticPaintText struct {
 	// Weight multiplier for the text. Default is 9
 	Weight uint8 `json:"weight" bson:"weight"`
 	// Shadows applied to the text
-	Shadow []CosmeticPaintDropShadow `json:"shadow,omitempty" bson:"shadow,omitempty"`
+	Shadows []CosmeticPaintDropShadow `json:"shadow,omitempty" bson:"shadow,omitempty"`
 	// Text tranformation
 	Transform CosmeticPaintTextTransform `json:"transform,omitempty" bson:"transform,omitempty"`
 	// Text stroke
