@@ -97,6 +97,8 @@ type CosmeticDataPaint struct {
 	DropShadows []CosmeticPaintDropShadow `json:"drop_shadows,omitempty" bson:"drop_shadows,omitempty"`
 	// A list of flairs
 	Flairs []CosmeticPaintFlair `json:"flairs,omitempty" bson:"flairs,omitempty"`
+	// Text properties
+	Text *CosmeticPaintText `json:"text,omitempty" bson:"text,omitempty"`
 	// Text stroke
 	// Deprecated: The function used to generate the paint (i.e gradients or an image)
 	Function CosmeticPaintGradientFunction `json:"function" bson:"function"`
