@@ -195,9 +195,13 @@ const (
 type CosmeticPaintFlair struct {
 	// The kind of sprite
 	Kind CosmeticPaintFlairKind `json:"kind" bson:"kind"`
-	// The width of the sprite
+	// The X offset of the flair (%)
+	OffsetX float64 `json:"x_offset" bson:"x_offset"`
+	// The Y offset of the flair (%)
+	OffsetY float64 `json:"y_offset" bson:"y_offset"`
+	// The width of the flair
 	Width float64 `json:"width" bson:"width"`
-	// The height of the sprite
+	// The height of the flair
 	Height float64 `json:"height" bson:"height"`
 	// Base64-encoded image or vector data
 	Data string `json:"data" bson:"data"`
