@@ -100,17 +100,17 @@ type CosmeticDataPaint struct {
 	// Text properties
 	Text *CosmeticPaintText `json:"text,omitempty" bson:"text,omitempty"`
 	// Text stroke
-	// Deprecated: The function used to generate the paint (i.e gradients or an image)
+	// The function used to generate the paint (i.e gradients or an image)
 	Function CosmeticPaintGradientFunction `json:"function" bson:"function"`
-	// Deprecated: Gradient stops, a list of positions and colors
+	// Gradient stops, a list of positions and colors
 	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
-	// Deprecated: Whether or not the gradient repeats outside its original area
+	// Whether or not the gradient repeats outside its original area
 	Repeat bool `json:"repeat" bson:"repeat"`
-	// Deprecated: Gradient angle in degrees
+	// Gradient angle in degrees
 	Angle int32 `json:"angle" bson:"angle"`
-	// Deprecated: Shape of a radial gradient, when the paint is of RADIAL_GRADIENT type
+	// Shape of a radial gradient, when the paint is of RADIAL_GRADIENT type
 	Shape string `json:"shape,omitempty" bson:"shape,omitempty"`
-	// Deprecated: URL of an image, when the paint is of BACKGROUND_IMAGE type
+	// URL of an image, when the paint is of BACKGROUND_IMAGE type
 	ImageURL string `json:"image_url,omitempty" bson:"image_url,omitempty"`
 }
 
