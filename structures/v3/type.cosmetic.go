@@ -88,7 +88,7 @@ type CosmeticDataPaint struct {
 	// The default color of the paint
 	Color *utils.Color `json:"color" bson:"color"`
 	// The canvas size for the paint
-	CanvasSize [2]float32 `json:"canvas_size" bson:"canvas_size"`
+	CanvasSize [2]float64 `json:"canvas_size" bson:"canvas_size"`
 	// The repeat mode of the canvas
 	CanvasRepeat CosmeticPaintCanvasRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
 	// A list of gradients. There may be any amount, which can be stacked onto each other
@@ -166,10 +166,10 @@ type CosmeticPaintDropShadow struct {
 }
 
 type CosmeticPaintText struct {
-	// Weight multiplier for the text. Default is 9
-	Weight uint8 `json:"weight" bson:"weight"`
+	// Weight multiplier for the text. Defaults to 9x is not specified
+	Weight uint8 `json:"weight,omitempty" bson:"weight,omitempty"`
 	// Shadows applied to the text
-	Shadows []CosmeticPaintDropShadow `json:"shadow,omitempty" bson:"shadow,omitempty"`
+	Shadows []CosmeticPaintDropShadow `json:"shadows,omitempty" bson:"shadows,omitempty"`
 	// Text tranformation
 	Transform CosmeticPaintTextTransform `json:"transform,omitempty" bson:"transform,omitempty"`
 	// Text stroke
