@@ -87,10 +87,6 @@ type CosmeticDataPaint struct {
 	ID primitive.ObjectID `json:"id" bson:"-"`
 	// The default color of the paint
 	Color *utils.Color `json:"color" bson:"color"`
-	// The canvas size for the paint
-	CanvasSize [2]float64 `json:"canvas_size" bson:"canvas_size"`
-	// The repeat mode of the canvas
-	CanvasRepeat CosmeticPaintCanvasRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
 	// A list of gradients. There may be any amount, which can be stacked onto each other
 	Gradients []CosmeticPaintGradient `json:"gradients" bson:"gradients"`
 	// A list of drop shadows. There may be any amount, which can be stacked onto each other
@@ -117,6 +113,12 @@ type CosmeticDataPaint struct {
 type CosmeticPaintGradient struct {
 	// The function used to generate the paint (i.e gradients or an image)
 	Function CosmeticPaintGradientFunction `json:"function" bson:"function"`
+	// The repeat mode of the gradient canvas
+	CanvasRepeat CosmeticPaintGradientRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
+	// The canvas size for the paint
+	Size [2]float64 `json:"size" bson:"size"`
+	// Gradient position (X/Y % values)
+	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
 	// Gradient stops, a list of positions and colors
 	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
 	// For a URL-based paint, the URL to an image
@@ -125,11 +127,8 @@ type CosmeticPaintGradient struct {
 	Shape string `json:"shape,omitempty" bson:"shape,omitempty"`
 	// The degree angle of the gradient (does not apply if function is URL)
 	Angle int32 `json:"angle,omitempty" bson:"angle,omitempty"`
-	// Whether or not the gradient repeats outside its original area
+	// Whether or not the gradient stops repeat after they end
 	Repeat bool `json:"repeat" bson:"repeat"`
-
-	// Gradient position (X/Y % values)
-	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
 }
 
 type CosmeticPaintGradientFunction string
@@ -140,15 +139,15 @@ const (
 	CosmeticPaintFunctionImageURL       CosmeticPaintGradientFunction = "URL"
 )
 
-type CosmeticPaintCanvasRepeat string
+type CosmeticPaintGradientRepeat string
 
 const (
-	CosmeticPaintCanvasRepeatNone   CosmeticPaintCanvasRepeat = "no-repeat"
-	CosmeticPaintCanvasRepeatX      CosmeticPaintCanvasRepeat = "repeat-x"
-	CosmeticPaintCanvasRepeatY      CosmeticPaintCanvasRepeat = "repeat-y"
-	CosmeticPaintCanvasRepeatRevert CosmeticPaintCanvasRepeat = "revert"
-	CosmeticPaintCanvasRepeatRound  CosmeticPaintCanvasRepeat = "round"
-	CosmeticPaintCanvasRepeatSpace  CosmeticPaintCanvasRepeat = "space"
+	CosmeticPaintCanvasRepeatNone   CosmeticPaintGradientRepeat = "no-repeat"
+	CosmeticPaintCanvasRepeatX      CosmeticPaintGradientRepeat = "repeat-x"
+	CosmeticPaintCanvasRepeatY      CosmeticPaintGradientRepeat = "repeat-y"
+	CosmeticPaintCanvasRepeatRevert CosmeticPaintGradientRepeat = "revert"
+	CosmeticPaintCanvasRepeatRound  CosmeticPaintGradientRepeat = "round"
+	CosmeticPaintCanvasRepeatSpace  CosmeticPaintGradientRepeat = "space"
 )
 
 type CosmeticPaintGradientStop struct {
