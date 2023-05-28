@@ -85,10 +85,19 @@ type CosmeticDataBadge struct {
 
 type CosmeticDataPaint struct {
 	ID primitive.ObjectID `json:"id" bson:"-"`
-	// The function used to generate the paint (i.e gradients or an image)
-	Function CosmeticPaintFunction `json:"function" bson:"function"`
 	// The default color of the paint
 	Color *utils.Color `json:"color" bson:"color"`
+	// A list of gradients. There may be any amount, which can be stacked onto each other
+	Gradients []CosmeticPaintGradient `json:"gradients" bson:"gradients"`
+	// A list of drop shadows. There may be any amount, which can be stacked onto each other
+	DropShadows []CosmeticPaintDropShadow `json:"drop_shadows,omitempty" bson:"drop_shadows,omitempty"`
+	// A list of flairs
+	Flairs []CosmeticPaintFlair `json:"flairs,omitempty" bson:"flairs,omitempty"`
+	// Text properties
+	Text *CosmeticPaintText `json:"text,omitempty" bson:"text,omitempty"`
+	// Text stroke
+	// The function used to generate the paint (i.e gradients or an image)
+	Function CosmeticPaintGradientFunction `json:"function" bson:"function"`
 	// Gradient stops, a list of positions and colors
 	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
 	// Whether or not the gradient repeats outside its original area
@@ -99,21 +108,53 @@ type CosmeticDataPaint struct {
 	Shape string `json:"shape,omitempty" bson:"shape,omitempty"`
 	// URL of an image, when the paint is of BACKGROUND_IMAGE type
 	ImageURL string `json:"image_url,omitempty" bson:"image_url,omitempty"`
-	// A list of drop shadows. There may be any amount, which can be stacked onto each other
-	DropShadows []CosmeticPaintDropShadow `json:"drop_shadows,omitempty" bson:"drop_shadows,omitempty"`
 }
 
-type CosmeticPaintFunction string
+type CosmeticPaintGradient struct {
+	// The function used to generate the paint (i.e gradients or an image)
+	Function CosmeticPaintGradientFunction `json:"function" bson:"function"`
+	// The repeat mode of the gradient canvas
+	CanvasRepeat CosmeticPaintGradientRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
+	// The canvas size for the paint
+	Size [2]float64 `json:"size" bson:"size"`
+	// Gradient position (X/Y % values)
+	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
+	// Gradient stops, a list of positions and colors
+	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
+	// For a URL-based paint, the URL to an image
+	ImageURL string `json:"image_url,omitempty" bson:"image_url,omitempty"`
+	// For a radial gradient, the shape of the gradient
+	Shape string `json:"shape,omitempty" bson:"shape,omitempty"`
+	// The degree angle of the gradient (does not apply if function is URL)
+	Angle int32 `json:"angle,omitempty" bson:"angle,omitempty"`
+	// Whether or not the gradient stops repeat after they end
+	Repeat bool `json:"repeat" bson:"repeat"`
+}
+
+type CosmeticPaintGradientFunction string
 
 const (
-	CosmeticPaintFunctionLinearGradient CosmeticPaintFunction = "LINEAR_GRADIENT"
-	CosmeticPaintFunctionRadialGradient CosmeticPaintFunction = "RADIAL_GRADIENT"
-	CosmeticPaintFunctionImageURL       CosmeticPaintFunction = "URL"
+	CosmeticPaintFunctionLinearGradient CosmeticPaintGradientFunction = "LINEAR_GRADIENT"
+	CosmeticPaintFunctionRadialGradient CosmeticPaintGradientFunction = "RADIAL_GRADIENT"
+	CosmeticPaintFunctionImageURL       CosmeticPaintGradientFunction = "URL"
+)
+
+type CosmeticPaintGradientRepeat string
+
+const (
+	CosmeticPaintCanvasRepeatNone   CosmeticPaintGradientRepeat = "no-repeat"
+	CosmeticPaintCanvasRepeatX      CosmeticPaintGradientRepeat = "repeat-x"
+	CosmeticPaintCanvasRepeatY      CosmeticPaintGradientRepeat = "repeat-y"
+	CosmeticPaintCanvasRepeatRevert CosmeticPaintGradientRepeat = "revert"
+	CosmeticPaintCanvasRepeatRound  CosmeticPaintGradientRepeat = "round"
+	CosmeticPaintCanvasRepeatSpace  CosmeticPaintGradientRepeat = "space"
 )
 
 type CosmeticPaintGradientStop struct {
 	At    float64     `json:"at" bson:"at"`
 	Color utils.Color `json:"color" bson:"color"`
+	// the center position for the gradient. X/Y % values (for radial gradients only)
+	CenterAt [2]float64 `json:"center_at,omitempty" bson:"center_at,omitempty"`
 }
 
 type CosmeticPaintDropShadow struct {
@@ -123,13 +164,52 @@ type CosmeticPaintDropShadow struct {
 	Color   utils.Color `json:"color" bson:"color"`
 }
 
-type CosmeticPaintAnimation struct {
-	Speed     int32                            `json:"speed" bson:"speed"`
-	Keyframes []CosmeticPaintAnimationKeyframe `json:"keyframes" bson:"keyframes"`
+type CosmeticPaintText struct {
+	// Weight multiplier for the text. Defaults to 9x is not specified
+	Weight uint8 `json:"weight,omitempty" bson:"weight,omitempty"`
+	// Shadows applied to the text
+	Shadows []CosmeticPaintDropShadow `json:"shadows,omitempty" bson:"shadows,omitempty"`
+	// Text tranformation
+	Transform CosmeticPaintTextTransform `json:"transform,omitempty" bson:"transform,omitempty"`
+	// Text stroke
+	Stroke *CosmeticPaintStroke `json:"stroke,omitempty" bson:"stroke,omitempty"`
+	// (css) font variant property. non-standard
+	Variant string `json:"variant" bson:"variant"`
 }
 
-type CosmeticPaintAnimationKeyframe struct {
-	At float64 `json:"at" bson:"at"`
-	X  float64 `json:"x" bson:"x"`
-	Y  float64 `json:"y" bson:"y"`
+type CosmeticPaintStroke struct {
+	// Stroke color
+	Color utils.Color `json:"color" bson:"color"`
+	// Stroke width
+	Width float64 `json:"width" bson:"width"`
 }
+
+type CosmeticPaintTextTransform string
+
+const (
+	CosmeticPaintTextTransformUppercase CosmeticPaintTextTransform = "uppercase"
+	CosmeticPaintTextTransformLowercase CosmeticPaintTextTransform = "lowercase"
+)
+
+type CosmeticPaintFlair struct {
+	// The kind of sprite
+	Kind CosmeticPaintFlairKind `json:"kind" bson:"kind"`
+	// The X offset of the flair (%)
+	OffsetX float64 `json:"x_offset" bson:"x_offset"`
+	// The Y offset of the flair (%)
+	OffsetY float64 `json:"y_offset" bson:"y_offset"`
+	// The width of the flair
+	Width float64 `json:"width" bson:"width"`
+	// The height of the flair
+	Height float64 `json:"height" bson:"height"`
+	// Base64-encoded image or vector data
+	Data string `json:"data" bson:"data"`
+}
+
+type CosmeticPaintFlairKind string
+
+const (
+	CosmeticPaintSpriteKindImage  CosmeticPaintFlairKind = "IMAGE"
+	CosmeticPaintSpriteKindVector CosmeticPaintFlairKind = "VECTOR"
+	CosmeticPaintSpriteKindText   CosmeticPaintFlairKind = "TEXT"
+)
