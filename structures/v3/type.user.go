@@ -134,6 +134,13 @@ func (u *User) InferUsername() {
 
 			s = strings.ToLower(full)
 			sd = full
+		case UserConnectionPlatformKick:
+			con, _ := ConvertUserConnection[UserConnectionDataKick](connection)
+
+			full := con.Data.Username[:int(math.Min(22, float64(len(con.Data.Username))))] + "_" + u.Discriminator
+
+			s = strings.ToLower(full)
+			sd = full
 		}
 	}
 

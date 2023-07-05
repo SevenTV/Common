@@ -71,11 +71,15 @@ var (
 	UserConnectionPlatformTwitch  UserConnectionPlatform = "TWITCH"
 	UserConnectionPlatformYouTube UserConnectionPlatform = "YOUTUBE"
 	UserConnectionPlatformDiscord UserConnectionPlatform = "DISCORD"
+	UserConnectionPlatformKick    UserConnectionPlatform = "KICK"
 )
 
 func (ucp UserConnectionPlatform) Supported() bool {
 	switch ucp {
-	case UserConnectionPlatformTwitch, UserConnectionPlatformYouTube, UserConnectionPlatformDiscord:
+	case UserConnectionPlatformTwitch,
+		UserConnectionPlatformYouTube,
+		UserConnectionPlatformDiscord,
+		UserConnectionPlatformKick:
 		return true
 	}
 	return false
@@ -116,7 +120,7 @@ var (
 )
 
 type UserConnectionData interface {
-	bson.Raw | UserConnectionDataTwitch | UserConnectionDataYoutube | UserConnectionDataDiscord
+	bson.Raw | UserConnectionDataTwitch | UserConnectionDataYoutube | UserConnectionDataDiscord | UserConnectionDataKick
 }
 
 // UserConnection: Represents an external connection to a platform for a user
@@ -295,6 +299,14 @@ type UserConnectionDataDiscord struct {
 	PublicFlags   uint32 `json:"public_flags" bson:"public_flags"`
 }
 
+type UserConnectionDataKick struct {
+	ID          string `json:"id" bson:"id"`
+	ChatroomID  string `json:"chatroom_id" bson:"chatroom_id"`
+	Username    string `json:"username" bson:"username"`
+	DisplayName string `json:"display_name" bson:"display_name"`
+	Bio         string `json:"bio" bson:"bio"`
+}
+
 func (uc UserConnection[D]) Username() (string, string) {
 	var displayName string
 	var username string
@@ -314,6 +326,11 @@ func (uc UserConnection[D]) Username() (string, string) {
 		if con, err := ConvertUserConnection[UserConnectionDataDiscord](uc.ToRaw()); err == nil {
 			displayName = con.Data.Username
 			username = con.Data.Username + "#" + con.Data.Discriminator
+		}
+	case UserConnectionPlatformKick:
+		if con, err := ConvertUserConnection[UserConnectionDataKick](uc.ToRaw()); err == nil {
+			displayName = con.Data.DisplayName
+			username = con.Data.Username
 		}
 	}
 	return username, displayName
