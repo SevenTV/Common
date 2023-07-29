@@ -28,7 +28,16 @@ type LookupWithPipeline struct {
 }
 
 func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(opt.URI).SetDirect(opt.Direct))
+	uri := options.Client().ApplyURI(opt.URI)
+
+	if opt.Username != "" && opt.Password != "" {
+		uri.SetAuth(options.Credential{
+			Username: opt.Username,
+			Password: opt.Password,
+		})
+	}
+
+	client, err := mongo.Connect(ctx, uri.SetDirect(opt.Direct))
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +58,11 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 }
 
 type SetupOptions struct {
-	URI    string
-	DB     string
-	Direct bool
+	URI      string
+	DB       string
+	Direct   bool
+	Username string
+	Password string
 }
 
 type (
