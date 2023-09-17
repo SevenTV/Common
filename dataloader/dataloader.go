@@ -3,6 +3,8 @@ package dataloader
 import (
 	"sync"
 	"time"
+
+	"github.com/seventv/common/utils"
 )
 
 type Config[In comparable, Out any] struct {
@@ -48,7 +50,7 @@ type dataloaderBatch[In comparable, Out any] struct {
 	keys    []In
 	data    []Out
 	error   []error
-	closing bool
+	closing *utils.Closer
 	done    chan struct{}
 }
 
@@ -64,6 +66,7 @@ func (l *DataLoader[In, Out]) LoadThunk(key In) func() (Out, error) {
 	l.mu.Lock()
 	if l.batch == nil {
 		l.batch = &dataloaderBatch[In, Out]{done: make(chan struct{})}
+		l.batch.closing.Reset()
 	}
 	batch := l.batch
 	pos := batch.keyIndex(l, key)
@@ -140,25 +143,20 @@ func (b *dataloaderBatch[In, Out]) keyIndex(l *DataLoader[In, Out], key In) int 
 	}
 
 	if l.maxBatch != 0 && pos >= l.maxBatch-1 {
-		if !b.closing {
-			b.closing = true
-			l.batch = nil
-			go b.end(l)
-		}
+		b.closing.Close()
 	}
 
 	return pos
 }
 
 func (b *dataloaderBatch[In, Out]) startTimer(l *DataLoader[In, Out]) {
-	time.Sleep(l.wait)
-	l.mu.Lock()
-
-	// we must have hit a batch limit and are already finalizing this batch
-	if b.closing {
-		l.mu.Unlock()
-		return
+	select {
+	// we hit batch time limit
+	case <-time.After(l.wait):
+	// we hit a batch limit and are ready to finalize this batch
+	case <-b.closing.C:
 	}
+	l.mu.Lock()
 
 	l.batch = nil
 	l.mu.Unlock()
