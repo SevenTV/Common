@@ -150,11 +150,13 @@ func (b *dataloaderBatch[In, Out]) keyIndex(l *DataLoader[In, Out], key In) int 
 }
 
 func (b *dataloaderBatch[In, Out]) startTimer(l *DataLoader[In, Out]) {
+	timer := time.NewTimer(l.wait)
 	select {
 	// we hit batch time limit
-	case <-time.After(l.wait):
+	case <-timer.C:
 	// we hit a batch limit and are ready to finalize this batch
 	case <-b.closing.C:
+		timer.Stop()
 	}
 	l.mu.Lock()
 
