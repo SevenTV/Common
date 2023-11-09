@@ -65,7 +65,10 @@ func (l *DataLoader[In, Out]) Load(key In) (Out, error) {
 func (l *DataLoader[In, Out]) LoadThunk(key In) func() (Out, error) {
 	l.mu.Lock()
 	if l.batch == nil {
-		l.batch = &dataloaderBatch[In, Out]{done: make(chan struct{})}
+		l.batch = &dataloaderBatch[In, Out]{
+			done:    make(chan struct{}),
+			closing: &utils.Closer{},
+		}
 		l.batch.closing.Reset()
 	}
 	batch := l.batch
