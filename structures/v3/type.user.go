@@ -142,6 +142,10 @@ func (u *User) InferUsername() {
 			s = strings.ToLower(full)
 			sd = full
 		}
+
+		if s != "" {
+			break
+		}
 	}
 
 	u.Username = UsernameRegex.ReplaceAllString(s, "")
