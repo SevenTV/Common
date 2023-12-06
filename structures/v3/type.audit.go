@@ -55,6 +55,9 @@ const (
 	// Range: 80-89 (Report)
 	AuditLogKindCreateReport AuditLogKind = 80
 	AuditLogKindUpdateReport AuditLogKind = 81
+
+	// Range: 90-110 (Messaging)
+	AuditLogKindReadMessage AuditLogKind = 90
 )
 
 type AuditLogChange struct {

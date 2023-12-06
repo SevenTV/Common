@@ -171,6 +171,7 @@ type MessageRead struct {
 	RecipientID primitive.ObjectID `json:"recipient_id,omitempty" bson:"recipient_id,omitempty"`
 	Read        bool               `json:"read" bson:"read"`
 	ReadAt      time.Time          `json:"read_at,omitempty" bson:"read_at,omitempty"`
+	Weight      int32              `json:"weight" bson:"weight"`
 
 	// Relational
 

@@ -57,6 +57,7 @@ const (
 
 	RolePermissionFeatureZeroWidthEmoteType      RolePermission = 1 << 23 // 8388608 - Allows using the Zero-Width emote type
 	RolePermissionFeatureProfilePictureAnimation RolePermission = 1 << 24 // 16777216 - Allows the user's profile picture to be animated
+	RolePermissionFeatureMessagingPriority       RolePermission = 1 << 25 // 33554432 - The user's messages will become prioritized
 )
 
 // Moderation
