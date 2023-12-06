@@ -37,7 +37,13 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		})
 	}
 
-	client, err := mongo.Connect(ctx, uri.SetDirect(opt.Direct))
+	var readPref *readpref.ReadPref = readpref.Primary()
+
+	if opt.HedgedReads {
+		readPref = readpref.PrimaryPreferred(readpref.WithHedgeEnabled(true))
+	}
+
+	client, err := mongo.Connect(ctx, uri.SetDirect(opt.Direct).SetReadPreference(readPref))
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +64,12 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 }
 
 type SetupOptions struct {
-	URI      string
-	DB       string
-	Direct   bool
-	Username string
-	Password string
+	URI         string
+	DB          string
+	Direct      bool
+	Username    string
+	Password    string
+	HedgedReads bool
 }
 
 type (
