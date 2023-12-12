@@ -149,9 +149,9 @@ func (e EntitlementCondition) IsMet(roleIDs utils.Set[primitive.ObjectID]) bool 
 }
 
 type EntitlementApp struct {
-	Name    string         `json:"name"`
-	ActorID string         `json:"string,omitempty"`
-	State   map[string]any `json:"state"`
+	Name    string         `json:"name" bson:"name"`
+	ActorID string         `json:"actor_id,omitempty" bson:"actor_id"`
+	State   map[string]any `json:"state" bson:"state"`
 }
 
 type EntitlementClaim struct {
