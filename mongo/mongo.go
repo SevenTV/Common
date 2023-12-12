@@ -43,7 +43,7 @@ func Setup(ctx context.Context, opt SetupOptions) (Instance, error) {
 		readPref = readpref.PrimaryPreferred(readpref.WithHedgeEnabled(true))
 	}
 
-	client, err := mongo.Connect(ctx, uri.SetDirect(opt.Direct).SetReadPreference(readPref))
+	client, err := mongo.Connect(ctx, uri.SetDirect(opt.Direct).SetReadPreference(readPref).SetRetryReads(true))
 	if err != nil {
 		return nil, err
 	}
