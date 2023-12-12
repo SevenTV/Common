@@ -81,6 +81,7 @@ const (
 	RolePermissionManageStack        RolePermission = 1 << 55 // 36028797018963968 - (Admin) Allows managing the application stack
 	RolePermissionManageCosmetics    RolePermission = 1 << 56 // 72057594037927936 - (Admin) Allows managing user cosmetics
 	RolePermissionRunJobs            RolePermission = 1 << 57 // 144115188075855872 - (Admin) Allows firing processing jobs
+	RolePermissionManageEntitlements RolePermission = 1 << 58 // 288230376151711744 - (Admin) Allows managing entitlements
 )
 
 // All permissions

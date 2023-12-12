@@ -1,6 +1,8 @@
 package structures
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type EntitlementBuilder[D EntitlementData] struct {
 	Entitlement Entitlement[D]
@@ -43,5 +45,10 @@ func (b *EntitlementBuilder[D]) SetCondition(cond EntitlementCondition) *Entitle
 
 func (b *EntitlementBuilder[D]) SetApp(app EntitlementApp) *EntitlementBuilder[D] {
 	b.Entitlement.App = &app
+	return b
+}
+
+func (b *EntitlementBuilder[D]) SetClaim(claim EntitlementClaim) *EntitlementBuilder[D] {
+	b.Entitlement.Claim = &claim
 	return b
 }

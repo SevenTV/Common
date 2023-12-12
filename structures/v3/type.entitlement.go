@@ -23,6 +23,8 @@ type Entitlement[D EntitlementData] struct {
 	Data D `json:"data" bson:"data"`
 	// The user who is entitled to the item
 	UserID primitive.ObjectID `json:"user_id" bson:"user_id"`
+	// An optional claim expectation
+	Claim *EntitlementClaim `json:"claim" bson:"claim"`
 	// Eligibility conditions for this entitlement
 	Condition EntitlementCondition `json:"condition" bson:"condition"`
 	// Whether this entitlement is currently inactive
@@ -147,6 +149,12 @@ func (e EntitlementCondition) IsMet(roleIDs utils.Set[primitive.ObjectID]) bool 
 }
 
 type EntitlementApp struct {
-	Name  string         `json:"name"`
-	State map[string]any `json:"state"`
+	Name    string         `json:"name"`
+	ActorID string         `json:"string,omitempty"`
+	State   map[string]any `json:"state"`
+}
+
+type EntitlementClaim struct {
+	Platform UserConnectionPlatform `json:"platform" bson:"platform"`
+	ID       string                 `json:"id" bson:"id"`
 }
