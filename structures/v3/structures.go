@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	RegExpEmoteName               = regexp.MustCompile(`^[-_A-Za-z(!?&)$+:0-9]{2,100}$`)
-	RegExpEmoteVersionName        = regexp.MustCompile(`^[A-Za-z0-9\s]{2,40}$`)
-	RegExpEmoteVersionDescription = regexp.MustCompile(`^[-_*=/\\"'\]\[}{@&~!?;:A-Za-z0-9\s]{3,240}$`)
+	RegExpEmoteName               = regexp.MustCompile(`^[-_A-Za-zÀ-ÖØ-öø-įĴ-őŔ-žǍ-ǰǴǵǸ-țȞȟȤ-ȳɃɆ-ɏḀ-ẞƀ-ƓƗ-ƚƝ-ơƤƥƫ-ưƲ-ƶẠ-ỿ(!?&)$+:0-9]{2,100}$`)
+	RegExpEmoteVersionName        = regexp.MustCompile(`^[A-Za-zÀ-ÖØ-öø-įĴ-őŔ-žǍ-ǰǴǵǸ-țȞȟȤ-ȳɃɆ-ɏḀ-ẞƀ-ƓƗ-ƚƝ-ơƤƥƫ-ưƲ-ƶẠ-ỿ0-9\s]{2,40}$`)
+	RegExpEmoteVersionDescription = regexp.MustCompile(`^[-_*=/\\"'\]\[}{@&~!?;:A-Za-zÀ-ÖØ-öø-įĴ-őŔ-žǍ-ǰǴǵǸ-țȞȟȤ-ȳɃɆ-ɏḀ-ẞƀ-ƓƗ-ƚƝ-ơƤƥƫ-ưƲ-ƶẠ-ỿ0-9\s]{3,240}$`)
 )
 
 type UpdateMap bson.M
